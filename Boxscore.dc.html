@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--hit:#22c55e;--win:#22c55e;--loss:#ef4444;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:1000px;padding:24px 28px;}
+    a{color:var(--hit);} a:hover{color:#16a34a;}
+    .head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px;}
+    .head h1{font-size:22px;font-weight:800;}
+    .head .sub{font-size:13px;color:var(--muted);}
+    .tabs{display:flex;gap:8px;margin:14px 0 18px;}
+    .tab{font-size:13px;font-weight:700;padding:7px 14px;border-radius:9px;border:1px solid var(--line);color:var(--muted);background:var(--panel);}
+    .tab.on{color:#7ee2a4;border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.08);}
+    .blk{margin-bottom:22px;}
+    .blk .cap{font-size:11px;color:var(--dim);letter-spacing:1.5px;font-weight:700;margin-bottom:8px;}
+    table{border-collapse:separate;border-spacing:0;width:100%;}
+    th,td{border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;}
+    thead th{font-size:11px;color:var(--muted);font-weight:700;padding:8px 6px;text-align:center;}
+    tbody td{font-size:13px;padding:8px 6px;text-align:center;}
+    /* linescore */
+    .ls th.tm,.ls td.tm{text-align:left;padding-left:10px;width:130px;font-weight:700;}
+    .ls td.big{font-weight:800;font-size:15px;}
+    .ls td.r{color:#7ee2a4;}
+    .ls th.sep,.ls td.sep{border-left:1px solid var(--line);}
+    /* batting */
+    .bt td.nm,.bt th.nm{text-align:left;padding-left:10px;width:150px;}
+    .bt td.nm .po{font-size:11px;color:var(--muted);margin-left:6px;}
+    .bt td.avg{color:var(--muted);}
+    tbody tr.sum td{font-weight:800;color:var(--muted);border-top:1px solid var(--line);}
+    /* pitching */
+    .pt td.nm,.pt th.nm{text-align:left;padding-left:10px;width:170px;}
+    .badge{font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;}
+    .b-w{background:rgba(34,197,94,.15);color:#7ee2a4;}
+    .b-l{background:rgba(239,68,68,.13);color:#ff9a9a;}
+    .cols{display:flex;gap:26px;align-items:flex-start;}
+    .cols .c{flex:1;}
+  </style>
+</helmet>
+<div class="head"><h1>박스스코어</h1><span class="sub">LG 트윈스 vs 두산 베어스 · 2026.08.25 · 잠실</span></div>
+<div class="tabs"><div class="tab">스코어북</div><div class="tab on">박스스코어</div><div class="tab">투수</div><div class="tab">라인스코어</div></div>
+
+<div class="blk">
+  <div class="cap">라인스코어</div>
+  <table class="ls">
+    <thead><tr><th class="tm">팀</th>
+      <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+      <th class="sep">R</th><th>H</th><th>E</th></tr></thead>
+    <tbody>
+      <tr><td class="tm">두산</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="sep big r">2</td><td class="big">6</td><td class="big">1</td></tr>
+      <tr><td class="tm">LG</td><td>2</td><td>0</td><td>1</td><td>0</td><td>0</td><td>2</td><td>0</td><td>0</td><td>—</td><td class="sep big r">5</td><td class="big">9</td><td class="big">0</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="blk">
+  <div class="cap">타격 · LG 트윈스</div>
+  <table class="bt">
+    <thead><tr><th class="nm">선수</th><th>타수</th><th>안타</th><th>타점</th><th>득점</th><th>볼넷</th><th>삼진</th><th>타율</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">홍창기<span class="po">우익</span></td><td>4</td><td>2</td><td>1</td><td>1</td><td>1</td><td>0</td><td class="avg">.333</td></tr>
+      <tr><td class="nm">신민재<span class="po">2루</span></td><td>4</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td class="avg">.270</td></tr>
+      <tr><td class="nm">김현수<span class="po">지명</span></td><td>4</td><td>2</td><td>2</td><td>0</td><td>0</td><td>0</td><td class="avg">.318</td></tr>
+      <tr><td class="nm">오지환<span class="po">유격</span></td><td>4</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td class="avg">.268</td></tr>
+      <tr><td class="nm">문보경<span class="po">3루</span></td><td>3</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td class="avg">.295</td></tr>
+      <tr><td class="nm">박동원<span class="po">포수</span></td><td>4</td><td>1</td><td>1</td><td>0</td><td>0</td><td>2</td><td class="avg">.251</td></tr>
+      <tr><td class="nm">문성주<span class="po">좌익</span></td><td>3</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td class="avg">.289</td></tr>
+      <tr><td class="nm">오스틴<span class="po">1루</span></td><td>4</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td class="avg">.312</td></tr>
+      <tr><td class="nm">박해민<span class="po">중견</span></td><td>3</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td class="avg">.241</td></tr>
+      <tr class="sum"><td class="nm">합계</td><td>33</td><td>9</td><td>5</td><td>5</td><td>4</td><td>6</td><td class="avg">.273</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="blk">
+  <div class="cap">투수</div>
+  <table class="pt">
+    <thead><tr><th class="nm">투수</th><th>이닝</th><th>투구수</th><th>피안타</th><th>탈삼진</th><th>볼넷</th><th>실점</th><th>자책</th><th>판정</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">임찬규 <span style="font-size:11px;color:var(--muted)">LG</span></td><td>6.0</td><td>92</td><td>5</td><td>5</td><td>2</td><td>2</td><td>2</td><td><span class="badge b-w">승</span></td></tr>
+      <tr><td class="nm">유영찬 <span style="font-size:11px;color:var(--muted)">LG</span></td><td>3.0</td><td>41</td><td>1</td><td>4</td><td>0</td><td>0</td><td>0</td><td><span style="font-size:11px;color:var(--muted)">홀드</span></td></tr>
+      <tr><td class="nm">곽 빈 <span style="font-size:11px;color:var(--muted)">두산</span></td><td>5.1</td><td>88</td><td>7</td><td>4</td><td>3</td><td>4</td><td>4</td><td><span class="badge b-l">패</span></td></tr>
+    </tbody>
+  </table>
+</div>
+</x-dc>
+</body>
+</html>

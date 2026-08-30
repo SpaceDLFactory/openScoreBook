@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--hit:#22c55e;--hr:#f59e0b;--win:#22c55e;--loss:#ef4444;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:390px;padding:0 0 20px;}
+    a{color:var(--hit);} a:hover{color:#16a34a;}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 4px;}
+    .top .c{font-size:13px;color:var(--muted);font-weight:600;}
+    .top .t{font-size:16px;font-weight:800;}
+    .final{margin:8px 16px 0;background:linear-gradient(160deg,rgba(34,197,94,.10),var(--panel));border:1px solid var(--line);border-radius:18px;padding:18px;}
+    .final .rowt{display:flex;align-items:center;}
+    .final .tm{flex:1;text-align:center;}
+    .final .tm .nm{font-size:14px;font-weight:700;color:var(--muted);}
+    .final .tm .rn{font-size:40px;font-weight:800;line-height:1;margin-top:4px;font-variant-numeric:tabular-nums;}
+    .final .tm.w .nm{color:var(--txt);}
+    .final .tm.w .rn{color:#7ee2a4;}
+    .final .vs{font-size:12px;color:var(--dim);padding:0 6px;}
+    .final .meta{text-align:center;font-size:11px;color:var(--muted);margin-top:12px;}
+    .dec{display:flex;gap:8px;margin:12px 16px 0;}
+    .dec .d{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:9px 0;text-align:center;}
+    .dec .d .k{font-size:9px;color:var(--dim);font-weight:700;letter-spacing:1px;}
+    .dec .d .v{font-size:13px;font-weight:700;margin-top:3px;}
+    .dec .d .v.w{color:#7ee2a4;} .dec .d .v.l{color:#ff9a9a;}
+    .sect{font-size:10px;color:var(--dim);letter-spacing:1.5px;font-weight:700;margin:18px 16px 7px;}
+    .mvp{margin:0 16px;background:var(--panel);border:1px solid rgba(245,158,11,.3);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:13px;}
+    .mvp .medal{width:40px;height:40px;border-radius:11px;background:rgba(245,158,11,.14);color:#ffd479;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .mvp .nm{flex:1;} .mvp .nm .n1{font-size:15px;font-weight:800;} .mvp .nm .n2{font-size:11px;color:var(--muted);margin-top:2px;}
+    .mvp .line{text-align:right;font-size:12px;color:#ffd479;font-weight:700;}
+    .kp{margin:0 16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+    .kp .r{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:13px;}
+    .kp .r:last-child{border-bottom:none;}
+    .kp .r .tag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;flex-shrink:0;}
+    .tg-hr{background:rgba(245,158,11,.16);color:#ffd479;}
+    .tg-win{background:rgba(34,197,94,.14);color:#7ee2a4;}
+    .kp .r .tx{color:var(--txt);}
+    .kp .r .tx b{font-weight:700;}
+    .kp .r .inn{margin-left:auto;font-size:11px;color:var(--muted);}
+  </style>
+</helmet>
+<div class="top"><span class="c">‹</span><span class="t">경기 요약</span><span class="c">공유</span></div>
+
+<div class="final">
+  <div class="rowt">
+    <div class="tm w"><div class="nm">LG 트윈스</div><div class="rn">5</div></div>
+    <div class="vs">FINAL</div>
+    <div class="tm"><div class="nm">두산 베어스</div><div class="rn">2</div></div>
+  </div>
+  <div class="meta">2026.08.25 · 잠실 · 9이닝 · 3시간 12분</div>
+</div>
+
+<div class="dec">
+  <div class="d"><div class="k">승</div><div class="v w">임찬규</div></div>
+  <div class="d"><div class="k">패</div><div class="v l">곽 빈</div></div>
+  <div class="d"><div class="k">세이브</div><div class="v">고우석</div></div>
+</div>
+
+<div class="sect">이 경기 MVP</div>
+<div class="mvp">
+  <div class="medal">★</div>
+  <div class="nm"><div class="n1">김현수</div><div class="n2">지명 · 3타수 2안타</div></div>
+  <div class="line">2타점 · 결승타<br><span style="color:var(--muted);font-weight:500">WPA +.24</span></div>
+</div>
+
+<div class="sect">주요 장면</div>
+<div class="kp">
+  <div class="r"><span class="tag tg-hr">홈런</span><span class="tx"><b>홍창기</b> 우중간 솔로 (시즌 12호)</span><span class="inn">3회말</span></div>
+  <div class="r"><span class="tag tg-win">결승</span><span class="tx"><b>김현수</b> 좌중간 2루타 2타점</span><span class="inn">6회말</span></div>
+  <div class="r"><span class="tag tg-hr">호수비</span><span class="tx"><b>오지환</b> 유격 깊은 타구 병살 처리</span><span class="inn">7회초</span></div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--hit:#22c55e;--run:#38bdf8;--out:#ef4444;--score:#f59e0b;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:390px;padding:0 0 20px;}
+    a{color:var(--hit);} a:hover{color:#16a34a;}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 8px;}
+    .top .t{font-size:16px;font-weight:800;}
+    .top .sc{font-size:13px;color:var(--muted);font-weight:600;}
+    .inn{display:flex;align-items:center;gap:10px;margin:14px 16px 4px;}
+    .inn .lb{font-size:13px;font-weight:800;color:#7dd3fc;}
+    .inn .rr{font-size:11px;color:var(--muted);}
+    .inn .line{flex:1;height:1px;background:var(--line);}
+    .feed{margin:6px 16px 0;position:relative;}
+    .ev{display:flex;gap:12px;padding:8px 0;}
+    .ev .rail{width:20px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+    .ev .dot{width:11px;height:11px;border-radius:50%;background:var(--panel2);border:2px solid var(--dim);margin-top:3px;}
+    .ev .dot.hit{background:var(--hit);border-color:var(--hit);}
+    .ev .dot.out{background:var(--out);border-color:var(--out);}
+    .ev .dot.run{background:var(--run);border-color:var(--run);}
+    .ev .dot.score{background:var(--score);border-color:var(--score);}
+    .ev .stem{flex:1;width:2px;background:var(--line);margin-top:3px;}
+    .ev .bd{flex:1;padding-bottom:4px;}
+    .ev .hl{display:flex;align-items:baseline;gap:8px;}
+    .ev .who{font-size:14px;font-weight:700;}
+    .ev .rescode{font-size:11px;font-weight:800;padding:1px 7px;border-radius:5px;}
+    .rc-hit{background:rgba(34,197,94,.14);color:#7ee2a4;}
+    .rc-out{background:rgba(239,68,68,.12);color:#ff9a9a;}
+    .rc-run{background:rgba(56,189,248,.14);color:#7dd3fc;}
+    .rc-score{background:rgba(245,158,11,.16);color:#ffd479;}
+    .ev .desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5;}
+    .ev .pitches{font-size:11px;color:var(--dim);margin-top:3px;}
+  </style>
+</helmet>
+<div class="top"><span class="t">플레이 로그</span><span class="sc">3회초 · LG 3 : 2 두산</span></div>
+
+<div class="inn"><span class="lb">3회초</span><span class="rr">LG 공격 · 2득점</span><span class="line"></span></div>
+<div class="feed">
+  <div class="ev">
+    <div class="rail"><div class="dot hit"></div><div class="stem"></div></div>
+    <div class="bd"><div class="hl"><span class="who">1번 홍창기</span><span class="rescode rc-hit">우전안타</span></div>
+      <div class="desc">우익수 앞 떨어지는 라인드라이브, 1루 출루</div>
+      <div class="pitches">S(슬라 루킹) · B · F(직구) · 인플레이(직구 147㎞)</div></div>
+  </div>
+  <div class="ev">
+    <div class="rail"><div class="dot run"></div><div class="stem"></div></div>
+    <div class="bd"><div class="hl"><span class="who">홍창기</span><span class="rescode rc-run">2루 도루</span></div>
+      <div class="desc">1루 → 2루 도루 성공 (SB), 무사 2루</div></div>
+  </div>
+  <div class="ev">
+    <div class="rail"><div class="dot out"></div><div class="stem"></div></div>
+    <div class="bd"><div class="hl"><span class="who">2번 신민재</span><span class="rescode rc-out">삼진</span></div>
+      <div class="desc">헛스윙 삼진 (슬라이더), 1사 2루</div>
+      <div class="pitches">B · S · S(파울) · S(헛스윙 131㎞)</div></div>
+  </div>
+  <div class="ev">
+    <div class="rail"><div class="dot score"></div><div class="stem"></div></div>
+    <div class="bd"><div class="hl"><span class="who">3번 김현수</span><span class="rescode rc-score">2루타 · 1타점</span></div>
+      <div class="desc">좌중간 2루타, 2루주자 홍창기 홈인 (3:2), 1사 2루</div>
+      <div class="pitches">F · 인플레이(직구 145㎞)</div></div>
+  </div>
+  <div class="ev">
+    <div class="rail"><div class="dot out"></div></div>
+    <div class="bd"><div class="hl"><span class="who">4번 오지환</span><span class="rescode rc-out">유격수 땅볼</span></div>
+      <div class="desc">6-3 땅볼 아웃, 주자 3루 진루, 2사 3루</div>
+      <div class="pitches">S · B · F · S(헛스윙) · 인플레이(146㎞)</div></div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

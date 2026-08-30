@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--hit:#22c55e;--accent:#3b82f6;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:390px;padding:0 0 16px;}
+    a{color:var(--hit);} a:hover{color:#16a34a;}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;}
+    .top .c{font-size:13px;color:var(--muted);font-weight:600;}
+    .top .t{font-size:16px;font-weight:800;}
+    .sect{font-size:10px;color:var(--dim);letter-spacing:1.5px;font-weight:700;margin:16px 16px 8px;}
+    .grp{margin:0 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+    .fr{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);}
+    .fr:last-child{border-bottom:none;}
+    .fr .k{font-size:13px;color:var(--muted);width:70px;flex-shrink:0;}
+    .fr .v{font-size:14px;font-weight:600;flex:1;}
+    .fr .v.ph{color:var(--dim);font-weight:400;}
+    .fr .ed{font-size:12px;color:var(--accent);font-weight:600;}
+    /* tabs */
+    .tabs{display:flex;gap:8px;margin:14px 12px 0;}
+    .tab{flex:1;font-size:13px;font-weight:700;padding:9px 0;border-radius:10px;border:1px solid var(--line);color:var(--muted);background:var(--panel);text-align:center;}
+    .tab.on{color:#8fbaff;border-color:rgba(59,130,246,.45);background:rgba(59,130,246,.10);}
+    /* lineup */
+    .lu{margin:10px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+    .lr{display:flex;align-items:center;gap:11px;padding:10px 13px;border-bottom:1px solid var(--line);}
+    .lr:last-child{border-bottom:none;}
+    .lr .ord{width:22px;height:22px;border-radius:6px;background:var(--panel2);font-size:12px;font-weight:800;color:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .lr .nm{flex:1;font-size:14px;font-weight:600;}
+    .lr .nm.ph{color:var(--dim);font-weight:400;}
+    .lr .bh{font-size:10px;color:var(--muted);width:26px;text-align:center;}
+    .lr .pos{font-size:12px;font-weight:700;color:#8fbaff;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.3);border-radius:7px;padding:4px 9px;min-width:44px;text-align:center;}
+    .lr .pos.ph{color:var(--dim);background:transparent;border-color:var(--line);}
+    .pit{margin:10px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px;}
+    .pit .ic{width:22px;height:22px;border-radius:6px;background:rgba(245,158,11,.14);color:#ffd479;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .pit .k{font-size:13px;color:var(--muted);}
+    .pit .v{font-size:14px;font-weight:700;margin-left:auto;}
+    .foot{margin:16px 12px 0;}
+    .foot .go{height:52px;border-radius:14px;border:none;background:var(--hit);color:#06210f;width:100%;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 24px rgba(34,197,94,.22);}
+  </style>
+</helmet>
+<div class="top"><span class="c">취소</span><span class="t">새 경기</span><span class="c" style="color:var(--hit)">임시저장</span></div>
+
+<div class="sect">경기 정보</div>
+<div class="grp">
+  <div class="fr"><span class="k">날짜</span><span class="v">2026.08.27 (수)</span><span class="ed">변경</span></div>
+  <div class="fr"><span class="k">구장</span><span class="v">잠실</span><span class="ed">변경</span></div>
+  <div class="fr"><span class="k">원정</span><span class="v">두산 베어스</span><span class="ed">변경</span></div>
+  <div class="fr"><span class="k">홈</span><span class="v">LG 트윈스</span><span class="ed">변경</span></div>
+</div>
+
+<div class="sect">라인업 · 수동 입력</div>
+<div class="tabs"><div class="tab">두산 (원정)</div><div class="tab on">LG (홈)</div></div>
+<div class="lu">
+  <div class="lr"><span class="ord">1</span><span class="nm">홍창기</span><span class="bh">좌</span><span class="pos">우익</span></div>
+  <div class="lr"><span class="ord">2</span><span class="nm">신민재</span><span class="bh">양</span><span class="pos">2루</span></div>
+  <div class="lr"><span class="ord">3</span><span class="nm">김현수</span><span class="bh">좌</span><span class="pos">지명</span></div>
+  <div class="lr"><span class="ord">4</span><span class="nm">오지환</span><span class="bh">우</span><span class="pos">유격</span></div>
+  <div class="lr"><span class="ord">5</span><span class="nm ph">선수 입력…</span><span class="bh"></span><span class="pos ph">포지션</span></div>
+</div>
+<div class="pit">
+  <span class="ic">P</span><span class="k">선발 투수</span><span class="v">임찬규 <span style="font-size:11px;color:var(--muted);font-weight:500">우투</span></span>
+</div>
+
+<div class="foot"><button class="go">기록 시작 →</button></div>
+</x-dc>
+</body>
+</html>

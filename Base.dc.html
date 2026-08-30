@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--hit:#22c55e;--run:#38bdf8;--out:#ef4444;--occ:#f59e0b;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:390px;padding:0 0 16px;}
+    a{color:var(--hit);} a:hover{color:#16a34a;}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 6px;}
+    .top .c{font-size:13px;color:var(--muted);font-weight:600;}
+    .top .t{font-size:16px;font-weight:800;}
+    .kinds{display:flex;gap:6px;margin:8px 12px 0;flex-wrap:wrap;}
+    .k{font-size:13px;font-weight:700;padding:9px 14px;border-radius:10px;border:1px solid var(--line);color:var(--muted);background:var(--panel);}
+    .k.on{color:#7dd3fc;border-color:rgba(56,189,248,.5);background:rgba(56,189,248,.12);}
+    .fieldwrap{display:flex;justify-content:center;margin-top:12px;}
+    .sect{font-size:10px;color:var(--dim);letter-spacing:1.5px;font-weight:700;margin:14px 16px 7px;}
+    .runners{display:flex;gap:8px;margin:0 12px;}
+    .rn{flex:1;border-radius:11px;border:1px solid var(--line);background:var(--panel);padding:10px 12px;}
+    .rn.sel{border-color:rgba(56,189,248,.5);background:rgba(56,189,248,.10);}
+    .rn .b{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;}
+    .rn.sel .b{color:#7dd3fc;}
+    .rn .n{font-size:14px;font-weight:700;margin-top:3px;}
+    .rn .n.ph{color:var(--dim);font-weight:400;}
+    .out{display:flex;gap:6px;margin:0 12px;}
+    .out .b{flex:1;height:44px;border-radius:11px;border:1px solid var(--line);background:var(--panel);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--txt);}
+    .out .b.ok{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.12);color:#7ee2a4;}
+    .out .b.no{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:#ff9a9a;}
+    .summary{margin:14px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
+    .summary .k2{font-size:10px;color:var(--dim);letter-spacing:1px;font-weight:700;}
+    .summary .v{font-size:15px;font-weight:800;}
+    .summary .v .em{color:#7dd3fc;}
+    .foot{margin:14px 12px 0;display:flex;gap:8px;}
+    .foot .undo{width:70px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:18px;}
+    .foot .go{flex:1;height:48px;border-radius:12px;border:none;background:var(--run);color:#05202e;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px;}
+  </style>
+</helmet>
+<div class="top"><span class="c">‹</span><span class="t">주루 플레이</span><span class="c">✕</span></div>
+
+<div class="kinds">
+  <div class="k on">도루</div><div class="k">도루자</div><div class="k">폭투·포일</div><div class="k">보크</div><div class="k">견제사</div>
+</div>
+
+<div class="fieldwrap">
+  <svg width="220" height="200" viewBox="0 0 220 200">
+    <path d="M110 168 L172 106 L110 44 L48 106 Z" fill="rgba(255,255,255,.02)" stroke="#3a4655" stroke-width="1.5"/>
+    <!-- 2B -->
+    <rect x="102" y="36" width="16" height="16" rx="2" transform="rotate(45 110 44)" fill="#1d232c" stroke="#4a5566" stroke-width="1.5"/>
+    <!-- 3B -->
+    <rect x="40" y="98" width="16" height="16" rx="2" transform="rotate(45 48 106)" fill="#1d232c" stroke="#4a5566" stroke-width="1.5"/>
+    <!-- 1B occupied (runner start) -->
+    <rect x="164" y="98" width="16" height="16" rx="2" transform="rotate(45 172 106)" fill="var(--occ)" stroke="var(--occ)"/>
+    <!-- home -->
+    <rect x="102" y="160" width="16" height="16" rx="2" transform="rotate(45 110 168)" fill="#262d38" stroke="#5c6672" stroke-width="1.5"/>
+    <!-- steal arrow 1B -> 2B -->
+    <path d="M168 100 L118 50" stroke="var(--run)" stroke-width="2.5" stroke-dasharray="6 5" fill="none"/>
+    <polygon points="118,50 124,58 112,58" fill="var(--run)"/>
+    <text x="150" y="80" fill="#7dd3fc" font-size="11" font-weight="700" text-anchor="middle" transform="rotate(-45 150 80)">도루</text>
+  </svg>
+</div>
+
+<div class="sect">주자 선택</div>
+<div class="runners">
+  <div class="rn sel"><div class="b">1루</div><div class="n">김현수</div></div>
+  <div class="rn"><div class="b">2루</div><div class="n ph">주자 없음</div></div>
+  <div class="rn"><div class="b">3루</div><div class="n ph">주자 없음</div></div>
+</div>
+
+<div class="sect">결과</div>
+<div class="out">
+  <div class="b ok">세이프 (2루)</div><div class="b no">태그아웃</div><div class="b">1루 귀루</div>
+</div>
+
+<div class="summary"><span class="k2">기록</span><span class="v">1루 김현수 → <span class="em">2루 도루 성공</span> (SB)</span></div>
+
+<div class="foot"><div class="undo">↶</div><div class="go">확정 ✓</div></div>
+</x-dc>
+</body>
+</html>

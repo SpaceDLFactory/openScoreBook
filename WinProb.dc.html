@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--hit:#22c55e;--hr:#f59e0b;--loss:#ef4444;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:390px;padding:0 0 20px;}
+    a{color:var(--hit);} a:hover{color:#16a34a;}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;}
+    .top h1{font-size:19px;font-weight:800;}
+    .top .who{font-size:12px;color:var(--muted);}
+    .card{margin:12px 16px 0;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 14px 12px;}
+    .card .h{font-size:12px;font-weight:700;color:var(--muted);margin:0 4px 4px;display:flex;justify-content:space-between;}
+    .card .h .end{color:#7ee2a4;font-weight:800;}
+    .axkey{display:flex;gap:16px;margin:8px 6px 0;font-size:11px;color:var(--muted);}
+    .axkey .it{display:flex;align-items:center;gap:6px;}
+    .axkey .sw{width:14px;height:3px;border-radius:2px;}
+    .sect{font-size:10px;color:var(--dim);letter-spacing:1.5px;font-weight:700;margin:18px 16px 8px;}
+    .sw3{margin:0 16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+    .sw3 .r{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line);}
+    .sw3 .r:last-child{border-bottom:none;}
+    .sw3 .rk{width:20px;height:20px;border-radius:6px;background:var(--panel2);font-size:11px;font-weight:800;color:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .sw3 .tx{flex:1;font-size:13px;} .sw3 .tx .in{font-size:11px;color:var(--muted);margin-top:2px;}
+    .sw3 .delta{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;}
+    .up{color:#7ee2a4;} .down{color:#ff9a9a;}
+  </style>
+</helmet>
+<div class="top"><h1>승부 확률 <span class="who">WPA · LG 기준</span></h1><span class="who">LG 5 : 2 두산</span></div>
+
+<div class="card">
+  <div class="h"><span>경기 진행별 LG 승리확률</span><span class="end">최종 100%</span></div>
+  <svg width="330" height="190" viewBox="0 0 340 195">
+    <!-- grid -->
+    <line x1="24" y1="20" x2="320" y2="20" stroke="#1e2630" stroke-width="1"/>
+    <line x1="24" y1="95" x2="320" y2="95" stroke="#39424f" stroke-width="1" stroke-dasharray="4 4"/>
+    <line x1="24" y1="165" x2="320" y2="165" stroke="#1e2630" stroke-width="1"/>
+    <text x="18" y="24" fill="#5c6672" font-size="9" text-anchor="end">100</text>
+    <text x="18" y="98" fill="#5c6672" font-size="9" text-anchor="end">50</text>
+    <text x="18" y="168" fill="#5c6672" font-size="9" text-anchor="end">0</text>
+    <!-- area fill -->
+    <path d="M30 89 L58 64 L86 73 L114 61 L142 67 L170 81 L198 75 L226 42 L254 38 L300 25 L300 165 L30 165 Z" fill="rgba(34,197,94,.08)"/>
+    <!-- line -->
+    <path d="M30 89 L58 64 L86 73 L114 61 L142 67 L170 81 L198 75 L226 42 L254 38 L300 25" fill="none" stroke="var(--hit)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <!-- key markers -->
+    <circle cx="114" cy="61" r="5" fill="var(--hr)" stroke="#0d1014" stroke-width="1.5"/>
+    <circle cx="226" cy="42" r="5" fill="var(--hit)" stroke="#0d1014" stroke-width="1.5"/>
+    <circle cx="300" cy="25" r="4" fill="var(--hit)"/>
+    <text x="120" y="52" fill="#ffd479" font-size="9" font-weight="700">홍창기 HR</text>
+    <text x="200" y="34" fill="#7ee2a4" font-size="9" font-weight="700">김현수 2타점</text>
+    <!-- x labels -->
+    <text x="30" y="180" fill="#5c6672" font-size="9" text-anchor="middle">1회</text>
+    <text x="114" y="180" fill="#5c6672" font-size="9" text-anchor="middle">3회</text>
+    <text x="170" y="180" fill="#5c6672" font-size="9" text-anchor="middle">5회</text>
+    <text x="226" y="180" fill="#5c6672" font-size="9" text-anchor="middle">6회</text>
+    <text x="300" y="180" fill="#5c6672" font-size="9" text-anchor="middle">9회</text>
+  </svg>
+  <div class="axkey">
+    <div class="it"><span class="sw" style="background:var(--hit)"></span>LG 승리확률</div>
+    <div class="it"><span class="sw" style="background:#39424f"></span>50% 균형</div>
+  </div>
+</div>
+
+<div class="sect">결정적 장면 (WPA 변동)</div>
+<div class="sw3">
+  <div class="r"><span class="rk">1</span><span class="tx">김현수 좌중간 2루타 2타점<div class="in">6회말 1사 2·3루 · 동점→역전</div></span><span class="delta up">+18%p</span></div>
+  <div class="r"><span class="rk">2</span><span class="tx">홍창기 우중간 솔로홈런<div class="in">3회말 무사 · 리드 확대</div></span><span class="delta up">+12%p</span></div>
+  <div class="r"><span class="rk">3</span><span class="tx">양석환 5회 적시타 (두산)<div class="in">5회초 1사 2루 · 추격</div></span><span class="delta down">−11%p</span></div>
+</div>
+</x-dc>
+</body>
+</html>

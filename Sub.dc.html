@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--hit:#22c55e;--sub:#a78bfa;--out:#ef4444;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:390px;padding:0 0 16px;}
+    a{color:var(--hit);} a:hover{color:#16a34a;}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 6px;}
+    .top .c{font-size:13px;color:var(--muted);font-weight:600;}
+    .top .t{font-size:16px;font-weight:800;}
+    .kinds{display:flex;gap:6px;margin:8px 12px 0;}
+    .k{flex:1;text-align:center;font-size:13px;font-weight:700;padding:10px 0;border-radius:10px;border:1px solid var(--line);color:var(--muted);background:var(--panel);}
+    .k.on{color:#c7b6ff;border-color:rgba(167,139,250,.5);background:rgba(167,139,250,.12);}
+    .ctx{margin:12px 12px 0;font-size:12px;color:var(--muted);background:var(--panel2);border-radius:10px;padding:9px 13px;display:flex;gap:8px;align-items:center;}
+    .ctx b{color:var(--txt);font-weight:700;}
+    .sect{font-size:10px;color:var(--dim);letter-spacing:1.5px;font-weight:700;margin:16px 16px 7px;}
+    /* out card */
+    .card{margin:0 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px;}
+    .card .ord{width:34px;height:34px;border-radius:9px;background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+    .card .ord b{font-size:15px;font-weight:800;line-height:1;}
+    .card .ord span{font-size:8px;color:var(--muted);margin-top:2px;}
+    .card .nm{flex:1;}
+    .card .nm .n1{font-size:15px;font-weight:700;}
+    .card .nm .n2{font-size:11px;color:var(--muted);margin-top:2px;}
+    .card .tag{font-size:11px;color:var(--out);font-weight:700;}
+    .swap{display:flex;align-items:center;justify-content:center;margin:8px 0;color:var(--sub);font-size:18px;}
+    /* in card (input) */
+    .in{margin:0 12px;background:var(--panel);border:1px solid rgba(167,139,250,.35);border-radius:14px;padding:13px 15px;}
+    .in .row{display:flex;align-items:center;gap:12px;}
+    .in .ord{width:34px;height:34px;border-radius:9px;background:rgba(167,139,250,.14);color:#c7b6ff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .in .field{flex:1;font-size:15px;color:var(--dim);}
+    .in .hand{display:flex;gap:5px;}
+    .in .hb{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+    .in .hb.on{border-color:rgba(167,139,250,.5);background:rgba(167,139,250,.12);color:#c7b6ff;}
+    /* preview */
+    .prev{margin:0 12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+    .pv{display:flex;align-items:center;gap:11px;padding:9px 14px;border-bottom:1px solid var(--line);font-size:13px;}
+    .pv:last-child{border-bottom:none;}
+    .pv .o{width:20px;height:20px;border-radius:6px;background:var(--panel2);font-size:11px;font-weight:800;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+    .pv.chg{background:rgba(167,139,250,.06);}
+    .pv .old{color:var(--dim);text-decoration:line-through;}
+    .pv .arw{color:var(--sub);}
+    .pv .new{font-weight:700;color:#c7b6ff;}
+    .pv .po{margin-left:auto;font-size:11px;color:var(--muted);}
+    .foot{margin:16px 12px 0;}
+    .foot .go{height:52px;border-radius:14px;border:none;background:var(--sub);color:#1a0f33;width:100%;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;}
+  </style>
+</helmet>
+<div class="top"><span class="c">‹</span><span class="t">선수 교체</span><span class="c">취소</span></div>
+
+<div class="kinds">
+  <div class="k on">대타</div><div class="k">대주자</div><div class="k">대수비</div><div class="k">투수</div>
+</div>
+
+<div class="ctx"><span><b>3회초</b> 2사 1·2루 · <b>7번 타석</b> 진행 중</span></div>
+
+<div class="sect">나가는 선수</div>
+<div class="card">
+  <div class="ord"><b>7</b><span>타순</span></div>
+  <div class="nm"><div class="n1">문성주 <span style="font-size:11px;color:var(--muted);font-weight:500">좌익</span></div><div class="n2">오늘 0-2 · 좌타</div></div>
+  <div class="tag">교체 아웃</div>
+</div>
+
+<div class="swap">⇅</div>
+
+<div class="sect">들어오는 선수 · 대타</div>
+<div class="in">
+  <div class="row">
+    <div class="ord">7</div>
+    <div class="field">대타 선수 이름…</div>
+    <div class="hand"><div class="hb">좌</div><div class="hb on">우</div><div class="hb">양</div></div>
+  </div>
+</div>
+
+<div class="sect">라인업 반영 미리보기</div>
+<div class="prev">
+  <div class="pv"><span class="o">6</span><span>박동원</span><span class="po">포수</span></div>
+  <div class="pv chg"><span class="o">7</span><span class="old">문성주</span><span class="arw">→</span><span class="new">대타</span><span class="po">수비는 다음 이닝 지정</span></div>
+  <div class="pv"><span class="o">8</span><span>오스틴</span><span class="po">1루</span></div>
+</div>
+
+<div class="foot"><button class="go">교체 확정</button></div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--hit:#22c55e;--out:#ef4444;--liner:#f59e0b;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:390px;}
+    a{color:var(--hit);} a:hover{color:#16a34a;}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 8px;}
+    .top .ico{color:var(--muted);font-size:20px;width:28px;}
+    .top .mid{font-size:13px;font-weight:700;}
+    .banner{margin:2px 12px 0;display:flex;align-items:center;gap:10px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:10px 14px;}
+    .banner .tag{font-size:11px;color:#7ee2a4;font-weight:800;letter-spacing:1px;}
+    .banner .b{font-weight:700;}
+    .banner .who{margin-left:auto;font-size:12px;color:var(--muted);}
+    .prompt{text-align:center;margin:12px 0 2px;}
+    .prompt .p1{font-size:16px;font-weight:800;}
+    .prompt .p2{font-size:11px;color:var(--muted);margin-top:3px;}
+    .fieldwrap{display:flex;justify-content:center;margin-top:4px;}
+    .sect{font-size:10px;color:var(--dim);letter-spacing:1.5px;font-weight:700;margin:14px 14px 6px;}
+    .chips{display:flex;gap:6px;margin:0 12px;flex-wrap:wrap;}
+    .chip{height:40px;padding:0 14px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
+    .chip.sel{border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.12);color:#ffd479;}
+    .res{display:flex;gap:6px;margin:0 12px;}
+    .res .b{flex:1;height:44px;border-radius:11px;border:1px solid var(--line);background:var(--panel);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--txt);}
+    .res .b.hit{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.12);color:#7ee2a4;}
+    .res .b.out{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:#ff9a9a;}
+    .summary{margin:14px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
+    .summary .k{font-size:10px;color:var(--dim);letter-spacing:1px;font-weight:700;}
+    .summary .v{font-size:16px;font-weight:800;}
+    .summary .v .em{color:#ffd479;}
+    .foot{margin:12px 12px 14px;display:flex;gap:8px;}
+    .foot .undo{width:78px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;}
+    .foot .ok{flex:1;height:48px;border-radius:12px;border:none;background:var(--hit);color:#06210f;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px;}
+  </style>
+</helmet>
+<div class="top"><div class="ico">‹</div><div class="mid">인플레이 타구 · 오지환</div><div class="ico">✕</div></div>
+<div class="banner"><span class="tag">IN PLAY</span><span class="b">P5 직구 146㎞</span><span class="who">4번 오지환 · 우타</span></div>
+<div class="prompt"><div class="p1">타구 낙하지점을 탭</div><div class="p2">필드 위 지점 → 궤적·결과 선택. 야수는 위치로 자동 추정</div></div>
+<div class="fieldwrap">
+  <svg width="340" height="316" viewBox="0 0 340 316">
+    <path d="M170 292 L36 150 A190 190 0 0 1 304 150 Z" fill="rgba(34,197,94,.05)"/>
+    <path d="M36 150 A190 190 0 0 1 304 150" fill="none" stroke="#22402c" stroke-width="2"/>
+    <path d="M170 292 L20 146 M170 292 L320 146" stroke="#2f3a44" stroke-width="1.5" fill="none"/>
+    <path d="M170 268 L232 206 L170 144 L108 206 Z" fill="rgba(255,255,255,.02)" stroke="#3a4655" stroke-width="1.5"/>
+    <rect x="163" y="261" width="12" height="12" transform="rotate(45 169 267)" fill="#39424f"/>
+    <rect x="226" y="200" width="12" height="12" transform="rotate(45 232 206)" fill="#39424f"/>
+    <rect x="164" y="138" width="12" height="12" transform="rotate(45 170 144)" fill="#39424f"/>
+    <rect x="102" y="200" width="12" height="12" transform="rotate(45 108 206)" fill="#39424f"/>
+    <g fill="#5c6672">
+      <circle cx="170" cy="210" r="2.5"/><circle cx="140" cy="176" r="2.5"/><circle cx="200" cy="176" r="2.5"/>
+      <circle cx="118" cy="196" r="2.5"/><circle cx="222" cy="196" r="2.5"/>
+      <circle cx="88" cy="110" r="2.5"/><circle cx="170" cy="78" r="2.5"/><circle cx="252" cy="110" r="2.5"/>
+    </g>
+    <text x="90" y="150" fill="#4a5566" font-size="10" text-anchor="middle">좌</text>
+    <text x="170" y="108" fill="#4a5566" font-size="10" text-anchor="middle">중</text>
+    <text x="250" y="150" fill="#4a5566" font-size="10" text-anchor="middle">우</text>
+    <path d="M170 288 L118 120" stroke="var(--liner)" stroke-width="2.5" stroke-dasharray="6 5" fill="none" opacity="0.85"/>
+    <circle cx="118" cy="120" r="13" fill="rgba(245,158,11,.18)" stroke="var(--liner)" stroke-width="2.5"/>
+    <circle cx="118" cy="120" r="4" fill="var(--liner)"/>
+    <text x="118" y="100" fill="#ffd479" font-size="10" font-weight="700" text-anchor="middle">좌중간</text>
+  </svg>
+</div>
+<div class="sect">타구 궤적</div>
+<div class="chips">
+  <div class="chip">땅볼</div><div class="chip sel">라이너</div><div class="chip">플라이</div><div class="chip">뜬공</div><div class="chip">번트</div>
+</div>
+<div class="sect">결과</div>
+<div class="res">
+  <div class="b hit">안타</div><div class="b">2루타</div><div class="b out">아웃</div><div class="b">실책</div>
+</div>
+<div class="summary"><span class="k">기록</span><span class="v">좌중간 <span class="em">2루타</span> · 라이너</span></div>
+<div class="foot"><div class="undo">← 투구</div><div class="ok">확정 ✓</div></div>
+</x-dc>
+</body>
+</html>

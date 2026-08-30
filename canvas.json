@@ -1,0 +1,26 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 760, "title": "Home · 기록한 경기" },
+    { "file": "Setup.dc.html", "x": 470, "y": 0, "w": 390, "h": 730, "title": "새 경기 · 라인업 수동입력" },
+    { "file": "PitchChart.dc.html", "x": 940, "y": 0, "w": 390, "h": 780, "title": "투구 차팅 (위치·구질·구속)" },
+    { "file": "HitChart.dc.html", "x": 1410, "y": 0, "w": 390, "h": 820, "title": "타구 차팅 (낙구·궤적)" },
+    { "file": "Sub.dc.html", "x": 1880, "y": 0, "w": 390, "h": 740, "title": "선수 교체 (대타·대주자·대수비·투수)" },
+    { "file": "Base.dc.html", "x": 2350, "y": 0, "w": 390, "h": 740, "title": "주루 플레이 (도루·견제사·폭투·보크)" },
+
+    { "file": "Analysis.dc.html", "x": 0, "y": 960, "w": 390, "h": 920, "title": "타자 분석 (스프레이·존 히트맵)" },
+    { "file": "PitcherAnalysis.dc.html", "x": 470, "y": 960, "w": 390, "h": 820, "title": "투수 분석 (구종·구속·위치)" },
+    { "file": "PlayLog.dc.html", "x": 940, "y": 960, "w": 390, "h": 860, "title": "플레이 로그 (중계 텍스트)" },
+    { "file": "GameSummary.dc.html", "x": 1410, "y": 960, "w": 390, "h": 740, "title": "경기 요약 (MVP·주요 장면)" },
+    { "file": "WinProb.dc.html", "x": 1880, "y": 960, "w": 390, "h": 720, "title": "승부 확률 (WPA)" },
+    { "file": "SeasonStats.dc.html", "x": 2350, "y": 960, "w": 390, "h": 730, "title": "시즌 누적 (리더보드)" },
+
+    { "file": "Scorebook.dc.html", "x": 0, "y": 2000, "w": 1140, "h": 1000, "title": "스코어북 그리드 (데스크톱)" },
+    { "file": "Boxscore.dc.html", "x": 1260, "y": 2000, "w": 1000, "h": 900, "title": "박스스코어 (라인스코어·타격·투수)" }
+  ],
+  "annotations": [
+    { "id": "flow-note", "x": 0, "y": -116, "w": 900, "text": "기록 흐름 · KBO 풀 스코어링 · 양팀 전체 · 오프라인 (Rust 엔진 → WASM, IndexedDB 이벤트 로그)\n새 경기(라인업 수동입력) → 타석마다 투구 차팅(위치+구질+구속) → 인플레이면 타구 차팅(낙구+궤적) → 교체·주루는 언제든 삽입" },
+    { "id": "analysis-note", "x": 0, "y": 872, "w": 620, "text": "분석 · 로그 — 수집한 위치·구속 데이터의 페이오프: 타자 스프레이/존 히트맵, 투수 구종·위치 밀도, 플레이 로그(중계 텍스트)" },
+    { "id": "review-note", "x": 0, "y": 1912, "w": 560, "text": "경기 후 리뷰 (데스크톱) — 스코어북 그리드(진루 경로+자동 집계) · 박스스코어(라인스코어/타격/투수)" }
+  ],
+  "launch": { "view": "canvas" }
+}

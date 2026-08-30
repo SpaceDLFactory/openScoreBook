@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--hit:#22c55e;--out:#ef4444;--xbh:#f59e0b;--cold:#3b82f6;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:390px;padding:0 0 20px;}
+    a{color:var(--hit);} a:hover{color:#16a34a;}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;}
+    .top h1{font-size:19px;font-weight:800;}
+    .top .who{font-size:12px;color:var(--muted);}
+    .tabs{display:flex;gap:8px;margin:6px 16px 0;}
+    .tab{font-size:13px;font-weight:700;padding:7px 14px;border-radius:9px;border:1px solid var(--line);color:var(--muted);background:var(--panel);}
+    .tab.on{color:#7ee2a4;border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.08);}
+    .card{margin:12px 16px 0;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;}
+    .card .h{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px;margin-bottom:2px;display:flex;justify-content:space-between;}
+    .card .h .sub{font-size:10px;color:var(--dim);font-weight:600;}
+    .center{display:flex;justify-content:center;margin-top:6px;}
+    .leg{display:flex;gap:14px;justify-content:center;margin-top:8px;}
+    .leg .it{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+    .leg .d{width:11px;height:11px;border-radius:50%;}
+    .mini{display:flex;gap:10px;margin-top:12px;}
+    .mini .m{flex:1;text-align:center;background:var(--panel2);border-radius:10px;padding:9px 0;}
+    .mini .m b{font-size:16px;font-weight:800;display:block;}
+    .mini .m span{font-size:10px;color:var(--muted);}
+    /* heatmap */
+    .zone{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:180px;margin:10px auto 0;}
+    .zc{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .zc b{font-size:15px;font-weight:800;}
+    .zc span{font-size:8px;opacity:.75;margin-top:1px;}
+    .scalebar{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:10px;font-size:10px;color:var(--muted);}
+    .scalebar .grad{width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,#3b82f6,#1d232c,#ef4444);}
+  </style>
+</helmet>
+<div class="top"><h1>오지환 <span class="who">유격수 · 우타</span></h1><span class="who">최근 24경기 ▾</span></div>
+<div class="tabs"><div class="tab on">타격 스프레이</div><div class="tab">피치 존별</div><div class="tab">투수</div></div>
+
+<div class="card">
+  <div class="h"><span>타구 방향 분포</span><span class="sub">인플레이 68타구 · 안타 22</span></div>
+  <div class="center">
+    <svg width="300" height="270" viewBox="0 0 340 300">
+      <path d="M170 276 L36 138 A190 190 0 0 1 304 138 Z" fill="rgba(255,255,255,.015)"/>
+      <path d="M36 138 A190 190 0 0 1 304 138" fill="none" stroke="#22402c" stroke-width="2"/>
+      <path d="M170 276 L22 134 M170 276 L318 134" stroke="#2f3a44" stroke-width="1.5" fill="none"/>
+      <path d="M170 252 L232 190 L170 128 L108 190 Z" fill="none" stroke="#3a4655" stroke-width="1.5"/>
+      <!-- batted balls, pull-heavy (left) -->
+      <g>
+        <circle cx="96" cy="120" r="4" fill="var(--xbh)"/><circle cx="112" cy="104" r="4" fill="var(--hit)"/>
+        <circle cx="128" cy="150" r="4" fill="var(--out)"/><circle cx="88" cy="150" r="4" fill="var(--hit)"/>
+        <circle cx="104" cy="176" r="4" fill="var(--out)"/><circle cx="140" cy="120" r="4" fill="var(--hit)"/>
+        <circle cx="120" cy="132" r="4" fill="var(--out)"/><circle cx="76" cy="128" r="4" fill="var(--xbh)"/>
+        <circle cx="150" cy="168" r="4" fill="var(--out)"/><circle cx="132" cy="188" r="4" fill="var(--hit)"/>
+        <circle cx="164" cy="112" r="4" fill="var(--out)"/><circle cx="182" cy="132" r="4" fill="var(--hit)"/>
+        <circle cx="198" cy="160" r="4" fill="var(--out)"/><circle cx="210" cy="120" r="4" fill="var(--out)"/>
+        <circle cx="176" cy="180" r="4" fill="var(--out)"/><circle cx="150" cy="210" r="4" fill="var(--out)"/>
+        <circle cx="118" cy="200" r="4" fill="var(--hit)"/><circle cx="92" cy="188" r="4" fill="var(--out)"/>
+        <circle cx="240" cy="150" r="4" fill="var(--out)"/><circle cx="222" cy="176" r="4" fill="var(--hit)"/>
+      </g>
+    </svg>
+  </div>
+  <div class="leg">
+    <div class="it"><span class="d" style="background:var(--hit)"></span>안타</div>
+    <div class="it"><span class="d" style="background:var(--xbh)"></span>장타</div>
+    <div class="it"><span class="d" style="background:var(--out)"></span>아웃</div>
+  </div>
+  <div class="mini">
+    <div class="m"><b>54%</b><span>당겨치기</span></div>
+    <div class="m"><b>31%</b><span>중앙</span></div>
+    <div class="m"><b>15%</b><span>밀어치기</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="h"><span>피치 존별 타율 · 포수 시점</span><span class="sub">인플레이 기준</span></div>
+  <div class="zone">
+    <div class="zc" style="background:rgba(59,130,246,.22)"><b>.188</b><span>3-1</span></div>
+    <div class="zc" style="background:rgba(120,120,120,.15)"><b>.271</b><span>4-0</span></div>
+    <div class="zc" style="background:rgba(239,68,68,.30)"><b>.402</b><span>7-2</span></div>
+    <div class="zc" style="background:rgba(120,120,120,.12)"><b>.250</b><span>2-1</span></div>
+    <div class="zc" style="background:rgba(239,68,68,.45)"><b>.455</b><span>10-4</span></div>
+    <div class="zc" style="background:rgba(239,68,68,.22)"><b>.333</b><span>5-2</span></div>
+    <div class="zc" style="background:rgba(59,130,246,.30)"><b>.150</b><span>3-0</span></div>
+    <div class="zc" style="background:rgba(59,130,246,.15)"><b>.211</b><span>4-1</span></div>
+    <div class="zc" style="background:rgba(120,120,120,.12)"><b>.244</b><span>9-2</span></div>
+  </div>
+  <div class="scalebar"><span>차가움</span><span class="grad"></span><span>뜨거움</span></div>
+</div>
+</x-dc>
+</body>
+</html>

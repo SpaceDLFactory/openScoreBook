@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--strike:#f59e0b;--ball:#3b82f6;--foul:#8b95a3;--inplay:#22c55e;--out:#ef4444;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:390px;}
+    a{color:var(--inplay);} a:hover{color:#16a34a;}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 8px;}
+    .top .ico{color:var(--muted);font-size:20px;width:28px;}
+    .top .mid{font-size:13px;font-weight:700;}
+    .top .mid .dim{color:var(--muted);font-weight:500;}
+    .mu{display:flex;align-items:center;gap:10px;margin:2px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;}
+    .mu .side{display:flex;flex-direction:column;gap:2px;}
+    .mu .side .r{font-size:9px;color:var(--dim);letter-spacing:1px;font-weight:700;}
+    .mu .side .n{font-size:15px;font-weight:700;}
+    .mu .side .s{font-size:10px;color:var(--muted);}
+    .mu .arw{color:var(--dim);font-size:16px;margin:0 2px;}
+    .mu .cnt{margin-left:auto;text-align:right;}
+    .mu .cnt .bs{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+    .mu .cnt .o{font-size:10px;color:var(--out);font-weight:700;margin-top:1px;}
+    .zonewrap{display:flex;gap:12px;margin:12px 12px 0;}
+    .zonecard{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;}
+    .zonecard .cap{font-size:10px;color:var(--dim);letter-spacing:1px;font-weight:700;align-self:flex-start;margin-bottom:6px;}
+    .leg{width:96px;display:flex;flex-direction:column;gap:9px;justify-content:center;}
+    .leg .it{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);}
+    .leg .d{width:13px;height:13px;border-radius:50%;flex-shrink:0;}
+    .leg .cnt2{margin-top:4px;font-size:10px;color:var(--dim);}
+    .sect{font-size:10px;color:var(--dim);letter-spacing:1.5px;font-weight:700;margin:14px 14px 6px;}
+    .chips{display:flex;gap:6px;margin:0 12px;flex-wrap:wrap;}
+    .chip{height:38px;padding:0 13px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-size:13px;font-weight:700;display:flex;align-items:center;}
+    .chip.sel{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.10);color:#7ee2a4;}
+    .callrow{display:flex;gap:6px;margin:8px 12px 0;}
+    .call{flex:1;height:44px;border-radius:11px;border:1px solid var(--line);background:var(--panel);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--txt);}
+    .call.b{border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.09);color:#8fbaff;}
+    .call.s{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.10);color:#ffd479;}
+    .call.f{border-color:var(--line);color:var(--muted);}
+    .call.ip{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.12);color:#7ee2a4;}
+    .log{margin:14px 12px 12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+    .log .r{display:flex;align-items:center;gap:10px;padding:9px 13px;border-bottom:1px solid var(--line);font-size:12px;}
+    .log .r:last-child{border-bottom:none;}
+    .log .r .pn{width:20px;height:20px;border-radius:6px;background:var(--panel2);font-size:11px;font-weight:800;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+    .log .r .ty{font-weight:700;width:56px;}
+    .log .r .ve{color:var(--muted);width:52px;}
+    .log .r .rs{margin-left:auto;font-weight:700;}
+  </style>
+</helmet>
+<div class="top"><div class="ico">‹</div><div class="mid">3회초 · <span class="dim">LG</span> 3 : 2 <span class="dim">두산</span></div><div class="ico">⋯</div></div>
+<div class="mu">
+  <div class="side"><div class="r">P</div><div class="n">곽 빈</div><div class="s">74구 · 우투</div></div>
+  <div class="arw">→</div>
+  <div class="side"><div class="r">AB</div><div class="n">오지환 <span style="font-size:11px;color:var(--muted)">4번</span></div><div class="s">우타 · 오늘 1-2</div></div>
+  <div class="cnt"><div class="bs">2-2</div><div class="o">● ● 2아웃</div></div>
+</div>
+<div class="zonewrap">
+  <div class="zonecard">
+    <div class="cap">투구 위치 · 포수 시점</div>
+    <svg width="164" height="196" viewBox="0 0 164 196">
+      <rect x="1" y="1" width="162" height="194" rx="8" fill="rgba(255,255,255,.012)" stroke="#1e2630"/>
+      <rect x="42" y="46" width="80" height="104" fill="rgba(245,158,11,.05)" stroke="none"/>
+      <rect x="42" y="46" width="80" height="104" fill="none" stroke="#4a5566" stroke-width="1.5"/>
+      <line x1="68.7" y1="46" x2="68.7" y2="150" stroke="#2b333f" stroke-width="1"/>
+      <line x1="95.3" y1="46" x2="95.3" y2="150" stroke="#2b333f" stroke-width="1"/>
+      <line x1="42" y1="80.7" x2="122" y2="80.7" stroke="#2b333f" stroke-width="1"/>
+      <line x1="42" y1="115.3" x2="122" y2="115.3" stroke="#2b333f" stroke-width="1"/>
+      <g><circle cx="112" cy="138" r="11" fill="var(--strike)"/><text x="112" y="142" text-anchor="middle" font-size="12" font-weight="800" fill="#3a2a06">1</text></g>
+      <g><circle cx="80" cy="26" r="11" fill="var(--ball)"/><text x="80" y="30" text-anchor="middle" font-size="12" font-weight="800" fill="#0a1a33">2</text></g>
+      <g><circle cx="86" cy="96" r="11" fill="var(--foul)"/><text x="86" y="100" text-anchor="middle" font-size="12" font-weight="800" fill="#1a1f26">3</text></g>
+      <g><circle cx="118" cy="150" r="11" fill="var(--strike)"/><text x="118" y="154" text-anchor="middle" font-size="12" font-weight="800" fill="#3a2a06">4</text></g>
+      <g><circle cx="62" cy="104" r="12" fill="none" stroke="var(--inplay)" stroke-width="2.5" stroke-dasharray="3 3"/><text x="62" y="108" text-anchor="middle" font-size="12" font-weight="800" fill="#7ee2a4">5</text></g>
+    </svg>
+  </div>
+  <div class="leg">
+    <div class="it"><span class="d" style="background:var(--strike)"></span>스트라이크</div>
+    <div class="it"><span class="d" style="background:var(--ball)"></span>볼</div>
+    <div class="it"><span class="d" style="background:var(--foul)"></span>파울</div>
+    <div class="it"><span class="d" style="background:var(--inplay)"></span>인플레이</div>
+    <div class="cnt2">P5 위치 찍음 →<br>구질·구속·결과 입력</div>
+  </div>
+</div>
+<div class="sect">구질</div>
+<div class="chips">
+  <div class="chip sel">직구</div><div class="chip">슬라이더</div><div class="chip">커브</div><div class="chip">체인지업</div><div class="chip">포크</div>
+</div>
+<div class="sect">구속 · 판정</div>
+<div class="callrow">
+  <div class="call" style="flex:0 0 76px;color:var(--muted)">146㎞</div>
+  <div class="call b">볼</div><div class="call s">스트라이크</div><div class="call ip">인플레이 →</div>
+</div>
+<div class="log">
+  <div class="r"><span class="pn">1</span><span class="ty">슬라이더</span><span class="ve">133㎞</span><span>루킹 스트라이크</span><span class="rs" style="color:var(--strike)">S</span></div>
+  <div class="r"><span class="pn">2</span><span class="ty">직구</span><span class="ve">147㎞</span><span>높은 볼</span><span class="rs" style="color:var(--ball)">B</span></div>
+  <div class="r"><span class="pn">3</span><span class="ty">직구</span><span class="ve">146㎞</span><span>파울</span><span class="rs" style="color:var(--foul)">F</span></div>
+  <div class="r"><span class="pn">4</span><span class="ty">슬라이더</span><span class="ve">131㎞</span><span>헛스윙</span><span class="rs" style="color:var(--strike)">S</span></div>
+</div>
+</x-dc>
+</body>
+</html>

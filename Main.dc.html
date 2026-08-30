@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--hit:#22c55e;--out:#ef4444;--live:#f59e0b;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+    body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;width:390px;padding:0 0 24px;}
+    a{color:var(--hit);} a:hover{color:#16a34a;}
+    .top{padding:22px 18px 8px;display:flex;align-items:flex-end;justify-content:space-between;}
+    .top h1{font-size:26px;font-weight:800;letter-spacing:-.5px;}
+    .top .yr{font-size:13px;color:var(--muted);font-weight:600;}
+    .stat{display:flex;gap:10px;margin:14px 16px 0;}
+    .stat .box{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 12px;text-align:center;}
+    .stat .box b{font-size:22px;font-weight:800;display:block;font-variant-numeric:tabular-nums;}
+    .stat .box span{font-size:10px;color:var(--muted);}
+    .sec{font-size:12px;color:var(--dim);font-weight:700;letter-spacing:1px;margin:22px 18px 8px;}
+    .card{margin:8px 16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;}
+    .card .dt{width:44px;text-align:center;flex-shrink:0;}
+    .card .dt .d{font-size:20px;font-weight:800;line-height:1;}
+    .card .dt .m{font-size:10px;color:var(--muted);margin-top:3px;}
+    .card .mt{flex:1;}
+    .card .mt .vs{font-size:15px;font-weight:700;}
+    .card .mt .vn{font-size:11px;color:var(--muted);margin-top:3px;}
+    .card .sc{text-align:right;}
+    .card .sc .n{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;}
+    .card .st{font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;margin-left:2px;white-space:nowrap;}
+    .st-done{background:rgba(139,149,163,.15);color:var(--muted);}
+    .st-live{background:rgba(245,158,11,.15);color:#ffd479;}
+    .row2{display:flex;align-items:center;gap:8px;}
+    .fab{margin:22px 16px 0;height:54px;border-radius:15px;background:var(--hit);color:#06210f;border:none;width:calc(100% - 32px);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 24px rgba(34,197,94,.25);}
+  </style>
+</helmet>
+<div class="top">
+  <h1>스코어북</h1>
+  <span class="yr">2026 시즌 ▾</span>
+</div>
+<div class="stat">
+  <div class="box"><b>18</b><span>기록 경기</span></div>
+  <div class="box"><b>4,712</b><span>기록 투구</span></div>
+  <div class="box"><b>1,284</b><span>기록 타석</span></div>
+</div>
+<div class="sec">경기</div>
+<div class="card">
+  <div class="dt"><div class="d">25</div><div class="m">8월</div></div>
+  <div class="mt"><div class="vs">LG <span style="color:var(--muted)">vs</span> 두산</div><div class="vn">잠실 · 양팀 차팅</div></div>
+  <div class="row2"><div class="sc"><div class="n">3 : 2</div></div><span class="st st-live">3회초</span></div>
+</div>
+<div class="card">
+  <div class="dt"><div class="d">21</div><div class="m">8월</div></div>
+  <div class="mt"><div class="vs">키움 <span style="color:var(--muted)">vs</span> LG</div><div class="vn">고척 · 양팀 차팅</div></div>
+  <div class="row2"><div class="sc"><div class="n">3 : 7</div></div><span class="st st-done">완료</span></div>
+</div>
+<div class="card">
+  <div class="dt"><div class="d">18</div><div class="m">8월</div></div>
+  <div class="mt"><div class="vs">LG <span style="color:var(--muted)">vs</span> KIA</div><div class="vn">잠실 · 양팀 차팅</div></div>
+  <div class="row2"><div class="sc"><div class="n">4 : 5</div></div><span class="st st-done">완료</span></div>
+</div>
+<div class="card">
+  <div class="dt"><div class="d">14</div><div class="m">8월</div></div>
+  <div class="mt"><div class="vs">SSG <span style="color:var(--muted)">vs</span> LG</div><div class="vn">문학 · 양팀 차팅</div></div>
+  <div class="row2"><div class="sc"><div class="n">6 : 6</div></div><span class="st st-done">완료</span></div>
+</div>
+<button class="fab">＋ 새 경기 기록</button>
+</x-dc>
+</body>
+</html>
