@@ -1,0 +1,11 @@
+# Rust
+engine/target/
+
+# macOS
+.DS_Store
+
+# oh-my-claudecode state
+.omc/
+
+# Generated design canvas (regenerate via seed-canvas.mjs from the .dc.html artboards)
+kbo-scorebook.html
