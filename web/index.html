@@ -119,7 +119,8 @@ const CALL = {B:['볼','var(--ball)'], T:['루킹 스트라이크','var(--strike
 const TRAJ = ['땅볼','라이너','플라이','번트'];
 
 let G, idx = 0, view = 'chart', pitcherSel = null;
-const landings = JSON.parse(localStorage.getItem(STORE) || '{}');
+let landings = {};
+try { landings = JSON.parse(localStorage.getItem(STORE) || '{}'); } catch {}
 
 // Height where the pitch crosses y = crossPlateY. Naver's crossPlateY is the
 // plate-plane position (constant 0.7083 ft), not a height, so solve the trajectory.
@@ -130,8 +131,8 @@ function plateXZ(p){
 }
 
 async function load(){
-  const innings = [];
-  for (let i = 1; i <= 15; i++){
+  const innings = window.INLINE_INNINGS ? [...window.INLINE_INNINGS] : [];
+  for (let i = 1; !window.INLINE_INNINGS && i <= 15; i++){
     const r = await fetch(`${DIR}/inning-${i}.json`);
     if (!r.ok) break;
     innings.push((await r.json()).result.textRelayData);
@@ -252,9 +253,9 @@ function render(){
     <div class="card fieldcard">${fieldSVG(pa)}</div>
     <div class="chips">${TRAJ.map(t => `<button class="chip ${saved?.traj===t?'sel':''}" data-t="${t}">${t}</button>`).join('')}</div>` : ''}
   <div class="nav"><button id="prev2">← 이전 타석</button><button class="next" id="next2">${nextInPlayLabel()}</button></div>
-  <div class="foot"><span>${idx+1} / ${G.pas.length} 타석 · 낙구 ${Object.keys(landings).length}개</span><button id="export">JSON 내보내기</button></div>${tabsHTML()}`;
+  <div class="foot"><span>${idx+1} / ${G.pas.length} 타석 · 낙구 ${Object.keys(landings).length}개</span><button id="export">JSON 복사</button></div>${tabsHTML()}`;
   bindTabs();
-  const go = d => { idx = Math.max(0, Math.min(G.pas.length-1, idx+d)); location.hash = `pa=${idx}`; render(); };
+  const go = d => { idx = Math.max(0, Math.min(G.pas.length-1, idx+d)); location.hash = `pa-${idx}`; render(); };
   for (const [id, d] of [['prev',-1],['prev2',-1],['next',1]]) document.getElementById(id).onclick = () => go(d);
   document.getElementById('next2').onclick = () => { const j = G.pas.findIndex((p,i) => i > idx && p.inPlay); go((j<0?G.pas.length-1:j) - idx); };
   document.getElementById('export').onclick = exportJSON;
@@ -277,13 +278,13 @@ const halfName = pa => `${pa.inn}회${pa.top?'초':'말'}`;
 function tabsHTML(){ return `<nav class="tabs">${TABS.map(([k,l]) => `<button data-v="${k}" class="${view===k?'on':''}">${l}</button>`).join('')}</nav>`; }
 function bindTabs(){
   document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
-    view = b.dataset.v; location.hash = view === 'chart' ? `pa=${idx}` : `v=${view}`; scrollTo(0,0); render();
+    view = b.dataset.v; location.hash = view === 'chart' ? `pa-${idx}` : view; scrollTo(0,0); render();
   });
 }
 function renderOther(){
   document.getElementById('app').innerHTML = VIEWS[view]() + tabsHTML();
   bindTabs();
-  document.querySelectorAll('[data-pa]').forEach(e => e.onclick = () => { idx = +e.dataset.pa; view = 'chart'; location.hash = `pa=${idx}`; scrollTo(0,0); render(); });
+  document.querySelectorAll('[data-pa]').forEach(e => e.onclick = () => { idx = +e.dataset.pa; view = 'chart'; location.hash = `pa-${idx}`; scrollTo(0,0); render(); });
   document.querySelectorAll('[data-p]').forEach(e => e.onclick = () => { pitcherSel = e.dataset.p; render(); });
 }
 function scoreLine(){ const a = G.pas[G.pas.length-1].after; return `${G.awayName} ${a.awayScore} : ${a.homeScore} ${G.homeName}`; }
@@ -374,16 +375,17 @@ function viewWP(){
 }
 
 function nextInPlayLabel(){ return G.pas.some((p,i) => i > idx && p.inPlay) ? '다음 인플레이 →' : '마지막 →'; }
-function persist(){ localStorage.setItem(STORE, JSON.stringify(landings)); }
-function exportJSON(){
-  const blob = new Blob([JSON.stringify({gameId:GAME, landings}, null, 2)], {type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `landings-${GAME}.json`; a.click();
+function persist(){ try { localStorage.setItem(STORE, JSON.stringify(landings)); } catch {} }
+function exportJSON(e){
+  const btn = e.currentTarget;
+  navigator.clipboard.writeText(JSON.stringify({gameId:GAME, landings}, null, 2))
+    .then(() => { btn.textContent = '복사됨'; }, () => { btn.textContent = '복사 실패'; });
 }
 
 load().then(g => {
   G = g;
-  const m = location.hash.match(/pa=(\d+)/); if (m) idx = Math.min(+m[1], G.pas.length-1);
-  const v = location.hash.match(/v=(\w+)/); if (v && VIEWS[v[1]]) view = v[1];
+  const m = location.hash.match(/^#pa-(\d+)$/); if (m) idx = Math.min(+m[1], G.pas.length-1);
+  const v = location.hash.slice(1); if (VIEWS[v] !== undefined && v !== 'chart') view = v;
   render();
 }).catch(e => { document.getElementById('app').innerHTML = `<div class="err">${e.message}<br>repo 루트에서 <code>python3 -m http.server</code> 후 /web/ 로 여세요.</div>`; });
 </script>

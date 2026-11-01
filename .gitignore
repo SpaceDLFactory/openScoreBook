@@ -12,3 +12,4 @@ kbo-scorebook.html
 
 # Naver relay raw data (unofficial API, personal use; do not redistribute)
 fixtures/naver/
+web/dist/
