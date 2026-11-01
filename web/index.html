@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>KBO 직관 스코어북</title>
+<style>
+  :root{--bg:#0d1014;--panel:#161b22;--panel2:#1d232c;--line:#262d38;--txt:#e7ecf2;--muted:#8b95a3;--dim:#5c6672;--strike:#f59e0b;--ball:#3b82f6;--foul:#8b95a3;--inplay:#22c55e;--out:#ef4444;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;max-width:390px;margin:0 auto;padding-bottom:24px;}
+  button{font:inherit;color:inherit;cursor:pointer;}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 8px;}
+  .top .ico{color:var(--muted);font-size:20px;width:36px;height:32px;background:none;border:none;}
+  .top .mid{font-size:13px;font-weight:700;text-align:center;}
+  .top .mid .dim{color:var(--muted);font-weight:500;}
+  .mu{display:flex;align-items:center;gap:10px;margin:2px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;}
+  .mu .side{display:flex;flex-direction:column;gap:2px;}
+  .mu .r{font-size:9px;color:var(--dim);letter-spacing:1px;font-weight:700;}
+  .mu .n{font-size:15px;font-weight:700;}
+  .mu .s{font-size:10px;color:var(--muted);}
+  .mu .arw{color:var(--dim);font-size:16px;margin:0 2px;}
+  .mu .cnt{margin-left:auto;text-align:right;}
+  .mu .bs{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .mu .o{font-size:10px;color:var(--out);font-weight:700;margin-top:1px;}
+  .zonewrap{display:flex;gap:12px;margin:12px 12px 0;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;}
+  .zonecard{flex:1;display:flex;flex-direction:column;align-items:center;}
+  .cap{font-size:10px;color:var(--dim);letter-spacing:1px;font-weight:700;align-self:flex-start;margin-bottom:6px;}
+  .leg{width:96px;display:flex;flex-direction:column;gap:9px;justify-content:center;}
+  .leg .it{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);}
+  .leg .d{width:13px;height:13px;border-radius:50%;flex-shrink:0;}
+  .leg .src{margin-top:4px;font-size:10px;color:var(--dim);line-height:1.4;}
+  .log{margin:12px 12px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .log .r{display:flex;align-items:center;gap:10px;padding:9px 13px;border-bottom:1px solid var(--line);font-size:12px;}
+  .log .r:last-child{border-bottom:none;}
+  .log .pn{width:20px;height:20px;border-radius:6px;background:var(--panel2);font-size:11px;font-weight:800;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+  .log .ty{font-weight:700;width:56px;}
+  .log .ve{color:var(--muted);width:52px;}
+  .log .rs{margin-left:auto;font-weight:700;}
+  .log .ev{color:var(--muted);font-size:11px;padding:7px 13px;border-bottom:1px solid var(--line);}
+  .result{margin:12px 12px 0;padding:11px 14px;border-radius:12px;font-size:13px;font-weight:700;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.35);color:#7ee2a4;}
+  .result.out{background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.3);color:#fca5a5;}
+  .sect{font-size:10px;color:var(--dim);letter-spacing:1.5px;font-weight:700;margin:14px 14px 6px;display:flex;justify-content:space-between;}
+  .sect .saved{color:var(--inplay);letter-spacing:0;}
+  .fieldcard{margin:0 12px;padding:6px;}
+  #field{display:block;width:100%;touch-action:manipulation;}
+  .chips{display:flex;gap:6px;margin:8px 12px 0;}
+  .chip{flex:1;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:700;}
+  .chip.sel{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.10);color:#7ee2a4;}
+  .nav{display:flex;gap:8px;margin:14px 12px 0;}
+  .nav button{flex:1;height:44px;border-radius:11px;border:1px solid var(--line);background:var(--panel);font-weight:700;font-size:13px;}
+  .nav .next{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.12);color:#7ee2a4;}
+  .foot{margin:14px 12px 0;font-size:11px;color:var(--dim);display:flex;justify-content:space-between;align-items:center;}
+  .foot button{background:none;border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--muted);font-size:11px;}
+  .err{margin:40px 16px;color:var(--out);font-size:13px;line-height:1.5;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const GAME = new URLSearchParams(location.search).get('game') || '55551030SSHT02026';
+const DIR = `../fixtures/naver/${GAME}`;
+const STORE = `scorebook:landings:${GAME}`;
+const CALL = {B:['볼','var(--ball)'], T:['루킹 스트라이크','var(--strike)'], S:['헛스윙','var(--strike)'], F:['파울','var(--foul)'], H:['타격','var(--inplay)']};
+const TRAJ = ['땅볼','라이너','플라이','번트'];
+
+let G, idx = 0, sel = null;
+const landings = JSON.parse(localStorage.getItem(STORE) || '{}');
+
+// Height where the pitch crosses y = crossPlateY. Naver's crossPlateY is the
+// plate-plane position (constant 0.7083 ft), not a height, so solve the trajectory.
+function plateXZ(p){
+  const a = 0.5*p.ay, b = p.vy0, c = p.y0 - p.crossPlateY;
+  const t = (-b - Math.sqrt(b*b - 4*a*c)) / (2*a);
+  return [p.crossPlateX, p.z0 + p.vz0*t + 0.5*p.az*t*t];
+}
+
+async function load(){
+  const innings = [];
+  for (let i = 1; i <= 15; i++){
+    const r = await fetch(`${DIR}/inning-${i}.json`);
+    if (!r.ok) break;
+    innings.push((await r.json()).result.textRelayData);
+  }
+  if (!innings.length) throw new Error(`fixture 없음: ${DIR}/inning-1.json`);
+  const names = {}, hands = {};
+  for (const t of innings) for (const side of ['homeLineup','awayLineup']) for (const k of ['batter','pitcher'])
+    for (const p of t[side][k]){ names[p.pcode] = p.name; if (p.hitType) hands[p.pcode] = p.hitType; }
+  const away = innings[0].awayLineup, home = innings[0].homeLineup;
+  const pas = [], pitchCount = {};
+  for (const t of innings){
+    const relays = [...t.textRelays].sort((a,b) => a.no - b.no);
+    for (const r of relays){
+      const opts = [...r.textOptions].sort((a,b) => a.seqno - b.seqno);
+      if (!opts.length || opts[0].type !== 8) continue;   // only batter plate appearances
+      const pts = Object.fromEntries(r.ptsOptions.map(p => [p.pitchId, p]));
+      const before = opts[0].currentGameState;
+      const pitcher = before.pitcher;
+      const pitches = [], events = [];
+      let result = null;
+      for (const o of opts.slice(1)){
+        if (o.type === 1){
+          pitchCount[pitcher] = (pitchCount[pitcher] || 0) + 1;
+          const p = pts[o.ptsPitchId];
+          pitches.push({n:o.pitchNum, call:o.pitchResult, speed:o.speed, stuff:o.stuff, xz: p ? plateXZ(p) : null, sz: p ? [p.bottomSz, p.topSz] : null, state:o.currentGameState});
+        } else if (o.type === 13 || o.type === 23){ result = o.text; }
+        else if (o.text) events.push(o.text);
+      }
+      if (!pitches.length) continue;
+      const after = opts[opts.length - 1].currentGameState;
+      pas.push({no:r.no, inn:r.inn, top:r.homeOrAway === '0', title:r.title, batter:before.batter, pitcher,
+        pitcherPitches:pitchCount[pitcher], pitches, result, events, before, after,
+        inPlay: pitches[pitches.length-1].call === 'H'});
+    }
+  }
+  return {pas, names, hands, awayName: away.batter[0] ? teamName(innings[0], 'away') : '원정', homeName: teamName(innings[0], 'home')};
+}
+function teamName(t, side){ return {SS:'삼성',HT:'KIA',LG:'LG',OB:'두산',KT:'KT',SK:'SSG',NC:'NC',LT:'롯데',HH:'한화',WO:'키움'}[GAME.slice(side==='away'?8:10, side==='away'?10:12)] || side; }
+
+function zoneSVG(pa){
+  const W=164, H=196, sx = x => W/2 + x*40, sz = z => H - 12 - z*36;
+  const [b, t] = pa.pitches.find(p => p.sz)?.sz || [1.6, 3.4];
+  const zx0 = sx(-0.708), zx1 = sx(0.708), zy0 = sz(t), zy1 = sz(b);
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <rect x="1" y="1" width="${W-2}" height="${H-2}" rx="8" fill="rgba(255,255,255,.012)" stroke="#1e2630"/>
+    <rect x="${zx0}" y="${zy0}" width="${zx1-zx0}" height="${zy1-zy0}" fill="rgba(245,158,11,.05)" stroke="#4a5566" stroke-width="1.5"/>`;
+  for (const f of [1/3, 2/3]){
+    s += `<line x1="${zx0+(zx1-zx0)*f}" y1="${zy0}" x2="${zx0+(zx1-zx0)*f}" y2="${zy1}" stroke="#2b333f"/>`;
+    s += `<line x1="${zx0}" y1="${zy0+(zy1-zy0)*f}" x2="${zx1}" y2="${zy0+(zy1-zy0)*f}" stroke="#2b333f"/>`;
+  }
+  s += `<path d="M${sx(-0.708)} ${H-8} L${sx(0.708)} ${H-8}" stroke="#4a5566" stroke-width="2"/>`;
+  for (const p of pa.pitches){
+    if (!p.xz) continue;
+    const cx = Math.max(10, Math.min(W-10, sx(p.xz[0]))), cy = Math.max(10, Math.min(H-10, sz(p.xz[1])));
+    const col = CALL[p.call]?.[1] || 'var(--foul)';
+    s += p.call === 'H'
+      ? `<circle cx="${cx}" cy="${cy}" r="11" fill="none" stroke="${col}" stroke-width="2.5" stroke-dasharray="3 3"/><text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="11" font-weight="800" fill="#7ee2a4">${p.n}</text>`
+      : `<circle cx="${cx}" cy="${cy}" r="10" fill="${col}" opacity=".95"/><text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="11" font-weight="800" fill="#0d1014">${p.n}</text>`;
+  }
+  return s + '</svg>';
+}
+
+// Field in feet: home plate at origin, +y toward center field, foul lines at ±45°.
+const FW = 366, FH = 300, SCALE = 0.62, HX = FW/2, HY = FH - 14;
+const toPx = (x, y) => [HX + x*SCALE, HY - y*SCALE];
+const toFt = (px, py) => [(px - HX)/SCALE, (HY - py)/SCALE];
+function fieldSVG(pa){
+  const d = 90/Math.SQRT2, line = 330/Math.SQRT2, [l1, l2] = toPx(-line, line), [r1, r2] = toPx(line, line);
+  const [c1, c2] = toPx(0, 400);
+  let s = `<svg id="field" viewBox="0 0 ${FW} ${FH}">
+    <path d="M${HX} ${HY} L${l1} ${l2} Q${c1} ${c2 - 70} ${r1} ${r2} Z" fill="rgba(34,197,94,.06)" stroke="#2b3a30"/>
+    <path d="M${HX} ${HY} L${toPx(-d,d)} L${toPx(0,2*d)} L${toPx(d,d)} Z" fill="rgba(160,120,80,.12)" stroke="#4a5566"/>
+    <circle cx="${toPx(0,60.5)[0]}" cy="${toPx(0,60.5)[1]}" r="4" fill="#4a5566"/>`;
+  for (const [k, v] of Object.entries(landings)){
+    const [x, y] = toPx(v.x, v.y), cur = +k === pa.no;
+    s += `<circle cx="${x}" cy="${y}" r="${cur?8:4}" fill="${cur?'var(--inplay)':'rgba(139,149,163,.45)'}" ${cur?'stroke="#0d1014" stroke-width="2"':''}/>`;
+    if (cur) s += `<line x1="${HX}" y1="${HY}" x2="${x}" y2="${y}" stroke="var(--inplay)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  }
+  return s + '</svg>';
+}
+
+function render(){
+  const pa = G.pas[idx], n = G.names, st = pa.pitches[pa.pitches.length-1].state, a = pa.after;
+  const half = `${pa.inn}회${pa.top?'초':'말'}`;
+  const outs = pa.before.out;
+  const saved = landings[pa.no];
+  const isOut = /아웃|병살/.test(pa.result || '');
+  let log = pa.pitches.map(p => `<div class="r"><span class="pn">${p.n}</span><span class="ty">${p.stuff||'-'}</span><span class="ve">${p.speed?p.speed+'㎞':''}</span><span>${CALL[p.call]?.[0]||p.call}</span><span class="rs" style="color:${CALL[p.call]?.[1]}">${p.call}</span></div>`).join('');
+  log += pa.events.map(e => `<div class="ev">${e}</div>`).join('');
+  document.getElementById('app').innerHTML = `
+  <div class="top"><button class="ico" id="prev">‹</button>
+    <div class="mid">${half} · <span class="dim">${G.awayName}</span> ${a.awayScore} : ${a.homeScore} <span class="dim">${G.homeName}</span></div>
+    <button class="ico" id="next">›</button></div>
+  <div class="mu">
+    <div class="side"><div class="r">P</div><div class="n">${n[pa.pitcher]||pa.pitcher}</div><div class="s">${pa.pitcherPitches}구 · ${(G.hands[pa.pitcher]||'').slice(0,2)}</div></div>
+    <div class="arw">→</div>
+    <div class="side"><div class="r">AB</div><div class="n">${n[pa.batter]||pa.batter} <span style="font-size:11px;color:var(--muted)">${pa.title.split('번')[0]}번</span></div><div class="s">${(G.hands[pa.batter]||'').slice(2)}</div></div>
+    <div class="cnt"><div class="bs">${st.ball}-${st.strike}</div><div class="o">${'●'.repeat(outs)}${'○'.repeat(3-outs)} ${outs}아웃</div></div>
+  </div>
+  <div class="zonewrap">
+    <div class="card zonecard"><div class="cap">투구 위치 · 포수 시점</div>${zoneSVG(pa)}</div>
+    <div class="leg">
+      <div class="it"><span class="d" style="background:var(--strike)"></span>스트라이크</div>
+      <div class="it"><span class="d" style="background:var(--ball)"></span>볼</div>
+      <div class="it"><span class="d" style="background:var(--foul)"></span>파울</div>
+      <div class="it"><span class="d" style="border:2px dashed var(--inplay)"></span>인플레이</div>
+      <div class="src">네이버 PTS<br>자동 반영</div>
+    </div>
+  </div>
+  <div class="log">${log}</div>
+  ${pa.result ? `<div class="result ${isOut?'out':''}">${pa.result}</div>` : ''}
+  ${pa.inPlay ? `
+    <div class="sect"><span>타구 낙하지점 · 탭</span><span class="saved">${saved?`저장됨 · ${Math.round(Math.hypot(saved.x,saved.y))}ft`:''}</span></div>
+    <div class="card fieldcard">${fieldSVG(pa)}</div>
+    <div class="chips">${TRAJ.map(t => `<button class="chip ${saved?.traj===t?'sel':''}" data-t="${t}">${t}</button>`).join('')}</div>` : ''}
+  <div class="nav"><button id="prev2">← 이전 타석</button><button class="next" id="next2">${nextInPlayLabel()}</button></div>
+  <div class="foot"><span>${idx+1} / ${G.pas.length} 타석 · 낙구 ${Object.keys(landings).length}개</span><button id="export">JSON 내보내기</button></div>`;
+  const go = d => { idx = Math.max(0, Math.min(G.pas.length-1, idx+d)); location.hash = `pa=${idx}`; render(); };
+  for (const [id, d] of [['prev',-1],['prev2',-1],['next',1]]) document.getElementById(id).onclick = () => go(d);
+  document.getElementById('next2').onclick = () => { const j = G.pas.findIndex((p,i) => i > idx && p.inPlay); go((j<0?G.pas.length-1:j) - idx); };
+  document.getElementById('export').onclick = exportJSON;
+  const f = document.getElementById('field');
+  if (f) f.onclick = e => {
+    const r = f.getBoundingClientRect(), k = FW / r.width;
+    const [x, y] = toFt((e.clientX - r.left)*k, (e.clientY - r.top)*k);
+    landings[pa.no] = {...landings[pa.no], x:Math.round(x), y:Math.round(y), inn:pa.inn, batter:pa.batter, result:pa.result, at:Date.now()};
+    persist(); render();
+  };
+  document.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    if (!landings[pa.no]) return;
+    landings[pa.no].traj = c.dataset.t; persist(); render();
+  });
+}
+function nextInPlayLabel(){ return G.pas.some((p,i) => i > idx && p.inPlay) ? '다음 인플레이 →' : '마지막 →'; }
+function persist(){ localStorage.setItem(STORE, JSON.stringify(landings)); }
+function exportJSON(){
+  const blob = new Blob([JSON.stringify({gameId:GAME, landings}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `landings-${GAME}.json`; a.click();
+}
+
+load().then(g => {
+  G = g;
+  const m = location.hash.match(/pa=(\d+)/); if (m) idx = Math.min(+m[1], G.pas.length-1);
+  render();
+}).catch(e => { document.getElementById('app').innerHTML = `<div class="err">${e.message}<br>repo 루트에서 <code>python3 -m http.server</code> 후 /web/ 로 여세요.</div>`; });
+</script>
+</body>
+</html>
