@@ -9,3 +9,6 @@ engine/target/
 
 # Generated design canvas (regenerate via seed-canvas.mjs from the .dc.html artboards)
 kbo-scorebook.html
+
+# Naver relay raw data (unofficial API, personal use; do not redistribute)
+fixtures/naver/
