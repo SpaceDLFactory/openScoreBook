@@ -52,6 +52,60 @@
   .nav .next{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.12);color:#7ee2a4;}
   .foot{margin:14px 12px 0;font-size:11px;color:var(--dim);display:flex;justify-content:space-between;align-items:center;}
   .foot button{background:none;border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--muted);font-size:11px;}
+  body{padding-bottom:84px;}
+  .tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;display:flex;background:rgba(13,16,20,.96);border-top:1px solid var(--line);padding:6px 6px 14px;backdrop-filter:blur(8px);}
+  .tabs button{flex:1;height:40px;background:none;border:none;color:var(--dim);font-size:12px;font-weight:700;border-radius:9px;}
+  .tabs button.on{color:var(--txt);background:var(--panel2);}
+  .h1{font-size:17px;font-weight:800;margin:14px 14px 2px;}
+  .sub{font-size:11px;color:var(--muted);margin:0 14px 4px;}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;}
+  .tbl{margin:8px 12px 0;padding:4px 0;overflow:hidden;}
+  .tbl th{font-size:10px;color:var(--dim);font-weight:700;padding:7px 4px;text-align:right;}
+  .tbl td{font-size:12px;padding:7px 4px;text-align:right;border-top:1px solid var(--line);}
+  .tbl th:first-child,.tbl td:first-child{text-align:left;padding-left:12px;}
+  .tbl td:last-child,.tbl th:last-child{padding-right:12px;}
+  .tbl .pos{color:var(--dim);font-size:10px;margin-left:4px;}
+  .tbl .subp td:first-child{padding-left:24px;color:var(--muted);}
+  .tbl .tot td{font-weight:800;}
+  .ls td,.ls th{text-align:center !important;padding:7px 2px !important;}
+  .ls td:first-child,.ls th:first-child{text-align:left !important;padding-left:12px !important;}
+  .ls .rhe{font-weight:800;}
+  .half{font-size:10px;color:var(--dim);letter-spacing:1.5px;font-weight:700;margin:16px 14px 6px;}
+  .pa{display:flex;gap:10px;align-items:flex-start;margin:0 12px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-top:none;cursor:pointer;}
+  .half + .pa{border-top:1px solid var(--line);border-radius:12px 12px 0 0;}
+  .pa.last{border-radius:0 0 12px 12px;}
+  .half + .pa.last{border-radius:12px;}
+  .pa .who{width:62px;font-size:12px;font-weight:700;flex-shrink:0;}
+  .pa .who small{display:block;color:var(--dim);font-size:10px;font-weight:600;margin-top:2px;}
+  .pa .what{flex:1;font-size:12px;line-height:1.45;}
+  .pa .seq{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;}
+  .pa .seq i{font-style:normal;font-size:10px;font-weight:800;width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#0d1014;}
+  .pa .sc{font-size:12px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .pa .sc.chg{color:var(--inplay);}
+  .pchips{display:flex;gap:6px;margin:10px 12px 0;overflow-x:auto;padding-bottom:2px;}
+  .pchips button{flex-shrink:0;height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel);font-size:12px;font-weight:700;}
+  .pchips button.on{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.10);color:#7ee2a4;}
+  .kpis{display:flex;gap:6px;margin:10px 12px 0;}
+  .kpi{flex:1;padding:10px 8px;text-align:center;}
+  .kpi b{display:block;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .kpi span{font-size:10px;color:var(--dim);font-weight:700;}
+  .mix{margin:8px 12px 0;padding:6px 12px;}
+  .mix .row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;}
+  .mix .nm{width:72px;white-space:nowrap;font-weight:700;display:flex;align-items:center;gap:6px;}
+  .mix .dot{width:9px;height:9px;border-radius:50%;}
+  .mix .bar{flex:1;height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;}
+  .mix .bar div{height:100%;border-radius:4px;}
+  .mix .pct{width:34px;text-align:right;font-variant-numeric:tabular-nums;}
+  .mix .v{width:48px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .zc{margin:8px 12px 0;display:flex;justify-content:center;padding:10px;}
+  .wpc{margin:8px 12px 0;padding:10px 6px 6px;}
+  .swing{display:flex;gap:10px;align-items:center;margin:0 12px;padding:11px 12px;background:var(--panel);border:1px solid var(--line);border-top:none;}
+  .swings .swing:first-child{border-top:1px solid var(--line);border-radius:12px 12px 0 0;}
+  .swings .swing:last-child{border-radius:0 0 12px 12px;}
+  .swing .rk{width:22px;height:22px;border-radius:7px;background:var(--panel2);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+  .swing .tx{flex:1;font-size:12px;line-height:1.4;}
+  .swing .tx small{display:block;color:var(--dim);font-size:10px;}
+  .swing .d{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;}
   .err{margin:40px 16px;color:var(--out);font-size:13px;line-height:1.5;}
 </style>
 </head>
@@ -64,7 +118,7 @@ const STORE = `scorebook:landings:${GAME}`;
 const CALL = {B:['볼','var(--ball)'], T:['루킹 스트라이크','var(--strike)'], S:['헛스윙','var(--strike)'], F:['파울','var(--foul)'], H:['타격','var(--inplay)']};
 const TRAJ = ['땅볼','라이너','플라이','번트'];
 
-let G, idx = 0, sel = null;
+let G, idx = 0, view = 'chart', pitcherSel = null;
 const landings = JSON.parse(localStorage.getItem(STORE) || '{}');
 
 // Height where the pitch crosses y = crossPlateY. Naver's crossPlateY is the
@@ -95,25 +149,28 @@ async function load(){
       if (!opts.length || opts[0].type !== 8) continue;   // only batter plate appearances
       const pts = Object.fromEntries(r.ptsOptions.map(p => [p.pitchId, p]));
       const before = opts[0].currentGameState;
-      const pitcher = before.pitcher;
       const pitches = [], events = [];
       let result = null;
       for (const o of opts.slice(1)){
         if (o.type === 1){
-          pitchCount[pitcher] = (pitchCount[pitcher] || 0) + 1;
+          // attribute each pitch to the pitcher on the mound at that moment (mid-PA changes happen)
+          const pc = o.currentGameState.pitcher;
+          pitchCount[pc] = (pitchCount[pc] || 0) + 1;
           const p = pts[o.ptsPitchId];
-          pitches.push({n:o.pitchNum, call:o.pitchResult, speed:o.speed, stuff:o.stuff, xz: p ? plateXZ(p) : null, sz: p ? [p.bottomSz, p.topSz] : null, state:o.currentGameState});
+          pitches.push({pitcher:pc, n:o.pitchNum, call:o.pitchResult, speed:o.speed, stuff:o.stuff, xz: p ? plateXZ(p) : null, sz: p ? [p.bottomSz, p.topSz] : null, state:o.currentGameState});
         } else if (o.type === 13 || o.type === 23){ result = o.text; }
         else if (o.text) events.push(o.text);
       }
       if (!pitches.length) continue;
       const after = opts[opts.length - 1].currentGameState;
-      pas.push({no:r.no, inn:r.inn, top:r.homeOrAway === '0', title:r.title, batter:before.batter, pitcher,
-        pitcherPitches:pitchCount[pitcher], pitches, result, events, before, after,
+      const lastPitcher = pitches[pitches.length-1].pitcher;
+      pas.push({wp: r.metricOption, no:r.no, inn:r.inn, top:r.homeOrAway === '0', title:r.title, batter:before.batter, pitcher:lastPitcher,
+        pitcherPitches:pitchCount[lastPitcher], pitches, result, events, before, after,
         inPlay: pitches[pitches.length-1].call === 'H'});
     }
   }
-  return {pas, names, hands, awayName: away.batter[0] ? teamName(innings[0], 'away') : '원정', homeName: teamName(innings[0], 'home')};
+  const last = innings[innings.length-1];
+  return {pas, names, hands, lineups:{away:last.awayLineup, home:last.homeLineup}, inningScore:last.inningScore, awayName: away.batter[0] ? teamName(innings[0], 'away') : '원정', homeName: teamName(innings[0], 'home')};
 }
 function teamName(t, side){ return {SS:'삼성',HT:'KIA',LG:'LG',OB:'두산',KT:'KT',SK:'SSG',NC:'NC',LT:'롯데',HH:'한화',WO:'키움'}[GAME.slice(side==='away'?8:10, side==='away'?10:12)] || side; }
 
@@ -160,6 +217,7 @@ function fieldSVG(pa){
 }
 
 function render(){
+  if (view !== 'chart') return renderOther();
   const pa = G.pas[idx], n = G.names, st = pa.pitches[pa.pitches.length-1].state, a = pa.after;
   const half = `${pa.inn}회${pa.top?'초':'말'}`;
   const outs = pa.before.out;
@@ -194,7 +252,8 @@ function render(){
     <div class="card fieldcard">${fieldSVG(pa)}</div>
     <div class="chips">${TRAJ.map(t => `<button class="chip ${saved?.traj===t?'sel':''}" data-t="${t}">${t}</button>`).join('')}</div>` : ''}
   <div class="nav"><button id="prev2">← 이전 타석</button><button class="next" id="next2">${nextInPlayLabel()}</button></div>
-  <div class="foot"><span>${idx+1} / ${G.pas.length} 타석 · 낙구 ${Object.keys(landings).length}개</span><button id="export">JSON 내보내기</button></div>`;
+  <div class="foot"><span>${idx+1} / ${G.pas.length} 타석 · 낙구 ${Object.keys(landings).length}개</span><button id="export">JSON 내보내기</button></div>${tabsHTML()}`;
+  bindTabs();
   const go = d => { idx = Math.max(0, Math.min(G.pas.length-1, idx+d)); location.hash = `pa=${idx}`; render(); };
   for (const [id, d] of [['prev',-1],['prev2',-1],['next',1]]) document.getElementById(id).onclick = () => go(d);
   document.getElementById('next2').onclick = () => { const j = G.pas.findIndex((p,i) => i > idx && p.inPlay); go((j<0?G.pas.length-1:j) - idx); };
@@ -211,6 +270,109 @@ function render(){
     landings[pa.no].traj = c.dataset.t; persist(); render();
   });
 }
+const TABS = [['chart','차팅'],['log','로그'],['box','박스'],['pitcher','투수'],['wp','승률']];
+const VIEWS = {chart:null, log:viewLog, box:viewBox, pitcher:viewPitcher, wp:viewWP};
+const TYPE_COL = ['#f59e0b','#3b82f6','#a855f7','#22c55e','#ef4444','#14b8a6','#ec4899','#eab308','#64748b'];
+const halfName = pa => `${pa.inn}회${pa.top?'초':'말'}`;
+function tabsHTML(){ return `<nav class="tabs">${TABS.map(([k,l]) => `<button data-v="${k}" class="${view===k?'on':''}">${l}</button>`).join('')}</nav>`; }
+function bindTabs(){
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+    view = b.dataset.v; location.hash = view === 'chart' ? `pa=${idx}` : `v=${view}`; scrollTo(0,0); render();
+  });
+}
+function renderOther(){
+  document.getElementById('app').innerHTML = VIEWS[view]() + tabsHTML();
+  bindTabs();
+  document.querySelectorAll('[data-pa]').forEach(e => e.onclick = () => { idx = +e.dataset.pa; view = 'chart'; location.hash = `pa=${idx}`; scrollTo(0,0); render(); });
+  document.querySelectorAll('[data-p]').forEach(e => e.onclick = () => { pitcherSel = e.dataset.p; render(); });
+}
+function scoreLine(){ const a = G.pas[G.pas.length-1].after; return `${G.awayName} ${a.awayScore} : ${a.homeScore} ${G.homeName}`; }
+
+function viewLog(){
+  let h = `<div class="h1">플레이 로그</div><div class="sub">${scoreLine()} · ${G.pas.length}타석</div>`, cur = null;
+  G.pas.forEach((pa, i) => {
+    const hn = halfName(pa);
+    if (hn !== cur){ cur = hn; h += `<div class="half">${hn} · ${pa.top?G.awayName:G.homeName} 공격</div>`; }
+    const nxt = G.pas[i+1], last = !nxt || halfName(nxt) !== hn;
+    const chg = pa.after.awayScore !== pa.before.awayScore || pa.after.homeScore !== pa.before.homeScore;
+    const seq = pa.pitches.map(p => `<i style="background:${CALL[p.call]?.[1]}">${p.call}</i>`).join('');
+    const res = (pa.result || pa.events[pa.events.length-1] || '').replace(/^[^:]+ : /, '');
+    h += `<div class="pa ${last?'last':''}" data-pa="${i}"><div class="who">${G.names[pa.batter]||''}<small>${pa.title.split('번')[0]}번 · ${pa.pitches.length}구</small></div>
+      <div class="what">${res}${pa.events.length?`<div style="color:var(--dim);font-size:11px;margin-top:3px">${pa.events.map(e=>e.replace(/^[^:]+ : /,'')).join(' · ')}</div>`:''}<div class="seq">${seq}</div></div>
+      <div class="sc ${chg?'chg':''}">${pa.after.awayScore}:${pa.after.homeScore}</div></div>`;
+  });
+  return h;
+}
+
+function viewBox(){
+  const is = G.inningScore, n = Object.keys(is.away).length, a = G.pas[G.pas.length-1].after;
+  const cols = [...Array(n).keys()].map(i => i+1);
+  let h = `<div class="h1">박스스코어</div><div class="sub">${scoreLine()} · 최종</div>
+  <div class="card tbl"><table class="ls"><tr><th>팀</th>${cols.map(c=>`<th>${c}</th>`).join('')}<th>R</th><th>H</th><th>E</th></tr>
+    <tr><td>${G.awayName}</td>${cols.map(c=>`<td>${is.away[c]}</td>`).join('')}<td class="rhe">${a.awayScore}</td><td class="rhe">${a.awayHit}</td><td class="rhe">${a.awayError}</td></tr>
+    <tr><td>${G.homeName}</td>${cols.map(c=>`<td>${is.home[c]}</td>`).join('')}<td class="rhe">${a.homeScore}</td><td class="rhe">${a.homeHit}</td><td class="rhe">${a.homeError}</td></tr></table></div>`;
+  for (const side of ['away','home']){
+    const L = G.lineups[side], name = side === 'away' ? G.awayName : G.homeName;
+    const bat = [...L.batter].sort((x,y) => x.batOrder - y.batOrder || x.seqno - y.seqno);
+    const sum = k => bat.reduce((t,b) => t + (+b[k]||0), 0);
+    h += `<div class="sect"><span>타격 · ${name}</span></div><div class="card tbl"><table><tr><th>선수</th><th>타수</th><th>안타</th><th>타점</th><th>득점</th><th>볼넷</th><th>삼진</th></tr>
+      ${bat.map(b => `<tr class="${b.seqno>1?'subp':''}"><td>${b.seqno>1?'':b.batOrder+' '}${b.name}<span class="pos">${b.posName||''}</span></td><td>${b.ab}</td><td>${b.hit}</td><td>${b.rbi}</td><td>${b.run}</td><td>${b.bb}</td><td>${b.so}</td></tr>`).join('')}
+      <tr class="tot"><td>합계</td><td>${sum('ab')}</td><td>${sum('hit')}</td><td>${sum('rbi')}</td><td>${sum('run')}</td><td>${sum('bb')}</td><td>${sum('so')}</td></tr></table></div>`;
+    h += `<div class="card tbl" style="margin-top:6px"><table><tr><th>투수</th><th>이닝</th><th>투구</th><th>피안타</th><th>삼진</th><th>볼넷</th><th>자책</th></tr>
+      ${[...L.pitcher].sort((x,y)=>x.seqno-y.seqno).map(p => `<tr><td>${p.name}</td><td>${p.inn}</td><td>${p.ballCount}</td><td>${p.hit}</td><td>${p.kk}</td><td>${p.bb}</td><td>${p.er}</td></tr>`).join('')}</table></div>`;
+  }
+  return h;
+}
+
+function viewPitcher(){
+  const order = [...new Set(G.pas.flatMap(p => p.pitches.map(q => q.pitcher)))];
+  if (!pitcherSel || !order.includes(pitcherSel)) pitcherSel = order[0];
+  const mine = G.pas.filter(p => p.pitches.some(q => q.pitcher === pitcherSel)), ps = mine.flatMap(p => p.pitches).filter(q => q.pitcher === pitcherSel);
+  const rec = [...G.lineups.away.pitcher, ...G.lineups.home.pitcher].find(p => p.pcode === pitcherSel) || {};
+  const groups = {};
+  for (const p of ps){ (groups[p.stuff||'기타'] ??= []).push(p); }
+  const types = Object.entries(groups).sort((a,b) => b[1].length - a[1].length);
+  const col = Object.fromEntries(types.map(([t], i) => [t, TYPE_COL[i % TYPE_COL.length]]));
+  const strikes = ps.filter(p => p.call !== 'B').length;
+  const W = 220, H = 230, sx = x => W/2 + x*48, sz = z => H - 14 - z*40;
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect x="${sx(-0.708)}" y="${sz(3.4)}" width="${sx(0.708)-sx(-0.708)}" height="${sz(1.6)-sz(3.4)}" fill="rgba(245,158,11,.05)" stroke="#4a5566" stroke-width="1.5"/>`;
+  for (const p of ps) if (p.xz) svg += `<circle cx="${Math.max(6, Math.min(W-6, sx(p.xz[0])))}" cy="${Math.max(6, Math.min(H-6, sz(p.xz[1])))}" r="5" fill="${col[p.stuff||'기타']}" opacity=".8"/>`;
+  svg += `<line x1="${sx(-0.708)}" y1="${H-6}" x2="${sx(0.708)}" y2="${H-6}" stroke="#4a5566" stroke-width="2"/></svg>`;
+  const team = G.lineups.away.pitcher.some(p => p.pcode === pitcherSel) ? G.awayName : G.homeName;
+  return `<div class="h1">투수 분석</div><div class="sub">${team} · ${(G.hands[pitcherSel]||'').slice(0,2)} · 이 경기</div>
+  <div class="pchips">${order.map(c => `<button data-p="${c}" class="${c===pitcherSel?'on':''}">${G.names[c]}</button>`).join('')}</div>
+  <div class="kpis"><div class="card kpi"><b>${rec.inn ?? '-'}</b><span>이닝</span></div><div class="card kpi"><b>${ps.length}</b><span>투구</span></div>
+    <div class="card kpi"><b>${rec.kk ?? '-'}</b><span>삼진</span></div><div class="card kpi"><b>${ps.length?Math.round(strikes/ps.length*100):0}%</b><span>스트라이크</span></div></div>
+  <div class="sect"><span>구종 구사 · 평균 구속</span><span>${mine.length}타자 상대</span></div>
+  <div class="card mix">${types.map(([t, arr]) => {
+    const v = arr.filter(p => p.speed).map(p => +p.speed), avg = v.length ? Math.round(v.reduce((a,b)=>a+b,0)/v.length) : '-';
+    const pct = Math.round(arr.length/ps.length*100);
+    return `<div class="row"><span class="nm"><span class="dot" style="background:${col[t]}"></span>${t}</span><div class="bar"><div style="width:${pct}%;background:${col[t]}"></div></div><span class="pct">${pct}%</span><span class="v">${avg}㎞</span></div>`;
+  }).join('')}</div>
+  <div class="sect"><span>투구 위치 · 포수 시점</span><span>${ps.length}구</span></div>
+  <div class="card zc">${svg}</div>`;
+}
+
+function viewWP(){
+  const pts = [{i:0, wr:50, pa:null}];
+  G.pas.forEach((pa, i) => { const m = pa.wp; if (m && (m.homeTeamWinRate || m.awayTeamWinRate)) pts.push({i:i+1, wr:m.homeTeamWinRate, pa, idx:i}); });
+  for (let k = 1; k < pts.length; k++) pts[k].d = pts[k].wr - pts[k-1].wr;
+  const W = 350, H = 180, X = i => 10 + i/G.pas.length*(W-20), Y = w => 10 + (100-w)/100*(H-20);
+  let svg = `<svg width="100%" viewBox="0 0 ${W} ${H}"><line x1="10" x2="${W-10}" y1="${Y(50)}" y2="${Y(50)}" stroke="#2b333f" stroke-dasharray="3 3"/>`;
+  let innX = '', prev = 0;
+  G.pas.forEach((pa, i) => { if (pa.inn !== prev && pa.top){ prev = pa.inn; innX += `<line x1="${X(i)}" x2="${X(i)}" y1="10" y2="${H-10}" stroke="#1e2630"/><text x="${X(i)+3}" y="${H-2}" font-size="9" fill="#5c6672">${pa.inn}</text>`; } });
+  svg += innX + `<polyline fill="none" stroke="var(--inplay)" stroke-width="2" points="${pts.map(p => `${X(p.i)},${Y(p.wr)}`).join(' ')}"/>`;
+  const top3 = pts.filter(p => p.pa).sort((a,b) => Math.abs(b.d) - Math.abs(a.d)).slice(0, 5);
+  for (const p of top3) svg += `<circle cx="${X(p.i)}" cy="${Y(p.wr)}" r="4" fill="var(--inplay)" stroke="#0d1014" stroke-width="2"/>`;
+  svg += `<text x="12" y="20" font-size="9" fill="#5c6672">${G.homeName} 100%</text><text x="12" y="${H-14}" font-size="9" fill="#5c6672">${G.awayName} 100%</text></svg>`;
+  const fin = pts[pts.length-1].wr;
+  return `<div class="h1">승부 확률</div><div class="sub">${scoreLine()} · ${G.homeName} 승리확률 기준 · 네이버 제공값</div>
+  <div class="card wpc">${svg}</div>
+  <div class="sect"><span>결정적 장면 · 승리확률 변동</span><span>최종 ${G.homeName} ${Math.round(fin)}%</span></div>
+  <div class="swings">${top3.map((p, k) => `<div class="swing" data-pa="${p.idx}"><span class="rk">${k+1}</span><div class="tx">${(p.pa.result||p.pa.events.join(' · ')).replace(/^[^:]+ : /, `${G.names[p.pa.batter]} `)}<small>${halfName(p.pa)} · ${p.pa.top?G.awayName:G.homeName} 공격 · ${p.pa.after.awayScore}:${p.pa.after.homeScore}</small></div>
+    <span class="d" style="color:${p.d>0?'var(--inplay)':'var(--out)'}">${p.d>0?'+':''}${p.d.toFixed(1)}%p</span></div>`).join('')}</div>`;
+}
+
 function nextInPlayLabel(){ return G.pas.some((p,i) => i > idx && p.inPlay) ? '다음 인플레이 →' : '마지막 →'; }
 function persist(){ localStorage.setItem(STORE, JSON.stringify(landings)); }
 function exportJSON(){
@@ -221,6 +383,7 @@ function exportJSON(){
 load().then(g => {
   G = g;
   const m = location.hash.match(/pa=(\d+)/); if (m) idx = Math.min(+m[1], G.pas.length-1);
+  const v = location.hash.match(/v=(\w+)/); if (v && VIEWS[v[1]]) view = v[1];
   render();
 }).catch(e => { document.getElementById('app').innerHTML = `<div class="err">${e.message}<br>repo 루트에서 <code>python3 -m http.server</code> 후 /web/ 로 여세요.</div>`; });
 </script>
