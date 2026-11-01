@@ -9,6 +9,9 @@ out to the system curl with --http1.1.
 Usage:
   naver_relay.py schedule 2026-10-20 2026-10-31
   naver_relay.py relay 55551030SSHT02026 [--out fixtures/naver]
+  naver_relay.py watch 77771103SSKT02026 [--every 15] [--out fixtures/naver]
+    polls a live game, saving each changed snapshot as live/<unix_ts>.json,
+    then fetches all innings once the game reaches RESULT.
 """
 import argparse
 import json
@@ -24,13 +27,20 @@ UA = (
 )
 
 
-def get(path):
-    out = subprocess.run(
-        ["curl", "-sS", "-m", "20", "--http1.1", "-A", UA,
-         "-H", "Referer: https://m.sports.naver.com/", BASE + path],
-        check=True, capture_output=True,
-    ).stdout
-    return json.loads(out)
+def get(path, tries=4):
+    # The gateway intermittently resets connections (curl exit 56); back off and retry.
+    for i in range(tries):
+        try:
+            out = subprocess.run(
+                ["curl", "-sS", "-m", "20", "--http1.1", "-A", UA,
+                 "-H", "Referer: https://m.sports.naver.com/", BASE + path],
+                check=True, capture_output=True,
+            ).stdout
+            return json.loads(out)
+        except (subprocess.CalledProcessError, json.JSONDecodeError):
+            if i == tries - 1:
+                raise
+            time.sleep(2 ** (i + 1))
 
 
 def schedule(start, end):
@@ -58,6 +68,31 @@ def relay(game_id, out):
         time.sleep(1)
 
 
+def watch(game_id, out, every):
+    d = pathlib.Path(out) / game_id / "live"
+    d.mkdir(parents=True, exist_ok=True)
+    last = None
+    while True:
+        try:
+            status = get(f"/schedule/games/{game_id}")["result"]["game"]["statusCode"]
+            snap = get(f"/schedule/games/{game_id}/relay")
+        except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
+            print(f"fetch failed, retrying: {e}", file=sys.stderr)
+            time.sleep(every)
+            continue
+        body = json.dumps(snap, ensure_ascii=False)
+        if body != last:
+            ts = int(time.time())
+            (d / f"{ts}.json").write_text(body)
+            t = snap["result"]["textRelayData"]
+            print(f"{ts} {status} inn={t.get('inn')} relays={len(t['textRelays'])}", file=sys.stderr)
+            last = body
+        if status in ("RESULT", "CANCEL"):
+            break
+        time.sleep(every)
+    relay(game_id, out)
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -67,11 +102,17 @@ def main():
     r = sub.add_parser("relay")
     r.add_argument("game_id")
     r.add_argument("--out", default="fixtures/naver")
+    w = sub.add_parser("watch")
+    w.add_argument("game_id")
+    w.add_argument("--out", default="fixtures/naver")
+    w.add_argument("--every", type=int, default=15)
     a = ap.parse_args()
     if a.cmd == "schedule":
         schedule(a.start, a.end)
-    else:
+    elif a.cmd == "relay":
         relay(a.game_id, a.out)
+    else:
+        watch(a.game_id, a.out, a.every)
 
 
 if __name__ == "__main__":
