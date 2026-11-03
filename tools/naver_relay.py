@@ -68,6 +68,15 @@ def relay(game_id, out):
         (d / f"inning-{inn}.json").write_text(json.dumps(data, ensure_ascii=False))
         print(f"inning {inn}: {n} relays", file=sys.stderr)
         time.sleep(1)
+    write_index(out)
+
+
+def write_index(out):
+    """fixtures/naver/games.json: one summary row per fetched game, newest first."""
+    keys = ("gameId", "gameDate", "stadium", "awayTeamName", "homeTeamName", "awayTeamScore", "homeTeamScore", "statusCode")
+    rows = [{k: json.loads(f.read_text()).get(k) for k in keys} for f in pathlib.Path(out).glob("*/game.json")]
+    rows.sort(key=lambda r: (r["gameDate"] or "", r["gameId"]), reverse=True)
+    (pathlib.Path(out) / "games.json").write_text(json.dumps(rows, ensure_ascii=False, indent=1))
 
 
 def watch(game_id, out, every):
