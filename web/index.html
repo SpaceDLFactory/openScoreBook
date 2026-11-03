@@ -153,15 +153,17 @@
   .wide .v-pitcher .zc svg{width:330px;height:345px;}
   .wide .v-wp .wpc{max-width:900px;}
   .wide .sheet table{min-width:0;}
+  .gbar{padding:10px 12px 0;}
+  .gamesel{width:100%;height:36px;padding:0 10px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font:inherit;font-size:13px;font-weight:700;}
+  .wide .dhead .gamesel{width:auto;min-width:280px;}
   .err{margin:40px 16px;color:var(--out);font-size:13px;line-height:1.5;}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
-const GAME = new URLSearchParams(location.search).get('game') || '55551030SSHT02026';
-const DIR = `../fixtures/naver/${GAME}`;
-const STORE = `scorebook:landings:${GAME}`;
+// Current game; switchable at runtime. Inline data (mockup build) or ../fixtures/naver (local server).
+let GAME, DIR, STORE, GAMES = [];
 const CALL = {B:['볼','var(--ball)'], T:['루킹 스트라이크','var(--strike)'], S:['헛스윙','var(--strike)'], F:['파울','var(--foul)'], H:['타격','var(--inplay)']};
 const TRAJ = ['땅볼','라이너','플라이','번트'];
 // Batted-ball result classes, auto-derived from Naver's PA result text; user can override.
@@ -198,8 +200,11 @@ const DEFAULT_FENCE = {f:[99,null,122,null,99], src:['est','est','est','est','es
 
 let G, idx = 0, view = 'chart', pitcherSel = null;
 let landings = {};
-try { landings = JSON.parse(localStorage.getItem(STORE) || '{}'); } catch {}
-for (const v of Object.values(landings)) if (v.unit !== 'm'){ v.x = Math.round(v.x*0.3048); v.y = Math.round(v.y*0.3048); v.unit = 'm'; }
+function loadLandings(){
+  landings = {};
+  try { landings = JSON.parse(localStorage.getItem(STORE) || '{}'); } catch {}
+  for (const v of Object.values(landings)) if (v.unit !== 'm'){ v.x = Math.round(v.x*0.3048); v.y = Math.round(v.y*0.3048); v.unit = 'm'; }
+}
 
 // Height where the pitch crosses y = crossPlateY. Naver's crossPlateY is the
 // plate-plane position (constant 0.7083 ft), not a height, so solve the trajectory.
@@ -210,10 +215,11 @@ function plateXZ(p){
 }
 
 async function load(){
-  const innings = window.INLINE_INNINGS ? [...window.INLINE_INNINGS] : [];
-  let meta = window.INLINE_GAME || null;
+  const inline = window.INLINE_GAMES?.[GAME];
+  const innings = inline ? [...inline.innings] : [];
+  let meta = inline?.meta || null;
   if (!meta){ try { const r = await fetch(`${DIR}/game.json`); if (r.ok) meta = await r.json(); } catch {} }
-  for (let i = 1; !window.INLINE_INNINGS && i <= 15; i++){
+  for (let i = 1; !inline && i <= 15; i++){
     const r = await fetch(`${DIR}/inning-${i}.json`);
     if (!r.ok) break;
     innings.push((await r.json()).result.textRelayData);
@@ -390,8 +396,8 @@ function render(){
     ? `${headHTML()}<div class="dgrid"><aside class="dcol dlog" id="dlog">${logRows(true)}</aside>
         <section class="dcol">${pitchPart}${navPart}<div class="keys"><kbd>←</kbd><kbd>→</kbd> 타석 이동 · <kbd>N</kbd> 다음 인플레이</div></section>
         <section class="dcol">${fieldPart}</section></div>`
-    : pitchPart + fieldPart + navPart + tabsHTML();
-  bindTabs();
+    : (GAMES.length > 1 ? `<div class="gbar">${gameSelHTML()}</div>` : '') + pitchPart + fieldPart + navPart + tabsHTML();
+  bindTabs(); bindGameSel();
   const go = d => { idx = Math.max(0, Math.min(G.pas.length-1, idx+d)); location.hash = `pa-${idx}`; render(); };
   for (const [id, d] of [['prev',-1],['prev2',-1],['next',1]]) document.getElementById(id).onclick = () => go(d);
   document.getElementById('next2').onclick = () => go(nextInPlay() - idx);
@@ -431,7 +437,7 @@ addEventListener('keydown', e => {
 });
 function headHTML(){
   const a = G.pas[G.pas.length-1].after, m = G.meta || {};
-  return `<header class="dhead"><div class="dtitle"><b>${G.awayName} ${a.awayScore} : ${a.homeScore} ${G.homeName}</b><span>${[m.gameDate, G.stadium].filter(Boolean).join(' · ')}</span></div>${tabsHTML()}</header>`;
+  return `<header class="dhead"><div class="dtitle"><b>${G.awayName} ${a.awayScore} : ${a.homeScore} ${G.homeName}</b><span>${[m.gameDate, G.stadium].filter(Boolean).join(' · ')}</span></div>${gameSelHTML()}${tabsHTML()}</header>`;
 }
 const TABS = [['chart','차팅'],['sheet','기록지'],['log','로그'],['box','박스'],['pitcher','투수'],['wp','승률']];
 const VIEWS = {chart:null, sheet:viewSheet, log:viewLog, box:viewBox, pitcher:viewPitcher, wp:viewWP};
@@ -444,8 +450,9 @@ function bindTabs(){
   });
 }
 function renderOther(){
-  document.getElementById('app').innerHTML = WIDE.matches ? headHTML() + `<main class="dmain v-${view}">${VIEWS[view]()}</main>` : VIEWS[view]() + tabsHTML();
-  bindTabs();
+  document.getElementById('app').innerHTML = WIDE.matches ? headHTML() + `<main class="dmain v-${view}">${VIEWS[view]()}</main>`
+    : (GAMES.length > 1 ? `<div class="gbar">${gameSelHTML()}</div>` : '') + VIEWS[view]() + tabsHTML();
+  bindTabs(); bindGameSel();
   document.querySelectorAll('[data-pa]').forEach(e => e.onclick = () => { idx = +e.dataset.pa; view = 'chart'; location.hash = `pa-${idx}`; scrollTo(0,0); render(); });
   document.querySelectorAll('[data-p]').forEach(e => e.onclick = () => { pitcherSel = e.dataset.p; render(); });
 }
@@ -621,12 +628,38 @@ function exportJSON(e){
     .then(() => { btn.textContent = '복사됨'; }, () => { btn.textContent = '복사 실패'; });
 }
 
-load().then(g => {
-  G = g;
-  const m = location.hash.match(/^#pa-(\d+)$/); if (m) idx = Math.min(+m[1], G.pas.length-1);
-  const v = location.hash.slice(1); if (VIEWS[v] !== undefined && v !== 'chart') view = v;
+async function openGame(id, first){
+  GAME = id; DIR = `../fixtures/naver/${GAME}`; STORE = `scorebook:landings:${GAME}`;
+  loadLandings();
+  try { localStorage.setItem('scorebook:game', id); } catch {}
+  G = await load(); idx = 0; pitcherSel = null;
+  if (first){
+    const m = location.hash.match(/^#pa-(\d+)$/); if (m) idx = Math.min(+m[1], G.pas.length-1);
+    const v = location.hash.slice(1); if (VIEWS[v] !== undefined && v !== 'chart') view = v;
+  } else if (view === 'chart') location.hash = 'pa-0';
   render();
-}).catch(e => { document.getElementById('app').innerHTML = `<div class="err">${e.message}<br>repo 루트에서 <code>python3 -m http.server</code> 후 /web/ 로 여세요.</div>`; });
+}
+function gameLabel(g){
+  return `${(g.gameDate||'').slice(5).replace('-','/')} ${g.awayTeamName} ${g.awayTeamScore ?? ''}:${g.homeTeamScore ?? ''} ${g.homeTeamName} · ${g.stadium||''}`;
+}
+function gameSelHTML(){
+  if (GAMES.length < 2) return '';
+  return `<select id="gamesel" class="gamesel" aria-label="경기 선택">${GAMES.map(g => `<option value="${g.gameId}" ${g.gameId===GAME?'selected':''}>${gameLabel(g)}</option>`).join('')}</select>`;
+}
+function bindGameSel(){
+  const el = document.getElementById('gamesel');
+  if (el) el.onchange = () => { scrollTo(0,0); openGame(el.value).catch(showErr); };
+}
+function showErr(e){ document.getElementById('app').innerHTML = `<div class="err">${e.message}<br>repo 루트에서 <code>python3 -m http.server</code> 후 /web/ 로 여세요.</div>`; }
+(async () => {
+  GAMES = window.INLINE_GAMES ? Object.values(window.INLINE_GAMES).map(g => g.meta)
+    : await fetch('../fixtures/naver/games.json').then(r => r.ok ? r.json() : []).catch(() => []);
+  GAMES.sort((a, b) => (b.gameDate||'').localeCompare(a.gameDate||'') || b.gameId.localeCompare(a.gameId));
+  let pick = new URLSearchParams(location.search).get('game');
+  if (!pick){ try { pick = localStorage.getItem('scorebook:game'); } catch {} }
+  if (GAMES.length && !GAMES.some(g => g.gameId === pick)) pick = GAMES[0].gameId;
+  await openGame(pick || '55551030SSHT02026', true);
+})().catch(showErr);
 </script>
 </body>
 </html>

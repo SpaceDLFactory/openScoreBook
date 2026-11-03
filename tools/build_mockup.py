@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""Bundle web/index.html + one game's relay fixture into a standalone page.
+"""Bundle web/index.html + fetched relay fixtures into a standalone page.
 
 The output has no fetches (data is inlined, trimmed to the fields the page
 reads), so it can be opened from anywhere, e.g. published as a private artifact.
 It contains Naver relay data: keep it out of git and do not share it publicly.
 
-Usage: build_mockup.py [GAME_ID] [OUT]
+Usage: build_mockup.py [GAME_ID ...] [OUT.html]   (default: every fetched game)
 """
 import json
 import pathlib
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-game = sys.argv[1] if len(sys.argv) > 1 else "55551030SSHT02026"
-out = pathlib.Path(sys.argv[2] if len(sys.argv) > 2 else ROOT / "web/dist/mockup.html")
+NAVER = ROOT / "fixtures/naver"
+args = sys.argv[1:]
+out = pathlib.Path(args.pop() if args and args[-1].endswith(".html") else ROOT / "web/dist/mockup.html")
+games = args or sorted(d.name for d in NAVER.iterdir() if (d / "inning-1.json").exists())
 
 OPT = ("seqno", "type", "text", "pitchNum", "pitchResult", "speed", "stuff", "ptsPitchId", "currentGameState")
 PTS = ("pitchId", "crossPlateX", "crossPlateY", "y0", "z0", "vy0", "vz0", "ay", "az", "bottomSz", "topSz")
@@ -29,36 +31,34 @@ def lineup(l):
     return {"batter": [pick(b, BAT) for b in l["batter"]], "pitcher": [pick(p, PIT) for p in l["pitcher"]]}
 
 
-innings = []
-files = sorted((ROOT / "fixtures/naver" / game).glob("inning-*.json"), key=lambda f: int(f.stem.split("-")[1]))
-for f in files:
-    t = json.loads(f.read_text())["result"]["textRelayData"]
-    innings.append({
-        "inningScore": t["inningScore"],
-        "awayLineup": lineup(t["awayLineup"]),
-        "homeLineup": lineup(t["homeLineup"]),
-        "textRelays": [{
-            "no": r["no"], "inn": r["inn"], "homeOrAway": r["homeOrAway"], "title": r["title"],
-            "metricOption": r.get("metricOption"),
-            "textOptions": [pick(o, OPT) for o in r["textOptions"]],
-            "ptsOptions": [pick(p, PTS) for p in r["ptsOptions"]],
-        } for r in t["textRelays"]],
-    })
-if not innings:
-    sys.exit(f"no fixture for {game}; run tools/naver_relay.py relay {game}")
+def bundle(game):
+    innings = []
+    files = sorted((NAVER / game).glob("inning-*.json"), key=lambda f: int(f.stem.split("-")[1]))
+    for f in files:
+        t = json.loads(f.read_text())["result"]["textRelayData"]
+        innings.append({
+            "inningScore": t["inningScore"],
+            "awayLineup": lineup(t["awayLineup"]),
+            "homeLineup": lineup(t["homeLineup"]),
+            "textRelays": [{
+                "no": r["no"], "inn": r["inn"], "homeOrAway": r["homeOrAway"], "title": r["title"],
+                "metricOption": r.get("metricOption"),
+                "textOptions": [pick(o, OPT) for o in r["textOptions"]],
+                "ptsOptions": [pick(p, PTS) for p in r["ptsOptions"]],
+            } for r in t["textRelays"]],
+        })
+    if not innings:
+        sys.exit(f"no fixture for {game}; run tools/naver_relay.py relay {game}")
+    meta_f = NAVER / game / "game.json"
+    meta = json.loads(meta_f.read_text()) if meta_f.exists() else {"gameId": game}
+    keys = ("gameId", "gameDate", "stadium", "homeTeamName", "awayTeamName", "homeTeamScore", "awayTeamScore")
+    return {"meta": {k: meta.get(k) for k in keys}, "innings": innings}
 
+
+data = json.dumps({g: bundle(g) for g in games}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 html = (ROOT / "web/index.html").read_text()
-data = json.dumps(innings, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-meta_f = ROOT / "fixtures/naver" / game / "game.json"
-meta = json.loads(meta_f.read_text()) if meta_f.exists() else {}
-meta = {k: meta.get(k) for k in ("gameId", "gameDate", "stadium", "homeTeamName", "awayTeamName")}
-inject = (f"<script>window.INLINE_INNINGS = {data};\nwindow.INLINE_GAME = {json.dumps(meta, ensure_ascii=False)};</script>\n"
-          f"<script>\nconst GAME_ID_OVERRIDE = '{game}';")
 assert html.count("<script>\n") == 1
-html = html.replace("<script>\n", inject + "\n", 1)
-assert "URLSearchParams(location.search)" in html
-html = html.replace("const GAME = new URLSearchParams(location.search).get('game') || '55551030SSHT02026';",
-                    "const GAME = GAME_ID_OVERRIDE;")
+html = html.replace("<script>\n", f"<script>window.INLINE_GAMES = {data};</script>\n<script>\n", 1)
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(html)
-print(f"{out} {len(html) // 1024} KB, {len(innings)} innings")
+print(f"{out} {len(html) // 1024} KB, games: {', '.join(games)}")
