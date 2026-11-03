@@ -112,6 +112,47 @@
   .swing .tx{flex:1;font-size:12px;line-height:1.4;}
   .swing .tx small{display:block;color:var(--dim);font-size:10px;}
   .swing .d{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .pa.cur{background:var(--panel2);box-shadow:inset 3px 0 0 var(--inplay);}
+  .empty{margin:40px 16px;color:var(--dim);font-size:13px;line-height:1.7;text-align:center;}
+  kbd{display:inline-block;min-width:20px;padding:1px 5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;font:11px ui-monospace,monospace;color:var(--muted);text-align:center;}
+  .keys{margin:12px 14px;font-size:11px;color:var(--dim);}
+  .sheet{margin:8px 12px 0;overflow-x:auto;padding:0;}
+  .sheet table{min-width:620px;}
+  .sheet th{font-size:10px;color:var(--dim);font-weight:700;padding:8px 4px;text-align:center;border-bottom:1px solid var(--line);}
+  .sheet td{font-size:12px;padding:6px 4px;text-align:center;border-top:1px solid var(--line);border-left:1px solid var(--line);font-variant-numeric:tabular-nums;}
+  .sheet .nmh,.sheet td.nm{text-align:left;padding-left:12px;border-left:none;white-space:nowrap;}
+  .sheet .nmh,.sheet td.nm{position:sticky;left:0;z-index:1;background:var(--panel);box-shadow:1px 0 0 var(--line);}
+  .sheet td.nm b{color:var(--dim);margin-right:4px;}
+  .sheet .subn{display:block;color:var(--muted);font-size:11px;padding-left:16px;}
+  .sheet .pos{color:var(--dim);font-size:10px;margin-left:4px;}
+  .sheet td.cell{min-width:46px;height:40px;vertical-align:middle;}
+  .nt{position:relative;display:inline-block;padding:2px 5px;margin:1px;border-radius:5px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;}
+  .nt.hit{background:rgba(34,197,94,.14);color:#7ee2a4;}
+  .nt.walk{background:rgba(59,130,246,.14);color:#8fbaff;}
+  .nt.out{background:var(--panel2);color:var(--muted);}
+  .nt.er{background:rgba(239,68,68,.12);color:#fca5a5;}
+  .nt em{position:absolute;top:-3px;right:-3px;width:7px;height:7px;border-radius:50%;background:var(--strike);}
+  .sheet .tot td{font-weight:800;color:var(--muted);}
+  .sheetleg{margin:10px 14px;font-size:11px;color:var(--dim);display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  /* ---------- wide (PC) layout */
+  body.wide{max-width:none;padding:0 0 32px;}
+  .wide .dhead{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:24px;padding:10px 24px;background:rgba(13,16,20,.96);border-bottom:1px solid var(--line);backdrop-filter:blur(8px);}
+  .wide .dtitle{display:flex;flex-direction:column;gap:2px;min-width:240px;}
+  .wide .dtitle b{font-size:16px;}
+  .wide .dtitle span{font-size:11px;color:var(--muted);}
+  .wide .tabs{position:static;transform:none;max-width:none;width:auto;flex:0 1 640px;margin-left:auto;padding:0;border:none;background:none;backdrop-filter:none;}
+  .wide .tabs button{height:34px;}
+  .wide .dgrid{display:grid;grid-template-columns:340px minmax(380px,440px) minmax(420px,1fr);gap:0;max-width:1480px;margin:0 auto;}
+  .wide .dcol{padding:8px 4px 24px;border-right:1px solid var(--line);}
+  .wide .dcol:last-child{border-right:none;}
+  .wide .dlog{position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;}
+  .wide .zonecard svg{width:220px;height:263px;}
+  .wide .dmain{max-width:1200px;margin:0 auto;padding:8px 12px;}
+  .wide .dmain.v-log{max-width:760px;}
+  .wide .cols2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .wide .v-pitcher .zc svg{width:330px;height:345px;}
+  .wide .v-wp .wpc{max-width:900px;}
+  .wide .sheet table{min-width:0;}
   .err{margin:40px 16px;color:var(--out);font-size:13px;line-height:1.5;}
 </style>
 </head>
@@ -301,6 +342,7 @@ function landingInfo(v){
 }
 
 function render(){
+  document.body.classList.toggle('wide', WIDE.matches);
   if (view !== 'chart') return renderOther();
   const pa = G.pas[idx], n = G.names, st = pa.pitches[pa.pitches.length-1].state, a = pa.after;
   const half = `${pa.inn}회${pa.top?'초':'말'}`;
@@ -309,7 +351,7 @@ function render(){
   const isOut = /아웃|병살/.test(pa.result || '');
   let log = pa.pitches.map(p => `<div class="r"><span class="pn">${p.n}</span><span class="ty">${p.stuff||'-'}</span><span class="ve">${p.speed?p.speed+'㎞':''}</span><span>${CALL[p.call]?.[0]||p.call}</span><span class="rs" style="color:${CALL[p.call]?.[1]}">${p.call}</span></div>`).join('');
   log += pa.events.map(e => `<div class="ev">${e}</div>`).join('');
-  document.getElementById('app').innerHTML = `
+  const pitchPart = `
   <div class="top"><button class="ico" id="prev">‹</button>
     <div class="mid">${half} · <span class="dim">${G.awayName}</span> ${a.awayScore} : ${a.homeScore} <span class="dim">${G.homeName}</span></div>
     <button class="ico" id="next">›</button></div>
@@ -330,8 +372,8 @@ function render(){
     </div>
   </div>
   <div class="log">${log}</div>
-  ${pa.result ? `<div class="result ${isOut?'out':''}">${pa.result}</div>` : ''}
-  ${pa.inPlay ? `
+  ${pa.result ? `<div class="result ${isOut?'out':''}">${pa.result}</div>` : ''}`;
+  const fieldPart = pa.inPlay ? `
     <div class="sect"><span>${saved ? '② 이후 타구 흐름 · 탭 (선택)' : '① 최초 낙구지점 · 탭'}</span><span class="saved">${saved?`저장됨 · ${landingInfo(saved)}`:''}</span></div>
     <div class="card fieldcard">${fieldSVG(pa)}</div>
     ${saved ? `<div class="pathbar"><button id="undo">↶ 되돌리기</button><button id="clear">지우기</button><span>흐름 ${saved.path?.length||0}점</span></div>` : ''}
@@ -339,14 +381,23 @@ function render(){
     <div class="sect"><span>결과</span><span>${saved?.resManual?'직접 수정':'네이버 판정 자동'}</span></div>
     <div class="chips res">${RES.map(([k,l,c]) => `<button class="chip ${curRes(pa)===k?'sel':''}" data-r="${k}" style="${curRes(pa)===k?`border-color:${c};color:${c};background:${c}1a`:''}">${l}</button>`).join('')}</div>
     <div class="sect"><span>궤적</span></div>
-    <div class="chips">${TRAJ.map(t => `<button class="chip ${saved?.traj===t?'sel':''}" data-t="${t}">${t}</button>`).join('')}</div>` : ''}
+    <div class="chips">${TRAJ.map(t => `<button class="chip ${saved?.traj===t?'sel':''}" data-t="${t}">${t}</button>`).join('')}</div>`
+    : (WIDE.matches ? `<div class="empty">인플레이 타석이 아니에요.<br>타구 기록은 인플레이 타석에서 해요. <kbd>N</kbd> 다음 인플레이</div>` : '');
+  const navPart = `
   <div class="nav"><button id="prev2">← 이전 타석</button><button class="next" id="next2">${nextInPlayLabel()}</button></div>
-  <div class="foot"><span>${idx+1} / ${G.pas.length} 타석 · 낙구 ${Object.keys(landings).length}개</span><button id="export">JSON 복사</button></div>${tabsHTML()}`;
+  <div class="foot"><span>${idx+1} / ${G.pas.length} 타석 · 낙구 ${Object.keys(landings).length}개</span><button id="export">JSON 복사</button></div>`;
+  document.getElementById('app').innerHTML = WIDE.matches
+    ? `${headHTML()}<div class="dgrid"><aside class="dcol dlog" id="dlog">${logRows(true)}</aside>
+        <section class="dcol">${pitchPart}${navPart}<div class="keys"><kbd>←</kbd><kbd>→</kbd> 타석 이동 · <kbd>N</kbd> 다음 인플레이</div></section>
+        <section class="dcol">${fieldPart}</section></div>`
+    : pitchPart + fieldPart + navPart + tabsHTML();
   bindTabs();
   const go = d => { idx = Math.max(0, Math.min(G.pas.length-1, idx+d)); location.hash = `pa-${idx}`; render(); };
   for (const [id, d] of [['prev',-1],['prev2',-1],['next',1]]) document.getElementById(id).onclick = () => go(d);
-  document.getElementById('next2').onclick = () => { const j = G.pas.findIndex((p,i) => i > idx && p.inPlay); go((j<0?G.pas.length-1:j) - idx); };
+  document.getElementById('next2').onclick = () => go(nextInPlay() - idx);
   document.getElementById('export').onclick = exportJSON;
+  document.querySelectorAll('#dlog [data-pa]').forEach(e => e.onclick = () => { idx = +e.dataset.pa; location.hash = `pa-${idx}`; render(); });
+  document.querySelector('#dlog .cur')?.scrollIntoView({block:'nearest'});
   const f = document.getElementById('field');
   if (f) f.onclick = e => {
     const r = f.getBoundingClientRect(), k = FW / r.width;
@@ -369,8 +420,21 @@ function render(){
     landings[pa.no].res = c.dataset.r; landings[pa.no].resManual = c.dataset.r !== pa.res; persist(); render();
   });
 }
-const TABS = [['chart','차팅'],['log','로그'],['box','박스'],['pitcher','투수'],['wp','승률']];
-const VIEWS = {chart:null, log:viewLog, box:viewBox, pitcher:viewPitcher, wp:viewWP};
+function nextInPlay(){ const j = G.pas.findIndex((p,i) => i > idx && p.inPlay); return j < 0 ? G.pas.length-1 : j; }
+const WIDE = matchMedia('(min-width: 1024px)');
+WIDE.addEventListener('change', () => G && render());
+addEventListener('keydown', e => {
+  if (!G || view !== 'chart' || e.target.closest?.('input,textarea')) return;
+  const to = e.key === 'ArrowLeft' ? idx-1 : e.key === 'ArrowRight' ? idx+1 : (e.key === 'n' || e.key === 'N') ? nextInPlay() : null;
+  if (to == null) return;
+  e.preventDefault(); idx = Math.max(0, Math.min(G.pas.length-1, to)); location.hash = `pa-${idx}`; render();
+});
+function headHTML(){
+  const a = G.pas[G.pas.length-1].after, m = G.meta || {};
+  return `<header class="dhead"><div class="dtitle"><b>${G.awayName} ${a.awayScore} : ${a.homeScore} ${G.homeName}</b><span>${[m.gameDate, G.stadium].filter(Boolean).join(' · ')}</span></div>${tabsHTML()}</header>`;
+}
+const TABS = [['chart','차팅'],['sheet','기록지'],['log','로그'],['box','박스'],['pitcher','투수'],['wp','승률']];
+const VIEWS = {chart:null, sheet:viewSheet, log:viewLog, box:viewBox, pitcher:viewPitcher, wp:viewWP};
 const TYPE_COL = ['#f59e0b','#3b82f6','#a855f7','#22c55e','#ef4444','#14b8a6','#ec4899','#eab308','#64748b'];
 const halfName = pa => `${pa.inn}회${pa.top?'초':'말'}`;
 function tabsHTML(){ return `<nav class="tabs">${TABS.map(([k,l]) => `<button data-v="${k}" class="${view===k?'on':''}">${l}</button>`).join('')}</nav>`; }
@@ -380,15 +444,15 @@ function bindTabs(){
   });
 }
 function renderOther(){
-  document.getElementById('app').innerHTML = VIEWS[view]() + tabsHTML();
+  document.getElementById('app').innerHTML = WIDE.matches ? headHTML() + `<main class="dmain v-${view}">${VIEWS[view]()}</main>` : VIEWS[view]() + tabsHTML();
   bindTabs();
   document.querySelectorAll('[data-pa]').forEach(e => e.onclick = () => { idx = +e.dataset.pa; view = 'chart'; location.hash = `pa-${idx}`; scrollTo(0,0); render(); });
   document.querySelectorAll('[data-p]').forEach(e => e.onclick = () => { pitcherSel = e.dataset.p; render(); });
 }
 function scoreLine(){ const a = G.pas[G.pas.length-1].after; return `${G.awayName} ${a.awayScore} : ${a.homeScore} ${G.homeName}`; }
 
-function viewLog(){
-  let h = `<div class="h1">플레이 로그</div><div class="sub">${scoreLine()} · ${G.pas.length}타석</div>`, cur = null;
+function logRows(compact){
+  let h = '', cur = null;
   G.pas.forEach((pa, i) => {
     const hn = halfName(pa);
     if (hn !== cur){ cur = hn; h += `<div class="half">${hn} · ${pa.top?G.awayName:G.homeName} 공격</div>`; }
@@ -396,10 +460,82 @@ function viewLog(){
     const chg = pa.after.awayScore !== pa.before.awayScore || pa.after.homeScore !== pa.before.homeScore;
     const seq = pa.pitches.map(p => `<i style="background:${CALL[p.call]?.[1]}">${p.call}</i>`).join('');
     const res = (pa.result || pa.events[pa.events.length-1] || '').replace(/^[^:]+ : /, '');
-    h += `<div class="pa ${last?'last':''}" data-pa="${i}"><div class="who">${G.names[pa.batter]||''}<small>${pa.title.split('번')[0]}번 · ${pa.pitches.length}구</small></div>
-      <div class="what">${res}${pa.events.length?`<div style="color:var(--dim);font-size:11px;margin-top:3px">${pa.events.map(e=>e.replace(/^[^:]+ : /,'')).join(' · ')}</div>`:''}<div class="seq">${seq}</div></div>
+    const ev = !compact && pa.events.length ? `<div style="color:var(--dim);font-size:11px;margin-top:3px">${pa.events.map(e=>e.replace(/^[^:]+ : /,'')).join(' · ')}</div>` : '';
+    h += `<div class="pa ${last?'last':''} ${compact && i===idx?'cur':''}" data-pa="${i}"><div class="who">${G.names[pa.batter]||''}<small>${pa.title.split('번')[0]}번 · ${pa.pitches.length}구</small></div>
+      <div class="what">${res}${ev}<div class="seq">${seq}</div></div>
       <div class="sc ${chg?'chg':''}">${pa.after.awayScore}:${pa.after.homeScore}</div></div>`;
   });
+  return h;
+}
+function viewLog(){
+  return `<div class="h1">플레이 로그</div><div class="sub">${scoreLine()} · ${G.pas.length}타석</div>` + logRows(false);
+}
+
+// ---------- 기록지: traditional scorebook grid (batting slot x inning) with scoring notation
+const POS = {'투수':1,'포수':2,'1루수':3,'2루수':4,'3루수':5,'유격수':6,'좌익수':7,'중견수':8,'우익수':9};
+const POS_RE = /(투수|포수|1루수|2루수|3루수|유격수|좌익수|중견수|우익수)/g;
+function notation(pa){
+  const t = (pa.result || '').replace(/^[^:]+ : /, '');
+  if (!t) return null;
+  const lastCall = pa.pitches[pa.pitches.length-1]?.call;
+  if (/삼진/.test(t)) return {c: lastCall === 'T' ? 'ꓘ' : 'K', k:'out'};
+  if (/고의/.test(t)) return {c:'IBB', k:'walk'};
+  if (/볼넷/.test(t)) return {c:'BB', k:'walk'};
+  if (/몸에 맞는/.test(t)) return {c:'HBP', k:'walk'};
+  if (/홈런/.test(t)) return {c:'HR', k:'hit'};
+  if (/3루타/.test(t)) return {c:'3B', k:'hit'};
+  if (/2루타/.test(t)) return {c:'2B', k:'hit'};
+  if (/1루타|내야안타/.test(t)) return {c:'1B', k:'hit'};
+  const first = POS[(t.match(POS_RE) || [])[0]] || '';
+  if (/실책/.test(t)) return {c:'E'+first, k:'er'};
+  if (/야수선택|땅볼로 출루/.test(t)) return {c:'FC', k:'er'};
+  const chain = ((t.match(/\(([^)]*)\)/) || [])[1]?.match(POS_RE) || []).map(p => POS[p]);
+  const nums = (chain.length ? chain : [first]).join('-');
+  if (/희생번트/.test(t)) return {c:'SAC '+nums, k:'out'};
+  if (/희생플라이/.test(t)) return {c:'SF'+first, k:'out'};
+  if (/병살/.test(t)) return {c:nums+' DP', k:'out'};
+  if (/플라이/.test(t)) return {c:'F'+first, k:'out'};
+  if (/라인드라이브|직선타/.test(t)) return {c:'L'+first, k:'out'};
+  if (/땅볼|번트/.test(t)) return {c: chain.length > 1 ? nums : first+'U', k:'out'};
+  return {c:t.slice(0, 5), k:'out'};
+}
+function viewSheet(){
+  const maxInn = Math.max(...G.pas.map(p => p.inn)), inns = [...Array(maxInn).keys()].map(i => i+1);
+  const order = {}; for (const side of ['away','home']) for (const b of G.lineups[side].batter) order[b.pcode] = b.batOrder;
+  // runners who scored, per half-inning (from "… : 홈인" events and home runs)
+  // a pinch runner's run is credited to the slot of the batter he replaced on base
+  const ranFor = {};
+  for (const pa of G.pas) for (const e of pa.events){ const m = e.match(/(\S+) : 대주자 (\S+) \(으\)로 교체/); if (m) ranFor[m[2]] = m[1]; }
+  const origin = n => { while (ranFor[n]) n = ranFor[n]; return n; };
+  const scored = {};
+  for (const pa of G.pas){
+    const key = pa.inn + (pa.top ? 't' : 'b'), set = scored[key] ??= new Set();
+    for (const e of pa.events){ const m = e.match(/(\S+) : 홈인/); if (m) set.add(origin(m[1])); }
+    if (/홈런/.test(pa.result || '')) set.add(G.names[pa.batter]);
+  }
+  let h = `<div class="h1">기록지</div><div class="sub">${scoreLine()} · 결과는 네이버 문자중계 텍스트에서 자동 변환</div>`;
+  for (const side of ['away','home']){
+    const top = side === 'away', L = G.lineups[side];
+    const cells = {};
+    for (const pa of G.pas.filter(p => p.top === top)){
+      const no = notation(pa); if (!no) continue;
+      const slot = order[pa.batter] || +pa.title.split('번')[0];
+      const run = scored[pa.inn + (top ? 't' : 'b')]?.has(G.names[pa.batter]);
+      (cells[slot + ':' + pa.inn] ??= []).push({...no, run, i: G.pas.indexOf(pa)});
+    }
+    h += `<div class="sect"><span>${top ? '원정' : '홈'} · ${top ? G.awayName : G.homeName}</span></div><div class="card sheet"><table>
+      <tr><th class="nmh">타순</th>${inns.map(i => `<th>${i}</th>`).join('')}<th>타수</th><th>안타</th><th>타점</th></tr>`;
+    for (let slot = 1; slot <= 9; slot++){
+      const ps = L.batter.filter(b => b.batOrder === slot).sort((x, y) => x.seqno - y.seqno);
+      const sum = k => ps.reduce((t, b) => t + (+b[k] || 0), 0);
+      h += `<tr><td class="nm"><b>${slot}</b> ${ps.map((b, j) => j ? `<span class="subn">${b.name}</span>` : `${b.name}<span class="pos">${b.posName || ''}</span>`).join('')}</td>
+        ${inns.map(i => `<td class="cell">${(cells[slot + ':' + i] || []).map(c => `<span class="nt ${c.k}" data-pa="${c.i}">${c.c}${c.run ? '<em></em>' : ''}</span>`).join('')}</td>`).join('')}
+        <td>${sum('ab')}</td><td>${sum('hit')}</td><td>${sum('rbi')}</td></tr>`;
+    }
+    const is = G.inningScore[side];
+    h += `<tr class="tot"><td class="nm">득점</td>${inns.map(i => `<td>${is[i] ?? ''}</td>`).join('')}<td colspan="3">${G.pas[G.pas.length-1].after[side + 'Score']}점</td></tr></table></div>`;
+  }
+  h += `<div class="sheetleg"><span class="nt hit">1B</span>안타 <span class="nt walk">BB</span>볼넷·사구 <span class="nt out">6-3</span>아웃 <span class="nt er">E6</span>실책·야선 <span class="nt hit">1B<em></em></span>득점 · 칸을 누르면 그 타석으로 이동</div>`;
   return h;
 }
 
@@ -410,7 +546,9 @@ function viewBox(){
   <div class="card tbl"><table class="ls"><tr><th>팀</th>${cols.map(c=>`<th>${c}</th>`).join('')}<th>R</th><th>H</th><th>E</th></tr>
     <tr><td>${G.awayName}</td>${cols.map(c=>`<td>${is.away[c]}</td>`).join('')}<td class="rhe">${a.awayScore}</td><td class="rhe">${a.awayHit}</td><td class="rhe">${a.awayError}</td></tr>
     <tr><td>${G.homeName}</td>${cols.map(c=>`<td>${is.home[c]}</td>`).join('')}<td class="rhe">${a.homeScore}</td><td class="rhe">${a.homeHit}</td><td class="rhe">${a.homeError}</td></tr></table></div>`;
+  h += '<div class="cols2">';
   for (const side of ['away','home']){
+    h += '<div>';
     const L = G.lineups[side], name = side === 'away' ? G.awayName : G.homeName;
     const bat = [...L.batter].sort((x,y) => x.batOrder - y.batOrder || x.seqno - y.seqno);
     const sum = k => bat.reduce((t,b) => t + (+b[k]||0), 0);
@@ -418,9 +556,9 @@ function viewBox(){
       ${bat.map(b => `<tr class="${b.seqno>1?'subp':''}"><td>${b.seqno>1?'':b.batOrder+' '}${b.name}<span class="pos">${b.posName||''}</span></td><td>${b.ab}</td><td>${b.hit}</td><td>${b.rbi}</td><td>${b.run}</td><td>${b.bb}</td><td>${b.so}</td></tr>`).join('')}
       <tr class="tot"><td>합계</td><td>${sum('ab')}</td><td>${sum('hit')}</td><td>${sum('rbi')}</td><td>${sum('run')}</td><td>${sum('bb')}</td><td>${sum('so')}</td></tr></table></div>`;
     h += `<div class="card tbl" style="margin-top:6px"><table><tr><th>투수</th><th>이닝</th><th>투구</th><th>피안타</th><th>삼진</th><th>볼넷</th><th>자책</th></tr>
-      ${[...L.pitcher].sort((x,y)=>x.seqno-y.seqno).map(p => `<tr><td>${p.name}</td><td>${p.inn}</td><td>${p.ballCount}</td><td>${p.hit}</td><td>${p.kk}</td><td>${p.bb}</td><td>${p.er}</td></tr>`).join('')}</table></div>`;
+      ${[...L.pitcher].sort((x,y)=>x.seqno-y.seqno).map(p => `<tr><td>${p.name}</td><td>${p.inn}</td><td>${p.ballCount}</td><td>${p.hit}</td><td>${p.kk}</td><td>${p.bb}</td><td>${p.er}</td></tr>`).join('')}</table></div></div>`;
   }
-  return h;
+  return h + '</div>';
 }
 
 function viewPitcher(){
@@ -442,14 +580,16 @@ function viewPitcher(){
   <div class="pchips">${order.map(c => `<button data-p="${c}" class="${c===pitcherSel?'on':''}">${G.names[c]}</button>`).join('')}</div>
   <div class="kpis"><div class="card kpi"><b>${rec.inn ?? '-'}</b><span>이닝</span></div><div class="card kpi"><b>${ps.length}</b><span>투구</span></div>
     <div class="card kpi"><b>${rec.kk ?? '-'}</b><span>삼진</span></div><div class="card kpi"><b>${ps.length?Math.round(strikes/ps.length*100):0}%</b><span>스트라이크</span></div></div>
+  <div class="cols2"><div>
   <div class="sect"><span>구종 구사 · 평균 구속</span><span>${mine.length}타자 상대</span></div>
   <div class="card mix">${types.map(([t, arr]) => {
     const v = arr.filter(p => p.speed).map(p => +p.speed), avg = v.length ? Math.round(v.reduce((a,b)=>a+b,0)/v.length) : '-';
     const pct = Math.round(arr.length/ps.length*100);
     return `<div class="row"><span class="nm"><span class="dot" style="background:${col[t]}"></span>${t}</span><div class="bar"><div style="width:${pct}%;background:${col[t]}"></div></div><span class="pct">${pct}%</span><span class="v">${avg}㎞</span></div>`;
   }).join('')}</div>
+  </div><div>
   <div class="sect"><span>투구 위치 · 포수 시점</span><span>${ps.length}구</span></div>
-  <div class="card zc">${svg}</div>`;
+  <div class="card zc">${svg}</div></div></div>`;
 }
 
 function viewWP(){
