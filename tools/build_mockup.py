@@ -49,7 +49,11 @@ if not innings:
 
 html = (ROOT / "web/index.html").read_text()
 data = json.dumps(innings, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-inject = f"<script>window.INLINE_INNINGS = {data};</script>\n<script>\nconst GAME_ID_OVERRIDE = '{game}';"
+meta_f = ROOT / "fixtures/naver" / game / "game.json"
+meta = json.loads(meta_f.read_text()) if meta_f.exists() else {}
+meta = {k: meta.get(k) for k in ("gameId", "gameDate", "stadium", "homeTeamName", "awayTeamName")}
+inject = (f"<script>window.INLINE_INNINGS = {data};\nwindow.INLINE_GAME = {json.dumps(meta, ensure_ascii=False)};</script>\n"
+          f"<script>\nconst GAME_ID_OVERRIDE = '{game}';")
 assert html.count("<script>\n") == 1
 html = html.replace("<script>\n", inject + "\n", 1)
 assert "URLSearchParams(location.search)" in html

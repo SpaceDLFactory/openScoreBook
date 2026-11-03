@@ -58,6 +58,8 @@ def schedule(start, end):
 def relay(game_id, out):
     d = pathlib.Path(out) / game_id
     d.mkdir(parents=True, exist_ok=True)
+    meta = get(f"/schedule/games/{game_id}")["result"]["game"]
+    (d / "game.json").write_text(json.dumps(meta, ensure_ascii=False))
     for inn in range(1, 16):
         data = get(f"/schedule/games/{game_id}/relay?inning={inn}")
         n = len(data["result"]["textRelayData"]["textRelays"])
