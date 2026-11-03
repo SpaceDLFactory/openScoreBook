@@ -144,7 +144,9 @@ const STADIUMS = {
   잠실: {f:[100,120,125,120,100], src:['ok','comm','ok','comm','ok']},
   고척: {f:[99,null,122,null,99], src:['ok','est','ok','est','ok']},
   문학: {f:[95,115,120,115,95], src:['est','comm','comm','comm','est']},
-  대구: {f:[99.5,107,122.5,107,99.5], src:['ok','ok','ok','ok','ok'], straight:true},
+  // 대구: aerial photo shows two straight walls (pole -> CF corner). Press '좌우중간 107m' does not fit that
+  // geometry at 22.5° (~101.5 m), so gaps come from the walls and are marked as estimates.
+  대구: {f:[99.5,null,122.5,null,99.5], src:['ok','est','ok','est','ok'], straight:true},
   사직: {f:[95,113,121,113,95], src:['est','comm','comm','comm','est']},
   창원: {f:[101,116,122,116,101], src:['est','comm','comm','comm','est']},
   수원: {f:[98,115,120,115,98], src:['est','comm','comm','comm','est']},
@@ -249,24 +251,24 @@ function fenceAt(a){
   // Catmull-Rom on radius vs angle: smooth through every known distance.
   return 0.5*((2*p1) + (-p0+p2)*t + (2*p0-5*p1+4*p2-p3)*t*t + (-p0+3*p1-3*p2+p3)*t*t*t);
 }
-// Straight-wall parks (e.g. 대구): distance along angle a to the wall segment between key points.
+// Straight-wall parks: walls run straight between consecutive known key points (null = no corner there).
 function wallAt(a){
-  const f = G.fence.f, keys = [-45, -22.5, 0, 22.5, 45];
-  const i = Math.min(3, Math.max(0, Math.floor((a + 45) / 22.5)));
-  const P = k => [f[k]*Math.sin(keys[k]*Math.PI/180), f[k]*Math.cos(keys[k]*Math.PI/180)];
-  const [x1, y1] = P(i), [x2, y2] = P(i+1), dx = Math.sin(a*Math.PI/180), dy = Math.cos(a*Math.PI/180);
+  const keys = [-45, -22.5, 0, 22.5, 45], v = keys.map((k, i) => [k, G.fence.f[i]]).filter(([, d]) => d != null);
+  let i = v.findIndex(([k], j) => j < v.length-1 && a <= v[j+1][0]); if (i < 0) i = v.length-2;
+  const P = ([k, d]) => [d*Math.sin(k*Math.PI/180), d*Math.cos(k*Math.PI/180)];
+  const [x1, y1] = P(v[i]), [x2, y2] = P(v[i+1]), dx = Math.sin(a*Math.PI/180), dy = Math.cos(a*Math.PI/180);
   const ex = x2-x1, ey = y2-y1;
   return (x1*ey - y1*ex) / (dx*ey - dy*ex);
 }
 const fenceDist = a => G.fence.straight ? wallAt(a) : fenceAt(a);
 function fencePath(){
   const pt = (a, d) => { const rad = a*Math.PI/180; return toPx(d*Math.sin(rad), d*Math.cos(rad)); };
-  const angles = G.fence.straight ? [-45, -22.5, 0, 22.5, 45] : [...Array(91).keys()].map(k => k - 45);
+  const angles = G.fence.straight ? [-45, -22.5, 0, 22.5, 45].filter((k, i) => G.fence.f[i] != null) : [...Array(91).keys()].map(k => k - 45);
   return angles.map(a => pt(a, fenceDist(a)).join(' ')).join(' L');
 }
 function fieldSVG(pa){
   const b = 27.43/Math.SQRT2;
-  const lbl = (a, i) => { const rad = a*Math.PI/180, d = G.fence.f[i]; if (d == null) return '';
+  const lbl = (a, i) => { const rad = a*Math.PI/180, d = G.fence.f[i] ?? Math.round(fenceDist(a)*2)/2;
     const [x, y] = toPx((d+5)*Math.sin(rad), (d+5)*Math.cos(rad));
     return `<text x="${x}" y="${y}" text-anchor="middle" font-size="9" fill="#5c6672">${d}${G.fence.src[i]==='ok'?'':'*'}</text>`; };
   let s = `<svg id="field" viewBox="0 0 ${FW} ${FH}">
