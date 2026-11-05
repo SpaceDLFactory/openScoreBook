@@ -8,7 +8,7 @@ export interface GameSource {
 }
 
 /** Static files laid out like fixtures/naver: games.json, <id>/game.json, <id>/inning-N.json. */
-export function fixtureSource(base = '/fixtures/naver'): GameSource {
+export function fixtureSource(base = 'fixtures/naver'): GameSource {
   return {
     async listGames() {
       const r = await fetch(`${base}/games.json`);
@@ -23,6 +23,8 @@ export function fixtureSource(base = '/fixtures/naver'): GameSource {
         if (!r.ok) break;
         innings.push((await r.json()).result.textRelayData);
       }
+      if (!innings.length)
+        throw new Error('이 경기를 불러올 수 없어요. 오프라인이면 한 번 열어 본 경기만 볼 수 있어요.');
       return buildGame(id, meta, innings);
     },
   };

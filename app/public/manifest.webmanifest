@@ -1,0 +1,17 @@
+{
+  "name": "KBO 직관 스코어북",
+  "short_name": "스코어북",
+  "description": "투구는 문자중계에서, 타구는 직접 찍는 KBO 직관 기록장",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d1014",
+  "theme_color": "#0d1014",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

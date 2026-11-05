@@ -23,6 +23,7 @@
   let events = $state<GameEvent[]>([]);
   const landings = $derived(foldLandings(events));
   let saveError = $state<string | null>(null);
+  let notice = $state<string | null>(null);
   let idx = $state(0);
   let view = $state<View>('chart');
   let error = $state<string | null>(null);
@@ -69,12 +70,19 @@
     if (!pick) { try { pick = localStorage.getItem(LAST_GAME); } catch { /* private mode */ } }
     if (games.length && !games.some((g) => g.gameId === pick)) pick = games[0].gameId;
     if (!pick) throw new Error('경기 데이터가 없어요. tools/naver_relay.py relay <gameId> 로 먼저 받아 주세요.');
-    await openGame(pick, true);
+    // the last game may not be loadable (offline and never cached): fall back to the others
+    let firstErr: unknown = null;
+    for (const id of [pick, ...games.map((g) => g.gameId).filter((id) => id !== pick)]) {
+      try { await openGame(id, true); if (firstErr) notice = (firstErr as Error).message; return; } catch (e) { firstErr ??= e; }
+    }
+    throw firstErr;
   })().catch((e) => (error = e.message));
 
   function switchGame(id: string) {
     scrollTo(0, 0);
-    openGame(id).catch((e) => (error = e.message));
+    notice = null;
+    // keep the current game on screen when the other one can't be loaded (e.g. offline and never opened)
+    openGame(id).catch((e) => (notice = e.message));
   }
   function go(i: number) { if (game) idx = Math.max(0, Math.min(game.pas.length - 1, i)); }
   function pick(i: number) { go(i); view = 'chart'; scrollTo(0, 0); }
@@ -116,6 +124,7 @@
 <svelte:window onkeydown={onkey} />
 
 {#if saveError}<div class="err">{saveError}</div>{/if}
+{#if notice}<div class="err" id="notice">{notice}</div>{/if}
 {#if error}
   <div class="err">{error}</div>
 {:else if game && fin}

@@ -6,7 +6,7 @@
 </script>
 
 {#if games.length > 1}
-  <select id="gamesel" class="gamesel" aria-label="경기 선택" value={current} onchange={(e) => onchange(e.currentTarget.value)}>
+  <select id="gamesel" class="gamesel" aria-label="경기 선택" value={current} onchange={(e) => { const id = e.currentTarget.value; e.currentTarget.value = current; onchange(id); }}>
     {#each games as g (g.gameId)}<option value={g.gameId}>{label(g)}</option>{/each}
   </select>
 {/if}
