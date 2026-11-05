@@ -4,10 +4,11 @@
 //! snapshot (current field state + per-batter box score). No I/O; the same
 //! function compiles to native (for `cargo test`) and wasm.
 //!
-//! Slice 1 covers plate-appearance results only. Runner advancement uses a
-//! deterministic MVP model (documented per result in `apply_pa`); explicit
-//! per-runner advances, pitch/hit coordinates, substitutions and base-running
-//! events are later slices.
+//! Plate appearances carry a result and, optionally, explicit runner moves
+//! (`advances`); without them a deterministic default model applies (documented
+//! per result in `apply_pa`). `Runners` events move runners between plate
+//! appearances (steals, wild pitches, pickoffs) without charging the batter.
+//! Pitch/hit coordinates and substitutions are later slices.
 
 use serde::{Deserialize, Serialize};
 
@@ -71,12 +72,50 @@ pub enum PaResult {
     Error,
     /// Batter out; runner on 3B scores.
     SacFly,
+    /// Batter out on a sacrifice bunt (no at-bat); runners advance one base by default.
+    SacBunt,
 }
 
+/// Where a runner starts or ends a move. `Batter` is only a start, `Home`/`Out` only ends.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Spot {
+    Batter,
+    First,
+    Second,
+    Third,
+    Home,
+    Out,
+}
+
+impl Spot {
+    fn base(self) -> Option<usize> {
+        match self {
+            Spot::First => Some(0),
+            Spot::Second => Some(1),
+            Spot::Third => Some(2),
+            _ => None,
+        }
+    }
+}
+
+/// One runner's move on a play. Runners not named stay where they are.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Advance {
+    pub from: Spot,
+    pub to: Spot,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind")]
 pub enum Event {
-    PlateAppearance { result: PaResult },
+    PlateAppearance {
+        result: PaResult,
+        /// Explicit moves for this play, batter included; `None` = default model.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        advances: Option<Vec<Advance>>,
+    },
+    /// Runner moves outside a plate appearance; the batter stays at the plate.
+    Runners { advances: Vec<Advance> },
 }
 
 /// Per-batter batting line.
@@ -177,8 +216,12 @@ pub fn derive(_config: &Config, events: &[Event]) -> Derived {
 
     for ev in events {
         match ev {
-            Event::PlateAppearance { result } => {
-                apply_pa(&mut d, *result, &mut half_runs);
+            Event::PlateAppearance { result, advances: None } => apply_pa(&mut d, *result, &mut half_runs),
+            Event::PlateAppearance { result, advances: Some(adv) } => apply_explicit_pa(&mut d, *result, adv, &mut half_runs),
+            Event::Runners { advances } => {
+                let (scored, outs) = move_runners(&mut d.state.bases, None, advances);
+                score(&mut d, &scored, &mut half_runs);
+                end_play(&mut d, outs, &mut half_runs);
             }
         }
     }
@@ -324,20 +367,15 @@ fn apply_pa(d: &mut Derived, result: PaResult, half_runs: &mut u16) {
             }
             rbi_credited = true;
         }
+        SacBunt => {
+            outs_added = 1;
+            advance_runners(&mut d.state.bases, 1, &mut scored);
+            rbi_credited = true;
+        }
     }
 
-    // Apply scoring.
+    score(d, &scored, half_runs);
     let runs = scored.len() as u16;
-    match side {
-        Side::Away => d.state.away_score += runs,
-        Side::Home => d.state.home_score += runs,
-    }
-    *half_runs += runs;
-    for r in &scored {
-        d.box_line(*r).r += 1;
-    }
-
-    // Batting line for the batter.
     {
         let line = d.box_line(batter);
         if is_ab {
@@ -356,11 +394,83 @@ fn apply_pa(d: &mut Derived, result: PaResult, half_runs: &mut u16) {
             line.rbi += runs;
         }
     }
-
-    // Outs and inning flow.
-    d.state.outs += outs_added;
     d.state.advance_bat_idx();
+    end_play(d, outs_added, half_runs);
+}
 
+/// A plate appearance whose runner moves are given (e.g. from a relay feed). Batting-line flags come from the
+/// result; RBI = runs scored on the play, none on a double play or an error.
+fn apply_explicit_pa(d: &mut Derived, result: PaResult, advances: &[Advance], half_runs: &mut u16) {
+    use PaResult::*;
+    let batter = PlayerRef { side: d.state.batting_side(), slot: d.state.bat_idx() };
+    let (scored, outs) = move_runners(&mut d.state.bases, Some(batter), advances);
+    score(d, &scored, half_runs);
+    let runs = scored.len() as u16;
+    let line = d.box_line(batter);
+    if !matches!(result, Walk | HitByPitch | SacFly | SacBunt) {
+        line.ab += 1;
+    }
+    if matches!(result, Single | Double | Triple | HomeRun) {
+        line.h += 1;
+    }
+    if result == Walk {
+        line.bb += 1;
+    }
+    if result == Strikeout {
+        line.so += 1;
+    }
+    if !matches!(result, DoublePlay | Error) {
+        line.rbi += runs;
+    }
+    d.state.advance_bat_idx();
+    end_play(d, outs, half_runs);
+}
+
+/// Apply explicit moves; returns who scored and how many were put out. All moves are read against the bases as
+/// they were before the play, so "2B->3B, 1B->2B" works in any order.
+fn move_runners(bases: &mut [Option<PlayerRef>; 3], batter: Option<PlayerRef>, advances: &[Advance]) -> (Vec<PlayerRef>, u8) {
+    let before = *bases;
+    let mut scored = Vec::new();
+    let mut outs = 0;
+    for a in advances {
+        if let Some(i) = a.from.base() {
+            bases[i] = None;
+        }
+    }
+    for a in advances {
+        let who = match a.from {
+            Spot::Batter => batter,
+            from => from.base().and_then(|i| before[i]),
+        };
+        let Some(who) = who else { continue };
+        match a.to {
+            Spot::Home => scored.push(who),
+            Spot::Out => outs += 1,
+            to => {
+                if let Some(i) = to.base() {
+                    bases[i] = Some(who);
+                }
+            }
+        }
+    }
+    (scored, outs)
+}
+
+fn score(d: &mut Derived, scored: &[PlayerRef], half_runs: &mut u16) {
+    let runs = scored.len() as u16;
+    match d.state.batting_side() {
+        Side::Away => d.state.away_score += runs,
+        Side::Home => d.state.home_score += runs,
+    }
+    *half_runs += runs;
+    for r in scored {
+        d.box_line(*r).r += 1;
+    }
+}
+
+/// Count the play's outs; at three, close the half and flip.
+fn end_play(d: &mut Derived, outs_added: u8, half_runs: &mut u16) {
+    d.state.outs += outs_added;
     if d.state.outs >= 3 {
         // Close the half: record its runs, reset, and flip.
         push_half_line(&mut d.state, *half_runs);
@@ -389,7 +499,15 @@ mod tests {
     }
 
     fn pa(result: PaResult) -> Event {
-        Event::PlateAppearance { result }
+        Event::PlateAppearance { result, advances: None }
+    }
+
+    fn mv(from: Spot, to: Spot) -> Advance {
+        Advance { from, to }
+    }
+
+    fn xpa(result: PaResult, advances: &[Advance]) -> Event {
+        Event::PlateAppearance { result, advances: Some(advances.to_vec()) }
     }
 
     #[test]
@@ -500,5 +618,76 @@ mod tests {
         // Batter now on 1B; the forced runner was retired.
         assert_eq!(d.state.bases[0], Some(PlayerRef { side: Side::Away, slot: 1 }));
         assert_eq!(d.state.bases[1], None);
+    }
+
+    #[test]
+    fn explicit_single_scores_runner_from_second() {
+        use PaResult::*;
+        use Spot::*;
+        let d = derive(&cfg(), &[xpa(Double, &[mv(Batter, Second)]), xpa(Single, &[mv(Second, Home), mv(Batter, First)])]);
+        assert_eq!(d.state.away_score, 1);
+        assert_eq!(d.away_box[0].r, 1);
+        assert_eq!(d.away_box[1].rbi, 1);
+        assert_eq!(d.state.bases, [Some(PlayerRef { side: Side::Away, slot: 1 }), None, None]);
+    }
+
+    #[test]
+    fn moves_read_against_bases_before_the_play() {
+        use PaResult::*;
+        use Spot::*;
+        // 1B and 2B occupied; on a single 2B->3B and 1B->2B, listed lead runner last.
+        let d = derive(&cfg(), &[pa(Walk), pa(Walk), xpa(Single, &[mv(First, Second), mv(Second, Third), mv(Batter, First)])]);
+        let r = |slot| Some(PlayerRef { side: Side::Away, slot });
+        // walks: slot 0 forced to 2B, slot 1 on 1B; after the single 1B=slot 2, 2B=slot 1, 3B=slot 0
+        assert_eq!(d.state.bases, [r(2), r(1), r(0)]);
+    }
+
+    #[test]
+    fn caught_stealing_for_the_third_out_keeps_the_batter() {
+        use PaResult::*;
+        use Spot::*;
+        let d = derive(&cfg(), &[pa(Strikeout), pa(Strikeout), pa(Single), Event::Runners { advances: vec![mv(First, Out)] }]);
+        assert_eq!(d.state.half, Half::Bottom);
+        // slot 3 never finished his PA: he leads off the away team's next inning
+        assert_eq!(d.state.away_idx, 3);
+    }
+
+    #[test]
+    fn run_on_double_play_or_wild_pitch_earns_no_rbi() {
+        use PaResult::*;
+        use Spot::*;
+        let d = derive(&cfg(), &[
+            xpa(Triple, &[mv(Batter, Third)]),
+            pa(Walk),
+            xpa(DoublePlay, &[mv(Third, Home), mv(First, Out), mv(Batter, Out)]),
+            xpa(Walk, &[mv(Batter, First)]),
+            Event::Runners { advances: vec![mv(First, Second)] },
+            xpa(Single, &[mv(Batter, First), mv(Second, Third)]),
+            Event::Runners { advances: vec![mv(Third, Home)] },
+        ]);
+        assert_eq!(d.state.away_score, 2);
+        assert_eq!(d.away_box[2].rbi, 0);
+        assert_eq!(d.away_box.iter().map(|b| b.rbi).sum::<u16>(), 0);
+        assert_eq!((d.away_box[0].r, d.away_box[3].r), (1, 1));
+        assert_eq!(d.state.outs, 2);
+    }
+
+    #[test]
+    fn sac_bunt_is_no_at_bat_and_moves_runners_up() {
+        use PaResult::*;
+        let d = derive(&cfg(), &[pa(Single), pa(SacBunt)]);
+        assert_eq!(d.away_box[1].ab, 0);
+        assert_eq!(d.state.outs, 1);
+        assert_eq!(d.state.bases[1], Some(PlayerRef { side: Side::Away, slot: 0 }));
+    }
+
+    #[test]
+    fn events_round_trip_through_json() {
+        use PaResult::*;
+        use Spot::*;
+        let evs = vec![pa(Single), xpa(Double, &[mv(First, Home), mv(Batter, Second)]), Event::Runners { advances: vec![mv(Second, Third)] }];
+        let json = serde_json::to_string(&evs).unwrap();
+        assert!(json.contains(r#"{"kind":"PlateAppearance","result":{"type":"Single"}}"#));
+        assert_eq!(serde_json::from_str::<Vec<Event>>(&json).unwrap(), evs);
     }
 }
