@@ -25,34 +25,54 @@ export async function gameEvents(gameId: string): Promise<GameEvent[]> {
   return all.sort((a, b) => a.seq! - b.seq!);
 }
 
-/** Append events in one transaction; resolves once they are durable. Returns their seq numbers. */
-export async function append(events: GameEvent[]): Promise<number[]> {
+/** Append events in one transaction, in order; resolves once they are durable. A failing request aborts the
+ *  transaction, so either all of them are stored or none. */
+export async function append(events: GameEvent[]): Promise<void> {
   const tx = (await open()).transaction(EVENTS, 'readwrite'), store = tx.objectStore(EVENTS);
-  const keys = events.map((e) => done(store.add(e) as IDBRequest<number>));
-  await new Promise<void>((resolve, reject) => { tx.oncomplete = () => resolve(); tx.onerror = tx.onabort = () => reject(tx.error); });
-  return Promise.all(keys);
+  for (const e of events) store.add(e);
+  await new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+  });
 }
 
-// Write-ahead queue in localStorage: setItem is synchronous, so an edit survives a page closed before the
-// IndexedDB transaction commits. Entries leave the queue once stored; leftovers are replayed on next start.
+// Write-ahead queue: every edit goes into it first (kept in memory and mirrored to localStorage, whose setItem is
+// synchronous, so a page closed before IndexedDB commits loses nothing). Writes run one at a time and always
+// store the whole queue in order, so an edit that failed is retried before any later one lands.
 const PENDING = 'scorebook:pending';
-const readPending = (): GameEvent[] => { try { return JSON.parse(localStorage.getItem(PENDING) || '[]'); } catch { return []; } };
-const writePending = (v: GameEvent[]) => { try { localStorage.setItem(PENDING, JSON.stringify(v)); } catch { /* quota, private mode */ } };
-
-/** Durable append of one user edit. */
-export function record(ev: GameEvent): Promise<void> {
-  writePending([...readPending(), ev]);
-  return append([ev]).then(() => writePending(readPending().filter((p) => p.id !== ev.id)));
+let queue: GameEvent[] | null = null;
+const pending = (): GameEvent[] => {
+  if (!queue) { try { queue = JSON.parse(localStorage.getItem(PENDING) || '[]'); } catch { queue = []; } }
+  return queue!;
+};
+function mirror(): boolean {
+  try { localStorage.setItem(PENDING, JSON.stringify(pending())); return true; } catch { return false; }
 }
+let chain: Promise<void> = Promise.resolve();
+const serial = (job: () => Promise<void>) => (chain = chain.catch(() => {}).then(job));
 
-/** Store queued edits left by a page that closed mid-write (skipping ones that did make it). Call before reading. */
-export async function flushPending(): Promise<number> {
-  const pending = readPending();
-  if (!pending.length) return 0;
+async function drain() {
+  const batch = [...pending()];
+  if (!batch.length) return;
+  // skip edits already stored (a write that committed just before the page closed)
   const have = new Set<string>();
-  for (const gid of new Set(pending.map((p) => p.gameId))) for (const e of await gameEvents(gid)) have.add(e.id);
-  const todo = pending.filter((p) => !have.has(p.id));
+  for (const gid of new Set(batch.map((e) => e.gameId))) for (const e of await gameEvents(gid)) have.add(e.id);
+  const todo = batch.filter((e) => !have.has(e.id));
   if (todo.length) await append(todo);
-  writePending([]);
-  return todo.length;
+  const done = new Set(batch.map((e) => e.id));
+  queue = pending().filter((e) => !done.has(e.id));
+  mirror();
 }
+
+/** Durable append of one user edit. Rejects when it could not be stored (it stays queued and is retried with the
+ *  next edit or start); a queue that can't be mirrored to localStorage is reported too. */
+export function record(ev: GameEvent): Promise<void> {
+  pending().push(ev);
+  const mirrored = mirror();
+  return serial(drain).then(() => {
+    if (!mirrored) throw new Error('임시 저장(localStorage)에 실패했어요. 기록은 저장됐지만 탭 직후 앱을 닫으면 유실될 수 있어요.');
+  });
+}
+
+/** Store edits left queued by an earlier session. Call before reading a game's events. */
+export const flushPending = () => serial(drain);

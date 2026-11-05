@@ -86,7 +86,8 @@
     if (!game) return;
     const ev: GameEvent = { ...e, id: newId(), gameId: game.gameId, at: Date.now() };
     events.push(ev);
-    store.record(ev).catch((err) => (saveError = `기록 저장 실패: ${err?.message ?? err}`));
+    // a failed write stays queued and is retried with the next edit; the banner clears once one lands
+    store.record(ev).then(() => (saveError = null), (err) => (saveError = `기록 저장 실패: ${err?.message ?? err}`));
   }
   function tap([x, y]: [number, number]) {
     if (!pa) return;
