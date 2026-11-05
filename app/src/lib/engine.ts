@@ -1,5 +1,5 @@
 // The Rust scoring engine (../engine, built to src/engine with `npm run engine`), JSON in / JSON out.
-import init, { deriveJson } from '../engine/engine.js';
+import init, { deriveJson, deriveStepsJson } from '../engine/engine.js';
 
 export type PaResultType =
   | 'Single' | 'Double' | 'Triple' | 'HomeRun' | 'Walk' | 'HitByPitch' | 'Strikeout'
@@ -17,6 +17,10 @@ export interface Derived {
   state: {
     inning: number; half: 'Top' | 'Bottom'; outs: number;
     away_score: number; home_score: number;
+    /** batting slot (0-8) up next for each team */
+    away_idx: number; home_idx: number;
+    /** runners on 1B, 2B, 3B */
+    bases: ({ side: 'Away' | 'Home'; slot: number } | null)[];
     linescore: { inning: number; half: 'Top' | 'Bottom'; runs: number }[];
   };
   away_box: BatLine[];
@@ -32,4 +36,10 @@ export const loadEngine = (wasm?: BufferSource) => (ready ??= init(wasm ? { modu
 export async function derive(config: EngineConfig, events: EngineEvent[]): Promise<Derived> {
   await loadEngine();
   return JSON.parse(deriveJson(JSON.stringify(config), JSON.stringify(events)));
+}
+
+/** The snapshot after each event (a step's linescore holds completed halves only). */
+export async function deriveSteps(config: EngineConfig, events: EngineEvent[]): Promise<Derived[]> {
+  await loadEngine();
+  return JSON.parse(deriveStepsJson(JSON.stringify(config), JSON.stringify(events)));
 }

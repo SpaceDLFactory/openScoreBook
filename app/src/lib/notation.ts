@@ -14,7 +14,8 @@ export function notation(pa: PA): Note | null {
   const t = stripName(pa.result ?? '');
   if (!t) return null;
   const lastCall = pa.pitches[pa.pitches.length - 1]?.call;
-  if (/삼진/.test(t)) return { c: lastCall === 'T' ? 'ꓘ' : 'K', k: 'out' };
+  // a dropped third strike ("포수 스트라이크 낫 아웃 (포수 태그아웃)") is still a strikeout
+  if (/삼진|낫 ?아웃/.test(t)) return { c: lastCall === 'T' ? 'ꓘ' : 'K', k: 'out' };
   if (/고의/.test(t)) return { c: 'IBB', k: 'walk' };
   if (/볼넷/.test(t)) return { c: 'BB', k: 'walk' };
   if (/몸에 맞는/.test(t)) return { c: 'HBP', k: 'walk' };
@@ -51,8 +52,8 @@ export function runsScored(g: Game): Record<string, string[]> {
   for (const pa of g.pas) {
     const runs = (scored[pa.inn + (pa.top ? 't' : 'b')] ??= []);
     for (const e of pa.events) {
-      // "3루주자 X : 홈인", also with a cause: "… : 폭투로 홈인", "… : 실책으로 홈인"
-      const m = e.match(/(\S+) : (?:\S+ )?홈인$/);
+      // "3루주자 X : 홈인", also with a cause ("… : 폭투로 홈인") and a note ("… : 실책으로 홈인 (2루수 송구 실책->1루수)")
+      const m = e.match(/(\S+) : (?:\S+ )?홈인(?: \(.*\))?$/);
       if (m) runs.push(origin(m[1]));
     }
     if (/홈런/.test(pa.result ?? '')) runs.push(g.names[pa.batter]);

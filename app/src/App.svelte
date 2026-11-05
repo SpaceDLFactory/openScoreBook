@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fixtureSource } from './lib/source';
+  import { isOver, pickSource, type GameSource } from './lib/source';
   import type { Game, ResClass } from './lib/naver/parse';
   import type { NaverGameMeta } from './lib/naver/types';
   import { legacyLandings } from './lib/landings';
@@ -15,7 +15,7 @@
   import Pitcher from './views/Pitcher.svelte';
   import WinProb from './views/WinProb.svelte';
 
-  const source = fixtureSource();
+  let source: GameSource;
   const LAST_GAME = 'scorebook:game';
 
   let games = $state<NaverGameMeta[]>([]);
@@ -60,15 +60,20 @@
     events = evs;
     idx = 0;
     game = g;
+    if (g.meta && !games.some((x) => x.gameId === id)) games = [g.meta, ...games];
     if (first) readHash(g);
   }
 
   (async () => {
     await store.flushPending();
+    source = await pickSource();
     games = await source.listGames();
+    // ?game= opens that game even when the list doesn't have it (e.g. an older game through the relay server)
     let pick = new URLSearchParams(location.search).get('game');
-    if (!pick) { try { pick = localStorage.getItem(LAST_GAME); } catch { /* private mode */ } }
-    if (games.length && !games.some((g) => g.gameId === pick)) pick = games[0].gameId;
+    if (!pick) {
+      try { pick = localStorage.getItem(LAST_GAME); } catch { /* private mode */ }
+      if (games.length && !games.some((g) => g.gameId === pick)) pick = games[0].gameId;
+    }
     if (!pick) throw new Error('경기 데이터가 없어요. tools/naver_relay.py relay <gameId> 로 먼저 받아 주세요.');
     // the last game may not be loadable (offline and never cached): fall back to the others
     let firstErr: unknown = null;
@@ -77,6 +82,24 @@
     }
     throw firstErr;
   })().catch((e) => (error = e.message));
+
+  // A game in progress is reloaded every 15 s. Someone looking at the latest PA follows the new ones.
+  const POLL_MS = 15_000;
+  const live = $derived(!!game && !isOver(game.meta?.statusCode));
+  $effect(() => {
+    if (!live || !game) return;
+    const id = game.gameId;
+    const t = setInterval(async () => {
+      try {
+        const g = await source.loadGame(id);
+        if (game?.gameId !== id) return;
+        const follow = idx === game.pas.length - 1;
+        game = g;
+        if (follow) idx = g.pas.length - 1;
+      } catch { /* offline or relay hiccup: try again next tick */ }
+    }, POLL_MS);
+    return () => clearInterval(t);
+  });
 
   function switchGame(id: string) {
     scrollTo(0, 0);
@@ -130,12 +153,12 @@
 {:else if game && fin}
   {#if wide}
     <header class="dhead">
-      <div class="dtitle"><b>{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName}</b><span>{[game.meta?.gameDate, game.stadium].filter(Boolean).join(' · ')}</span></div>
+      <div class="dtitle"><b>{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName}{#if live} <span class="live">LIVE</span>{/if}</b><span>{[game.meta?.gameDate, game.stadium].filter(Boolean).join(' · ')}</span></div>
       <GameSelect {games} current={game.gameId} onchange={switchGame} />
       <Tabs {view} onselect={select} />
     </header>
-  {:else if games.length > 1}
-    <div class="gbar"><GameSelect {games} current={game.gameId} onchange={switchGame} /></div>
+  {:else if games.length > 1 || live}
+    <div class="gbar">{#if live}<span class="live">LIVE</span>{/if}<GameSelect {games} current={game.gameId} onchange={switchGame} /></div>
   {/if}
 
   {#if view === 'chart'}

@@ -75,4 +75,20 @@ describe('relay situations outside the fixtures', () => {
     const d = await derive(config, events);
     expect([d.state.away_score, d.away_box[0].r, d.away_box[1].rbi]).toEqual([1, 1, 0]);
   });
+
+  it('a runner with two lines on one play: his last line decides (scored on an error: no RBI)', async () => {
+    const g = game([
+      pa(1, st(), '좌중간 2루타', st({ base2: '1', awayHit: '1' })),
+      pa(2, st({ base2: '1', batter: 'A2' }), '볼넷', st({ base1: '2', base2: '1' })),
+      pa(3, st({ base1: '2', base2: '1', batter: 'A3' }), '투수 앞 땅볼로 출루', st({ base1: '3', out: '1' }), [
+        ['1루주자 A타자2 : 포스아웃 (투수->2루수 2루 터치아웃)', st({ base1: '3', out: '1' })],
+        ['2루주자 A타자1 : 3루까지 진루', st({ base1: '3', out: '1' })],
+        ['3루주자 A타자1 : 실책으로 홈인 (2루수 송구 실책->1루수)', st({ base1: '3', out: '1', awayScore: '1' })],
+      ]),
+    ]);
+    const { config, events, issues } = toEngine(g);
+    expect(issues).toEqual([]);
+    const d = await derive(config, events);
+    expect([d.state.away_score, d.away_box[0].r, d.away_box[2].rbi, d.state.outs]).toEqual([1, 1, 0, 1]);
+  });
 });

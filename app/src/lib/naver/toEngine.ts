@@ -41,7 +41,13 @@ export function playAdvances(p: Play, top: boolean, batterSlot: number | null, r
   const advances: Advance[] = [];
   type Gone = { from: Spot; base: number; line: string | undefined };
   const gone: Gone[] = [];
-  const lineOf = (prefix: string) => p.texts.find((t) => t.startsWith(prefix));
+  // A runner can take several lines on one play ("2루주자 X : 3루까지 진루", then "3루주자 X : 실책으로 홈인"):
+  // find his first line by starting base, then use the last line about him.
+  const lineOf = (prefix: string) => {
+    const first = p.texts.find((t) => t.startsWith(prefix));
+    const name = first?.slice(prefix.length).split(' : ')[0];
+    return name ? p.texts.filter((t) => t.includes(`주자 ${name} : `)).at(-1) : first;
+  };
   before.bases.forEach((slot, i) => {
     if (!slot) return;
     const j = where.get(slot);

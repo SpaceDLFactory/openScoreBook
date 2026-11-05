@@ -29,3 +29,12 @@ export function fixtureSource(base = 'fixtures/naver'): GameSource {
     },
   };
 }
+
+/** The relay server (tools/relay_server.py) serves the same layout under api/; the Vite dev server has fixtures. */
+export async function pickSource(): Promise<GameSource> {
+  const api = await fetch('api/games.json').then((r) => r.ok && (r.headers.get('content-type') ?? '').includes('json'), () => false);
+  return fixtureSource(api ? 'api' : 'fixtures/naver');
+}
+
+/** Naver statuses after which a game no longer changes. */
+export const isOver = (status: string | undefined) => status === 'RESULT' || status === 'CANCEL';
