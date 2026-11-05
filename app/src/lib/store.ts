@@ -25,6 +25,13 @@ export async function gameEvents(gameId: string): Promise<GameEvent[]> {
   return all.sort((a, b) => a.seq! - b.seq!);
 }
 
+/** Setup events of the manually scored games, newest first. */
+export async function manualSetups(): Promise<GameEvent[]> {
+  const tx = (await open()).transaction(EVENTS, 'readonly');
+  const all = await done(tx.objectStore(EVENTS).getAll() as IDBRequest<GameEvent[]>);
+  return all.filter((e) => e.kind === 'm.setup').sort((a, b) => b.at - a.at);
+}
+
 /** Append events in one transaction, in order; resolves once they are durable. A failing request aborts the
  *  transaction, so either all of them are stored or none. */
 export async function append(events: GameEvent[]): Promise<void> {

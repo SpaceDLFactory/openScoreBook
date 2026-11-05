@@ -5,7 +5,9 @@
   import { legacyLandings } from './lib/landings';
   import { eventsFromLegacy, foldLandings, newId, type GameEvent, type LandingEvent } from './lib/events';
   import * as store from './lib/store';
-  import { isView, type View } from './lib/views';
+  import { isManualId, isView, type View } from './lib/views';
+  import { engineEvents, manualGame, resolve, type ManualEvent, type Now, type Setup as GameSetup } from './lib/manual';
+  import { deriveSteps } from './lib/engine';
   import Tabs from './components/Tabs.svelte';
   import GameSelect from './components/GameSelect.svelte';
   import Chart from './views/Chart.svelte';
@@ -14,6 +16,8 @@
   import Box from './views/Box.svelte';
   import Pitcher from './views/Pitcher.svelte';
   import WinProb from './views/WinProb.svelte';
+  import Score from './views/Score.svelte';
+  import Setup from './views/Setup.svelte';
 
   let source: GameSource;
   const LAST_GAME = 'scorebook:game';
@@ -24,6 +28,9 @@
   const landings = $derived(foldLandings(events));
   let saveError = $state<string | null>(null);
   let notice = $state<string | null>(null);
+  let now = $state<Now | null>(null); // manual games: the situation for the input screen
+  let loaded = $state(false);
+  const manual = $derived(!!game && isManualId(game.gameId));
   let idx = $state(0);
   let view = $state<View>('chart');
   let error = $state<string | null>(null);
@@ -33,7 +40,7 @@
   WIDE.addEventListener('change', () => (wide = WIDE.matches));
   $effect(() => { document.body.classList.toggle('wide', wide); });
 
-  const fin = $derived(game ? game.pas[game.pas.length - 1].after : null);
+  const fin = $derived(game ? (game.pas.at(-1)?.after ?? { awayScore: now?.awayScore ?? 0, homeScore: now?.homeScore ?? 0 }) : null);
 
   // #pa-12 (chart at a PA) or #log, #box, ... (other views)
   function readHash(g: Game) {
@@ -48,10 +55,24 @@
     if (location.hash !== h) history.replaceState(null, '', h);
   });
 
+  /** Fold a manual game's edits through the engine into the Game the views read. */
+  async function manualFrom(id: string, evs: GameEvent[]) {
+    const edits = evs.filter((e) => e.kind.startsWith('m.')) as unknown as ManualEvent[];
+    const ee = engineEvents(resolve(edits));
+    return manualGame(id, edits, await deriveSteps(ee.config, ee.events));
+  }
+
   async function openGame(id: string, first = false) {
-    const g = await source.loadGame(id);
+    const g = isManualId(id) ? null : await source.loadGame(id);
     try { localStorage.setItem(LAST_GAME, id); } catch { /* private mode */ }
     let evs = await store.gameEvents(id);
+    if (!g) {
+      const m = await manualFrom(id, evs);
+      events = evs; idx = Math.max(0, m.game.pas.length - 1); now = m.now; game = m.game; view = 'score';
+      if (first) readHash(m.game);
+      return;
+    }
+    now = null;
     if (!evs.length) {
       // first open since the event log: carry over what the prototype stored in localStorage (left in place)
       const legacy = eventsFromLegacy(id, legacyLandings(id));
@@ -67,7 +88,7 @@
   (async () => {
     await store.flushPending();
     source = await pickSource();
-    games = await source.listGames();
+    games = [...(await store.manualSetups()).map(manualMeta), ...(await source.listGames())];
     // ?game= opens that game even when the list doesn't have it (e.g. an older game through the relay server)
     let pick = new URLSearchParams(location.search).get('game');
     if (!pick) {
@@ -81,11 +102,11 @@
       try { await openGame(id, true); if (firstErr) notice = (firstErr as Error).message; return; } catch (e) { firstErr ??= e; }
     }
     throw firstErr;
-  })().catch((e) => (error = e.message));
+  })().catch((e) => (error = e.message)).finally(() => (loaded = true));
 
   // A game in progress is reloaded every 15 s. Someone looking at the latest PA follows the new ones.
   const POLL_MS = 15_000;
-  const live = $derived(!!game && !isOver(game.meta?.statusCode));
+  const live = $derived(!!game && !manual && !isOver(game.meta?.statusCode));
   $effect(() => {
     if (!live || !game) return;
     const id = game.gameId;
@@ -107,6 +128,39 @@
     // keep the current game on screen when the other one can't be loaded (e.g. offline and never opened)
     openGame(id).catch((e) => (notice = e.message));
   }
+  // ---- manual scoring
+  function manualMeta(e: GameEvent): NaverGameMeta {
+    const s = (e as unknown as { setup: GameSetup }).setup;
+    return { gameId: e.gameId, gameDate: s.date, stadium: s.stadium, awayTeamName: s.awayName, homeTeamName: s.homeName, statusCode: 'MANUAL' };
+  }
+  async function createGame(setup: GameSetup) {
+    const id = `m-${Date.now().toString(36)}`;
+    const ev = { kind: 'm.setup', setup: $state.snapshot(setup), id: newId(), gameId: id, at: Date.now() } as GameEvent;
+    await store.record(ev).catch((err) => (saveError = `기록 저장 실패: ${err?.message ?? err}`));
+    games = [manualMeta(ev), ...games];
+    await openGame(id);
+  }
+  async function recordManual(list: ManualEvent[]) {
+    if (!game) return;
+    const id = game.gameId;
+    for (const e of list) {
+      // plain copy: values bound in the input screen are Svelte proxies, which IndexedDB can't clone
+      const ev = { ...$state.snapshot(e), id: newId(), gameId: id, at: Date.now() } as GameEvent;
+      events.push(ev);
+      store.record(ev).then(() => (saveError = null), (err) => (saveError = `기록 저장 실패: ${err?.message ?? err}`));
+    }
+    const m = await manualFrom(id, $state.snapshot(events) as GameEvent[]);
+    if (game?.gameId !== id) return;
+    now = m.now; game = m.game; idx = Math.max(0, m.game.pas.length - 1);
+  }
+  function undoManual() {
+    const edits = resolve(events.filter((e) => e.kind.startsWith('m.')) as unknown as ManualEvent[]);
+    const last = edits.at(-1);
+    if (!last || last.kind === 'm.setup') return;
+    // an automatic walk/strikeout goes back together with the pitch that made it
+    recordManual(last.kind === 'm.pa' && last.auto ? [{ kind: 'm.undo' }, { kind: 'm.undo' }] : [{ kind: 'm.undo' }]);
+  }
+
   function go(i: number) { if (game) idx = Math.max(0, Math.min(game.pas.length - 1, i)); }
   function pick(i: number) { go(i); view = 'chart'; scrollTo(0, 0); }
   function select(v: View) { view = v; scrollTo(0, 0); }
@@ -148,20 +202,27 @@
 
 {#if saveError}<div class="err">{saveError}</div>{/if}
 {#if notice}<div class="err" id="notice">{notice}</div>{/if}
-{#if error}
+{#if view === 'setup'}
+  <main class={wide ? 'dmain' : ''}><Setup oncreate={createGame} oncancel={() => (view = game ? (manual ? 'score' : 'chart') : 'chart')} /></main>
+{:else if error}
   <div class="err">{error}</div>
 {:else if game && fin}
   {#if wide}
     <header class="dhead">
-      <div class="dtitle"><b>{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName}{#if live} <span class="live">LIVE</span>{/if}</b><span>{[game.meta?.gameDate, game.stadium].filter(Boolean).join(' · ')}</span></div>
+      <div class="dtitle"><b>{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName}{#if live} <span class="live">LIVE</span>{/if}</b><span>{[game.meta?.gameDate, game.stadium, manual ? '직접 기록' : ''].filter(Boolean).join(' · ')}</span></div>
       <GameSelect {games} current={game.gameId} onchange={switchGame} />
-      <Tabs {view} onselect={select} />
+      <button class="newgame" id="newgame" onclick={() => (view = 'setup')}>＋ 새 기록</button>
+      <Tabs {view} {manual} onselect={select} />
     </header>
-  {:else if games.length > 1 || live}
-    <div class="gbar">{#if live}<span class="live">LIVE</span>{/if}<GameSelect {games} current={game.gameId} onchange={switchGame} /></div>
+  {:else}
+    <div class="gbar">{#if live}<span class="live">LIVE</span>{/if}<GameSelect {games} current={game.gameId} onchange={switchGame} /><button class="newgame" id="newgame" onclick={() => (view = 'setup')}>＋ 새 기록</button></div>
   {/if}
 
-  {#if view === 'chart'}
+  {#if view === 'score' && manual && now}
+    <main class={wide ? 'dmain' : ''}><Score {game} {now} onrecord={recordManual} onundo={undoManual} /></main>
+  {:else if !game.pas.length}
+    <div class="empty">아직 기록한 타석이 없어요.{#if manual} <b>기록</b> 탭에서 시작해요.{/if}</div>
+  {:else if view === 'chart'}
     <Chart {game} {idx} {landings} {wide} ongo={go} ontap={tap} onundo={undo} onclear={clear} onres={setRes} ontraj={setTraj} onexport={exportJSON} />
   {:else}
     <main class={wide ? `dmain v-${view}` : ''}>
@@ -169,9 +230,11 @@
       {:else if view === 'log'}<Log {game} onpick={pick} />
       {:else if view === 'box'}<Box {game} />
       {:else if view === 'pitcher'}<Pitcher {game} />
-      {:else if view === 'wp'}<WinProb {game} onpick={pick} />{/if}
+      {:else if view === 'wp' && !manual}<WinProb {game} onpick={pick} />{/if}
     </main>
   {/if}
 
-  {#if !wide}<Tabs {view} onselect={select} />{/if}
+  {#if !wide}<Tabs {view} {manual} onselect={select} />{/if}
+{:else if loaded}
+  <div class="empty">경기가 없어요. <button class="newgame" id="newgame" onclick={() => (view = 'setup')}>＋ 새 기록</button></div>
 {/if}

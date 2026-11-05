@@ -1,6 +1,7 @@
 // The user's edits as an append-only event log; current landings are a fold over it.
 import type { ResClass } from './naver/parse';
 import type { Landing, Landings } from './landings';
+import type { ManualEvent } from './manual';
 
 /** `pa` is the plate appearance's relay number (PA.no). */
 export type LandingEvent =
@@ -11,7 +12,7 @@ export type LandingEvent =
   | { kind: 'landing.res'; pa: number; res: ResClass; manual: boolean }
   | { kind: 'landing.traj'; pa: number; traj: string };
 
-export type GameEvent = LandingEvent & {
+export type GameEvent = (LandingEvent | ManualEvent) & {
   /** unique per event; lets a replayed write-ahead entry be recognised */
   id: string;
   gameId: string;
@@ -26,7 +27,8 @@ export const newId = () => Date.now().toString(36) + Math.random().toString(36).
 export function foldLandings(events: readonly GameEvent[]): Landings {
   const out: Landings = {};
   for (const e of events) {
-    const cur = out[e.pa];
+    if (!e.kind.startsWith('landing.')) continue;
+    const cur = out[(e as LandingEvent).pa];
     switch (e.kind) {
       case 'landing.set':
         out[e.pa] = { unit: 'm', x: e.x, y: e.y, path: [], res: e.res, inn: e.inn, batter: e.batter, result: e.result, at: e.at };

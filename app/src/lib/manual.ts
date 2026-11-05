@@ -158,7 +158,9 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
     pending.length = 0;
     return cur;
   };
-  const close = () => { if (cur) { cur.after = state(); pas.push(cur); } cur = null; balls = strikes = 0; pitchNo = 0; };
+  const close = (after = state()) => { if (cur) { cur.after = after; pas.push(cur); } cur = null; balls = strikes = 0; pitchNo = 0; };
+  /** state right after a play; when it ended the half, as Naver shows it: three outs, bases cleared, same batter */
+  const afterPlay = (ended: boolean, before: State): State => (ended ? { ...state(), out: 3, bases: [0, 0, 0], batter: before.batter, pitcher: before.pitcher } : state());
   /** apply an engine step, crediting runs and RBI from the box deltas */
   const step = (k: number, side: Side, batterId: string | null) => {
     const before = snap, next = steps[k];
@@ -198,10 +200,10 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
     } else if (e.kind === 'm.runners') {
       const side = batSide(), pa = open(), before = state();
       const lines = moveLines(e.advances, side, PLAY_NAME[e.play]);
-      const ended = step(at[i], side, null);
+      const ended = step(at[i], side, null), after = afterPlay(ended, before);
       pa.events.push(...lines);
-      pa.plays.push({ kind: 'runners', before, after: state(), texts: lines } satisfies Play);
-      if (ended) close();
+      pa.plays.push({ kind: 'runners', before, after, texts: lines } satisfies Play);
+      if (ended) close(after);
     } else if (e.kind === 'm.pa') {
       const side = batSide(), pa = open(), before = state(), b = batter();
       const text = `${b.name} : ${resultText(e.result, e.fielders, e.line, e.ibb)}`;
@@ -212,11 +214,11 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
       if (e.result === 'Error') errors[side === 'away' ? 'home' : 'away']++;
       if (e.result === 'Walk') { row.bb++; pr.bb++; }
       if (e.result === 'Strikeout') { row.so++; pr.kk++; }
-      step(at[i], side, b.id);
+      const after = afterPlay(step(at[i], side, b.id), before);
       pa.result = text; pa.events.push(...lines); pa.res = classify(text);
       pa.inPlay = pa.pitches[pa.pitches.length - 1]?.call === 'H';
-      pa.plays.push({ kind: 'result', before, after: state(), texts: lines } satisfies Play);
-      close();
+      pa.plays.push({ kind: 'result', before, after, texts: lines } satisfies Play);
+      close(after);
     } else if (e.kind === 'm.sub') {
       const out = e.role === 'P' ? pitcher[e.side] : lineup[e.side][e.slot];
       const label = { PH: '대타', PR: '대주자', DEF: '', P: '투수' }[e.role];

@@ -36,6 +36,12 @@ describe('manual scoring', () => {
     const a2 = game.lineups.away.batter.find((b) => b.pcode === 'A2')!;
     expect([a2.ab, a2.hit, a2.rbi, a2.run]).toEqual([1, 1, 2, 1]);
     expect(game.lineups.home.pitcher[0]).toMatchObject({ ballCount: 11, kk: 1, bb: 1, hit: 1, er: 2, inn: '1' });
+    // the third out reads like Naver's relay (3 outs, bases cleared), so the engine adapter replays it the same
+    expect(game.pas[4].after).toMatchObject({ out: 3, bases: [0, 0, 0] });
+    const { toEngine, compareRuns, compareBox } = await import('./naver/toEngine');
+    const { derive } = await import('./engine');
+    const t = toEngine(game), d = await derive(t.config, t.events);
+    expect([t.issues, compareRuns(game, d), compareBox(game, d)]).toEqual([[], {}, []]);
   });
 
   it('undo takes back the latest edit; the count follows', async () => {
