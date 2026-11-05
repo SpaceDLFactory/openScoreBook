@@ -1,0 +1,227 @@
+{
+  "_doc": "Per-park inputs for park_fence.py. center: lat,lon the 7x7 z19 tile mosaic is centred on (pixel coords below refer to that mosaic). home: approximate home plate px and CF bearing (image degrees, 0=east, 90=south) to start the foul-line search; search: optional [deg, m] window; mound: use home = mound - 18.0 m instead of the foul lines. method: poly (robust polynomial of `deg`, `exclude` angles left out), polygon (straight walls between RDP corners, `tol` m), square (side walls square to the foul lines at the pole distance + flat CF wall, from anchors). anchors: official/press distances at angles (null = keep measured).",
+  "잠실": {
+    "center": [
+      37.5122,
+      127.0719
+    ],
+    "home": [
+      1037.3,
+      716.8,
+      107.6
+    ],
+    "method": {
+      "kind": "poly",
+      "deg": 4
+    },
+    "anchors": {
+      "-45": 100,
+      "0": 125,
+      "45": 100
+    },
+    "src": [
+      "ok",
+      "sat",
+      "ok",
+      "sat",
+      "ok"
+    ],
+    "note": "서울시 100/125."
+  },
+  "문학": {
+    "center": [
+      37.4369,
+      126.6933
+    ],
+    "home": [
+      874.6,
+      777.2,
+      85.8
+    ],
+    "method": {
+      "kind": "poly",
+      "deg": 4
+    },
+    "anchors": {},
+    "src": [
+      "sat",
+      "sat",
+      "sat",
+      "sat",
+      "sat"
+    ],
+    "note": "no official source found; community table 95/115/120 has the gaps wrong (113)."
+  },
+  "수원": {
+    "center": [
+      37.2997,
+      127.0097
+    ],
+    "home": [
+      811.4,
+      531.8,
+      80.0
+    ],
+    "method": {
+      "kind": "poly",
+      "deg": 4,
+      "exclude": [
+        -2,
+        9
+      ]
+    },
+    "anchors": {},
+    "src": [
+      "sat",
+      "sat",
+      "sat",
+      "sat",
+      "sat"
+    ],
+    "note": "-2..+9 deg left out of the fit: the trace takes the batter's-eye edge behind the wall."
+  },
+  "사직": {
+    "center": [
+      35.1942,
+      129.0615
+    ],
+    "home": [
+      836.0,
+      785.3,
+      77.4
+    ],
+    "method": {
+      "kind": "poly",
+      "deg": 4
+    },
+    "anchors": {
+      "-45": 95.8,
+      "0": 120.5,
+      "45": 95.8
+    },
+    "src": [
+      "ok",
+      "sat",
+      "ok",
+      "sat",
+      "ok"
+    ],
+    "note": "2022 figures (home plate moved 2.884 m back); the 2024 change only lowered the wall. CF wall in stand shadow."
+  },
+  "창원": {
+    "center": [
+      35.2225,
+      128.5822
+    ],
+    "home": [
+      765.0,
+      665.0,
+      43.5
+    ],
+    "method": {
+      "kind": "square"
+    },
+    "anchors": {
+      "-45": 101,
+      "0": 122,
+      "45": 101
+    },
+    "src": [
+      "ok",
+      "sat",
+      "ok",
+      "sat",
+      "ok"
+    ],
+    "note": "traced side walls straight (<=0.16 m mean residual), 90.6 deg apart and 100.5/101.3 m from home: walls square to the foul lines + flat CF wall. Trace within 1.2 m (mean 0.4) except a 2 m notch at +1..+5 deg; CF corners 123.8 at 9.7 deg (wiki: 중앙 좌·우측 123)."
+  },
+  "대전": {
+    "center": [
+      36.31605,
+      127.43176
+    ],
+    "mound": [
+      866.4,
+      789.8,
+      21.7
+    ],
+    "method": {
+      "kind": "polygon",
+      "tol": 1.2
+    },
+    "anchors": {
+      "-45": 99,
+      "-22.5": 115,
+      "0": 122,
+      "22.5": 112,
+      "45": 95
+    },
+    "src": [
+      "ok",
+      "ok",
+      "ok",
+      "ok",
+      "ok"
+    ],
+    "note": "club figures (프로스포츠협회 웹진). The foul-line search locks onto other lines here, so home = mound - 18 m."
+  },
+  "광주": {
+    "center": [
+      35.1682,
+      126.8891
+    ],
+    "home": [
+      767.3,
+      1171.8,
+      -37.0
+    ],
+    "search": [
+      4,
+      3
+    ],
+    "method": {
+      "kind": "poly",
+      "deg": 6
+    },
+    "anchors": {
+      "-45": null,
+      "0": 121,
+      "45": null
+    },
+    "src": [
+      "sat",
+      "sat",
+      "ok",
+      "sat",
+      "sat"
+    ],
+    "note": "CF 121 (press); poles left as measured since the press gives 98 or 99. Esri trace agrees within 1 m (1.9 m at the RF bullpen)."
+  },
+  "대구": {
+    "center": [
+      35.8411,
+      128.6815
+    ],
+    "home": [
+      631.0,
+      984.0,
+      -36.0
+    ],
+    "method": {
+      "kind": "square"
+    },
+    "anchors": {
+      "-45": 99.5,
+      "0": 122.5,
+      "45": 99.5
+    },
+    "src": [
+      "ok",
+      "sat",
+      "ok",
+      "sat",
+      "ok"
+    ],
+    "note": "walls square to the foul lines + flat CF wall: traced side walls straight (0.1 m mean residual) and 90 deg apart; Bing and VWorld traces within 1.4 m. Matches press 좌우중간 107 (107.7 at 22.5 deg) and 좌중·우중 123.4 (corners 123.85 at 8.46 deg)."
+  }
+}

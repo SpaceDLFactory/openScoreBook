@@ -13,3 +13,7 @@ kbo-scorebook.html
 # Naver relay raw data (unofficial API, personal use; do not redistribute)
 fixtures/naver/
 web/dist/
+
+# aerial imagery for tools/park_fence (VWorld; not ours to redistribute)
+fixtures/parks/
+__pycache__/
