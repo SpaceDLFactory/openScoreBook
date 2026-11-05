@@ -103,6 +103,9 @@ impl Spot {
 pub struct Advance {
     pub from: Spot,
     pub to: Spot,
+    /// A run that earns no RBI whatever the result (scored on a wild pitch, passed ball, balk or error).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub no_rbi: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -194,6 +197,9 @@ pub struct Derived {
     /// Box score keyed by batting slot, per side.
     pub away_box: Vec<BatLine>,
     pub home_box: Vec<BatLine>,
+    /// Moves that were skipped as impossible (empty base, a runner moved twice, ...), one line each.
+    #[serde(default)]
+    pub issues: Vec<String>,
 }
 
 impl Derived {
@@ -211,6 +217,7 @@ pub fn derive(_config: &Config, events: &[Event]) -> Derived {
         state: GameState::new(),
         away_box: vec![BatLine::default(); 9],
         home_box: vec![BatLine::default(); 9],
+        issues: Vec::new(),
     };
     let mut half_runs: u16 = 0;
 
@@ -219,9 +226,10 @@ pub fn derive(_config: &Config, events: &[Event]) -> Derived {
             Event::PlateAppearance { result, advances: None } => apply_pa(&mut d, *result, &mut half_runs),
             Event::PlateAppearance { result, advances: Some(adv) } => apply_explicit_pa(&mut d, *result, adv, &mut half_runs),
             Event::Runners { advances } => {
-                let (scored, outs) = move_runners(&mut d.state.bases, None, advances);
-                score(&mut d, &scored, &mut half_runs);
-                end_play(&mut d, outs, &mut half_runs);
+                let m = move_runners(&mut d.state.bases, None, advances);
+                d.issues.extend(m.issues);
+                score(&mut d, &m.scored, &mut half_runs);
+                end_play(&mut d, m.outs, &mut half_runs);
             }
         }
     }
@@ -399,13 +407,21 @@ fn apply_pa(d: &mut Derived, result: PaResult, half_runs: &mut u16) {
 }
 
 /// A plate appearance whose runner moves are given (e.g. from a relay feed). Batting-line flags come from the
-/// result; RBI = runs scored on the play, none on a double play or an error.
+/// result. RBI: none on a strikeout, double play or error; on a walk or HBP only a run forced home with the
+/// bases loaded; otherwise each run on the play, except moves flagged `no_rbi`.
 fn apply_explicit_pa(d: &mut Derived, result: PaResult, advances: &[Advance], half_runs: &mut u16) {
     use PaResult::*;
     let batter = PlayerRef { side: d.state.batting_side(), slot: d.state.bat_idx() };
-    let (scored, outs) = move_runners(&mut d.state.bases, Some(batter), advances);
-    score(d, &scored, half_runs);
-    let runs = scored.len() as u16;
+    let loaded = d.state.bases.iter().all(|b| b.is_some());
+    let m = move_runners(&mut d.state.bases, Some(batter), advances);
+    d.issues.extend(m.issues);
+    score(d, &m.scored, half_runs);
+    let rbi = match result {
+        Strikeout | DoublePlay | Error => 0,
+        Walk | HitByPitch => u16::from(loaded && m.rbi_runs > 0),
+        _ => m.rbi_runs,
+    };
+    let outs = m.outs;
     let line = d.box_line(batter);
     if !matches!(result, Walk | HitByPitch | SacFly | SacBunt) {
         line.ab += 1;
@@ -419,41 +435,70 @@ fn apply_explicit_pa(d: &mut Derived, result: PaResult, advances: &[Advance], ha
     if result == Strikeout {
         line.so += 1;
     }
-    if !matches!(result, DoublePlay | Error) {
-        line.rbi += runs;
-    }
+    line.rbi += rbi;
     d.state.advance_bat_idx();
     end_play(d, outs, half_runs);
 }
 
-/// Apply explicit moves; returns who scored and how many were put out. All moves are read against the bases as
-/// they were before the play, so "2B->3B, 1B->2B" works in any order.
-fn move_runners(bases: &mut [Option<PlayerRef>; 3], batter: Option<PlayerRef>, advances: &[Advance]) -> (Vec<PlayerRef>, u8) {
+struct Moved {
+    scored: Vec<PlayerRef>,
+    /// runs not flagged `no_rbi`
+    rbi_runs: u16,
+    outs: u8,
+    issues: Vec<String>,
+}
+
+/// Apply explicit moves. All are read against the bases as they were before the play, so "2B->3B, 1B->2B"
+/// works in any order. A move is skipped (and reported) when its runner doesn't exist or already moved, or when
+/// it would end on the batter's spot or on a base another runner takes on the same play.
+fn move_runners(bases: &mut [Option<PlayerRef>; 3], batter: Option<PlayerRef>, advances: &[Advance]) -> Moved {
     let before = *bases;
-    let mut scored = Vec::new();
-    let mut outs = 0;
-    for a in advances {
-        if let Some(i) = a.from.base() {
-            bases[i] = None;
-        }
-    }
+    let mut m = Moved { scored: Vec::new(), rbi_runs: 0, outs: 0, issues: Vec::new() };
+    let mut moved: Vec<Spot> = Vec::new();
+    let mut valid: Vec<(PlayerRef, Advance)> = Vec::new();
     for a in advances {
         let who = match a.from {
             Spot::Batter => batter,
             from => from.base().and_then(|i| before[i]),
         };
-        let Some(who) = who else { continue };
+        let problem = match who {
+            _ if matches!(a.from, Spot::Home | Spot::Out) || a.to == Spot::Batter => Some("not a start/end spot"),
+            None => Some("no runner there"),
+            Some(_) if moved.contains(&a.from) => Some("runner moved twice"),
+            Some(_) => None,
+        };
+        if let Some(p) = problem {
+            m.issues.push(format!("skipped {:?}->{:?}: {p}", a.from, a.to));
+            continue;
+        }
+        moved.push(a.from);
+        valid.push((who.unwrap(), *a));
+    }
+    for (_, a) in &valid {
+        if let Some(i) = a.from.base() {
+            bases[i] = None;
+        }
+    }
+    for (who, a) in valid {
         match a.to {
-            Spot::Home => scored.push(who),
-            Spot::Out => outs += 1,
+            Spot::Home => {
+                m.scored.push(who);
+                if !a.no_rbi {
+                    m.rbi_runs += 1;
+                }
+            }
+            Spot::Out => m.outs = m.outs.saturating_add(1),
             to => {
-                if let Some(i) = to.base() {
+                let i = to.base().expect("bases checked above");
+                if bases[i].is_some() {
+                    m.issues.push(format!("{:?}->{:?}: base already taken, runner left off", a.from, a.to));
+                } else {
                     bases[i] = Some(who);
                 }
             }
         }
     }
-    (scored, outs)
+    m
 }
 
 fn score(d: &mut Derived, scored: &[PlayerRef], half_runs: &mut u16) {
@@ -470,7 +515,7 @@ fn score(d: &mut Derived, scored: &[PlayerRef], half_runs: &mut u16) {
 
 /// Count the play's outs; at three, close the half and flip.
 fn end_play(d: &mut Derived, outs_added: u8, half_runs: &mut u16) {
-    d.state.outs += outs_added;
+    d.state.outs = d.state.outs.saturating_add(outs_added).min(3);
     if d.state.outs >= 3 {
         // Close the half: record its runs, reset, and flip.
         push_half_line(&mut d.state, *half_runs);
@@ -503,7 +548,7 @@ mod tests {
     }
 
     fn mv(from: Spot, to: Spot) -> Advance {
-        Advance { from, to }
+        Advance { from, to, no_rbi: false }
     }
 
     fn xpa(result: PaResult, advances: &[Advance]) -> Event {
@@ -689,5 +734,42 @@ mod tests {
         let json = serde_json::to_string(&evs).unwrap();
         assert!(json.contains(r#"{"kind":"PlateAppearance","result":{"type":"Single"}}"#));
         assert_eq!(serde_json::from_str::<Vec<Event>>(&json).unwrap(), evs);
+    }
+
+    #[test]
+    fn no_rbi_on_strikeout_wild_pitch_or_flagged_run() {
+        use PaResult::*;
+        use Spot::*;
+        // runner on 3B scores on a dropped third strike wild pitch, batter reaches 1B
+        let d = derive(&cfg(), &[xpa(Triple, &[mv(Batter, Third)]), xpa(Strikeout, &[mv(Third, Home), mv(Batter, First)])]);
+        assert_eq!((d.state.away_score, d.away_box[1].rbi, d.away_box[1].so), (1, 0, 1));
+        // a single where the run scores on the throwing error: flagged
+        let d = derive(&cfg(), &[xpa(Double, &[mv(Batter, Second)]), xpa(Single, &[Advance { from: Second, to: Home, no_rbi: true }, mv(Batter, First)])]);
+        assert_eq!((d.state.away_score, d.away_box[1].rbi), (1, 0));
+    }
+
+    #[test]
+    fn walk_drives_in_only_a_forced_run() {
+        use PaResult::*;
+        use Spot::*;
+        // runner on 3B only; ball four is a wild pitch and he scores: no RBI
+        let d = derive(&cfg(), &[xpa(Triple, &[mv(Batter, Third)]), xpa(Walk, &[mv(Third, Home), mv(Batter, First)])]);
+        assert_eq!((d.state.away_score, d.away_box[1].rbi, d.away_box[1].bb), (1, 0, 1));
+        // bases loaded walk: 1 RBI
+        let d = derive(&cfg(), &[pa(Walk), pa(Walk), pa(Walk), xpa(Walk, &[mv(Third, Home), mv(Second, Third), mv(First, Second), mv(Batter, First)])]);
+        assert_eq!((d.state.away_score, d.away_box[3].rbi), (1, 1));
+    }
+
+    #[test]
+    fn impossible_moves_are_skipped_and_reported() {
+        use PaResult::*;
+        use Spot::*;
+        let d = derive(&cfg(), &[xpa(HomeRun, &[mv(Batter, Home), mv(Batter, Home), mv(Second, Home)])]);
+        assert_eq!(d.state.away_score, 1);
+        assert_eq!(d.issues.len(), 2, "{:?}", d.issues);
+        // 256 outs on one play: no overflow, the half just ends
+        let d = derive(&cfg(), &[Event::Runners { advances: vec![mv(First, Out); 256] }, xpa(Strikeout, &vec![mv(Batter, Out); 256])]);
+        assert_eq!((d.state.outs, d.state.half), (1, Half::Top));
+        assert!(!d.issues.is_empty());
     }
 }
