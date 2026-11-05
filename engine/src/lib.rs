@@ -212,7 +212,19 @@ impl Derived {
 }
 
 /// Replay an event log into a derived snapshot.
-pub fn derive(_config: &Config, events: &[Event]) -> Derived {
+pub fn derive(config: &Config, events: &[Event]) -> Derived {
+    derive_with(config, events, |_| ())
+}
+
+/// The snapshot after each event, in order (for drawing a game PA by PA without replaying prefixes).
+/// A step's linescore holds the completed halves only.
+pub fn derive_steps(config: &Config, events: &[Event]) -> Vec<Derived> {
+    let mut steps = Vec::with_capacity(events.len());
+    derive_with(config, events, |d| steps.push(d.clone()));
+    steps
+}
+
+fn derive_with(_config: &Config, events: &[Event], mut after_each: impl FnMut(&Derived)) -> Derived {
     let mut d = Derived {
         state: GameState::new(),
         away_box: vec![BatLine::default(); 9],
@@ -232,6 +244,7 @@ pub fn derive(_config: &Config, events: &[Event]) -> Derived {
                 end_play(&mut d, m.outs, &mut half_runs);
             }
         }
+        after_each(&d);
     }
     // Flush the in-progress half's runs so the linescore reflects it.
     push_half_line(&mut d.state, half_runs);
@@ -771,5 +784,18 @@ mod tests {
         let d = derive(&cfg(), &[Event::Runners { advances: vec![mv(First, Out); 256] }, xpa(Strikeout, &vec![mv(Batter, Out); 256])]);
         assert_eq!((d.state.outs, d.state.half), (1, Half::Top));
         assert!(!d.issues.is_empty());
+    }
+
+    #[test]
+    fn steps_give_the_state_after_each_event() {
+        use PaResult::*;
+        let evs = [pa(Single), pa(HomeRun), pa(Strikeout), pa(Strikeout), pa(Strikeout)];
+        let steps = derive_steps(&cfg(), &evs);
+        assert_eq!(steps.len(), 5);
+        assert_eq!((steps[0].state.away_score, steps[0].state.bases[0].is_some()), (0, true));
+        assert_eq!((steps[1].state.away_score, steps[1].away_box[1].rbi), (2, 2));
+        assert_eq!((steps[4].state.half, steps[4].state.outs), (Half::Bottom, 0));
+        // the last step is the final state
+        assert_eq!(steps[4].state.away_idx, derive(&cfg(), &evs).state.away_idx);
     }
 }
