@@ -1,6 +1,15 @@
 <script lang="ts">
   import type { Game } from '../lib/naver/parse';
+  import { derive } from '../lib/engine';
+  import { compareBox, compareRuns, toEngine } from '../lib/naver/toEngine';
   let { game }: { game: Game } = $props();
+  // Replay the relay through the scoring engine (wasm) and check it lands on Naver's score and box.
+  const check = $derived.by(async () => {
+    const { config, events, unmapped, issues } = toEngine(game);
+    const d = await derive(config, events);
+    const runs = Object.entries(compareRuns(game, d)).map(([h, [e, n]]) => `${h} 득점 엔진 ${e} / 네이버 ${n}`);
+    return [...unmapped.map((p) => `변환 못 한 타석: ${p.result}`), ...issues, ...runs, ...compareBox(game, d)];
+  });
   const fin = $derived(game.pas[game.pas.length - 1].after);
   const cols = $derived(Array.from({ length: Object.keys(game.inningScore.away).length }, (_, i) => i + 1));
   const teams = $derived((['away', 'home'] as const).map((side) => {
@@ -18,6 +27,16 @@
   <tr><td>{game.awayName}</td>{#each cols as c}<td>{game.inningScore.away[c]}</td>{/each}<td class="rhe">{fin.awayScore}</td><td class="rhe">{fin.awayHit}</td><td class="rhe">{fin.awayError}</td></tr>
   <tr><td>{game.homeName}</td>{#each cols as c}<td>{game.inningScore.home[c]}</td>{/each}<td class="rhe">{fin.homeScore}</td><td class="rhe">{fin.homeHit}</td><td class="rhe">{fin.homeError}</td></tr>
 </tbody></table></div>
+{#await check}
+  <div class="fnote" id="enginecheck">엔진 검산 중…</div>
+{:then off}
+  <div class="fnote" id="enginecheck" style="color:{off.length ? 'var(--out)' : 'var(--inplay)'}">
+    {off.length ? `엔진 검산 · ${off.length}곳 불일치` : '엔진 검산 · 이닝별 득점과 타순별 타격 기록이 네이버와 일치'}
+  </div>
+  {#each off.slice(0, 8) as o}<div class="fnote">{o}</div>{/each}
+{:catch e}
+  <div class="fnote" id="enginecheck" style="color:var(--out)">엔진 검산 실패: {e.message}</div>
+{/await}
 <div class="cols2">
   {#each teams as t (t.side)}
     <div>

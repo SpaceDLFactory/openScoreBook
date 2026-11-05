@@ -10,6 +10,18 @@ export interface State {
   awayError: number; homeError: number;
   ball: number; strike: number; out: number;
   pitcher: string; batter: string;
+  /** batting slot (1-9) of the runner on 1B, 2B, 3B; 0 = empty */
+  bases: [number, number, number];
+}
+
+/** A stretch of the relay that moves runners: the PA's result with the runner lines that follow it, or runner
+ *  lines between pitches (steal, wild pitch, pickoff). States are Naver's before and after the stretch. */
+export interface Play {
+  kind: 'result' | 'runners';
+  before: State;
+  after: State;
+  /** the runner lines, e.g. "1루주자 김영웅 : 2루까지 진루" */
+  texts: string[];
 }
 
 export interface Pitch {
@@ -38,6 +50,8 @@ export interface PA {
   pitches: Pitch[];
   result: string | null;
   events: string[];
+  /** in relay order */
+  plays: Play[];
   before: State;
   after: State;
   inPlay: boolean;
@@ -85,6 +99,7 @@ const toState = (s: NaverGameState): State => ({
   awayError: +s.awayError, homeError: +s.homeError,
   ball: +s.ball, strike: +s.strike, out: +s.out,
   pitcher: s.pitcher, batter: s.batter,
+  bases: [+(s.base1 ?? 0), +(s.base2 ?? 0), +(s.base3 ?? 0)],
 });
 
 const TEAM: Record<string, string> = { SS: '삼성', HT: 'KIA', LG: 'LG', OB: '두산', KT: 'KT', SK: 'SSG', NC: 'NC', LT: '롯데', HH: '한화', WO: '키움' };
@@ -109,9 +124,18 @@ export function buildGame(gameId: string, meta: NaverGameMeta | null, innings: N
       if (!opts.length || opts[0].type !== 8) continue; // only batter plate appearances
       const pts = Object.fromEntries(r.ptsOptions.map((p) => [p.pitchId, p]));
       const before = toState(opts[0].currentGameState);
-      const pitches: Pitch[] = [], events: string[] = [];
+      const pitches: Pitch[] = [], events: string[] = [], plays: Play[] = [];
       let result: string | null = null;
+      let prev = before, open: Play | null = null, res: Play | null = null;
       for (const o of opts.slice(1)) {
+        const st = toState(o.currentGameState);
+        if (o.type === 13 || o.type === 23) { res = { kind: 'result', before: prev, after: st, texts: [] }; plays.push(res); open = null; }
+        else if (o.type === 14 || o.type === 24) {
+          const cur = res ?? (open ??= plays[plays.push({ kind: 'runners', before: prev, after: st, texts: [] }) - 1]);
+          cur.after = st;
+          cur.texts.push(o.text ?? '');
+        } else open = null; // a pitch or another line closes a run of runner lines
+        prev = st;
         if (o.type === 1) {
           // attribute each pitch to the pitcher on the mound at that moment (mid-PA changes happen)
           const pc = o.currentGameState.pitcher;
@@ -128,7 +152,7 @@ export function buildGame(gameId: string, meta: NaverGameMeta | null, innings: N
       const lastPitcher = pitches[pitches.length - 1].pitcher;
       pas.push({
         no: r.no, inn: r.inn, top: r.homeOrAway === '0', title: r.title, batter: before.batter,
-        pitcher: lastPitcher, pitcherPitches: pitchCount[lastPitcher], pitches, result, events, before,
+        pitcher: lastPitcher, pitcherPitches: pitchCount[lastPitcher], pitches, result, events, plays, before,
         after: toState(opts[opts.length - 1].currentGameState),
         inPlay: pitches[pitches.length - 1].call === 'H', res: classify(result), wp: r.metricOption ?? null,
       });
