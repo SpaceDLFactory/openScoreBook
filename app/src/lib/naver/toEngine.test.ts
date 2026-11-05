@@ -30,6 +30,7 @@ describe.skipIf(!ids.length)('engine replay of fetched games', () => {
         ` | halves off ${JSON.stringify(runs)} | box off ${box.join(', ') || '-'}`);
       expect(unmapped.map((p) => p.result)).toEqual([]);
       expect(issues).toEqual([]);
+      expect(d.issues).toEqual([]);
       expect(runs).toEqual({});
       expect([d.state.away_score, d.state.home_score]).toEqual([fin.awayScore, fin.homeScore]);
       expect(box).toEqual([]);

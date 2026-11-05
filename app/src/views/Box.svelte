@@ -8,7 +8,7 @@
     const { config, events, unmapped, issues } = toEngine(game);
     const d = await derive(config, events);
     const runs = Object.entries(compareRuns(game, d)).map(([h, [e, n]]) => `${h} 득점 엔진 ${e} / 네이버 ${n}`);
-    return [...unmapped.map((p) => `변환 못 한 타석: ${p.result}`), ...issues, ...runs, ...compareBox(game, d)];
+    return [...unmapped.map((p) => `변환 못 한 타석: ${p.result}`), ...issues, ...d.issues.map((i) => `엔진: ${i}`), ...runs, ...compareBox(game, d)];
   });
   const fin = $derived(game.pas[game.pas.length - 1].after);
   const cols = $derived(Array.from({ length: Object.keys(game.inningScore.away).length }, (_, i) => i + 1));

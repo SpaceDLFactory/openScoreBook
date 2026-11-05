@@ -19,7 +19,7 @@
 
   const pa = $derived(game.pas[idx]);
   const fence = $derived(fenceFor(game.stadium));
-  const st = $derived(pa.pitches[pa.pitches.length - 1].state);
+  const st = $derived(pa.pitches[pa.pitches.length - 1]?.state ?? pa.after);
   const saved = $derived(landings[pa.no]);
   const isOut = $derived(/아웃|병살/.test(pa.result ?? ''));
   const curRes = $derived(saved?.res ?? pa.res);

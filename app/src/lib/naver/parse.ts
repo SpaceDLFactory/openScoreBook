@@ -148,13 +148,15 @@ export function buildGame(gameId: string, meta: NaverGameMeta | null, innings: N
         } else if (o.type === 13 || o.type === 23) result = o.text ?? null;
         else if (o.text) events.push(o.text);
       }
-      if (!pitches.length) continue;
-      const lastPitcher = pitches[pitches.length - 1].pitcher;
+      // A relay with no pitch is a PA only if something happened in it (automatic intentional walk, pickoff before
+      // the first pitch); a pinch hitter announcement has neither and is skipped.
+      if (!pitches.length && !plays.length) continue;
+      const lastPitcher = pitches[pitches.length - 1]?.pitcher ?? before.pitcher;
       pas.push({
         no: r.no, inn: r.inn, top: r.homeOrAway === '0', title: r.title, batter: before.batter,
-        pitcher: lastPitcher, pitcherPitches: pitchCount[lastPitcher], pitches, result, events, plays, before,
+        pitcher: lastPitcher, pitcherPitches: pitchCount[lastPitcher] ?? 0, pitches, result, events, plays, before,
         after: toState(opts[opts.length - 1].currentGameState),
-        inPlay: pitches[pitches.length - 1].call === 'H', res: classify(result), wp: r.metricOption ?? null,
+        inPlay: pitches[pitches.length - 1]?.call === 'H', res: classify(result), wp: r.metricOption ?? null,
       });
     }
   }

@@ -28,38 +28,51 @@ export function engineResult(pa: PA): PaResultType | null {
 const BASE: Spot[] = ['First', 'Second', 'Third'];
 
 /** Runner moves on a play, read off Naver's base states (each base holds the runner's batting slot). A runner
- *  who left the bases scored or was put out: the runner line says which ("2루주자 X : 홈인"); without one, the
- *  play's run and out counts decide. `issue` is set when the moves don't add up to those counts. */
+ *  who left the bases scored or was put out: his runner line says which ("2루주자 X : 홈인"). Without a line the
+ *  play's run and out counts decide, lead runners scoring first; when that guess has to pick who scored and who
+ *  was out, or the moves don't add up to Naver's counts, `issue` says so. A run scored on a wild pitch, passed
+ *  ball, balk or error is marked no_rbi. */
 export function playAdvances(p: Play, top: boolean, batterSlot: number | null, resultText: string | null) {
   const { before, after } = p;
   const runs = top ? after.awayScore - before.awayScore : after.homeScore - before.homeScore;
   const outs = after.out - before.out;
   const where = new Map<number, number>();
   after.bases.forEach((slot, i) => slot && where.set(slot, i));
-  const advances: Advance[] = [], gone: { from: Spot; hint: 'Home' | 'Out' | null }[] = [];
-  const hintFor = (prefix: string) => {
-    const line = p.texts.find((t) => t.startsWith(prefix));
-    return !line ? null : /홈인/.test(line) ? 'Home' : /아웃/.test(line) ? 'Out' : null;
-  };
+  const advances: Advance[] = [];
+  type Gone = { from: Spot; base: number; line: string | undefined };
+  const gone: Gone[] = [];
+  const lineOf = (prefix: string) => p.texts.find((t) => t.startsWith(prefix));
   before.bases.forEach((slot, i) => {
     if (!slot) return;
     const j = where.get(slot);
-    if (j === undefined) gone.push({ from: BASE[i], hint: hintFor(`${i + 1}루주자 `) });
+    if (j === undefined) gone.push({ from: BASE[i], base: i + 1, line: lineOf(`${i + 1}루주자 `) });
     else if (j !== i) advances.push({ from: BASE[i], to: BASE[j] });
   });
   if (batterSlot !== null) {
     const j = where.get(batterSlot);
     if (j !== undefined) advances.push({ from: 'Batter', to: BASE[j] });
-    else gone.push({ from: 'Batter', hint: /홈런/.test(resultText ?? '') ? 'Home' : hintFor('타자주자 ') });
+    else gone.push({ from: 'Batter', base: 0, line: /홈런/.test(resultText ?? '') ? '홈런 홈인' : lineOf('타자주자 ') });
   }
-  let homes = runs - gone.filter((g) => g.hint === 'Home').length;
-  for (const g of gone) {
-    const to = g.hint ?? (g.from === 'Batter' ? (homes > 0 && outs === 0 ? 'Home' : 'Out') : homes > 0 ? 'Home' : 'Out');
-    if (!g.hint && to === 'Home') homes--;
-    advances.push({ from: g.from, to });
+  const hinted = (g: Gone): 'Home' | 'Out' | null => (g.line && /홈인/.test(g.line) ? 'Home' : g.line && /아웃/.test(g.line) ? 'Out' : null);
+  let homesLeft = runs - gone.filter((g) => hinted(g) === 'Home').length;
+  let outsLeft = outs - gone.filter((g) => hinted(g) === 'Out').length;
+  const guessed: ('Home' | 'Out')[] = [];
+  // lead runner first; the batter last, and he is the one put out when an out is left
+  for (const g of [...gone].sort((x, y) => (y.base || -1) - (x.base || -1))) {
+    let to = hinted(g);
+    if (!to) {
+      to = g.from === 'Batter' ? (outsLeft > 0 ? 'Out' : homesLeft > 0 ? 'Home' : 'Out') : homesLeft > 0 ? 'Home' : 'Out';
+      if (to === 'Home') homesLeft--; else outsLeft--;
+      guessed.push(to);
+    }
+    const a: Advance = { from: g.from, to };
+    if (to === 'Home' && g.line && /폭투|포일|보크|실책/.test(g.line)) a.no_rbi = true;
+    advances.push(a);
   }
   const n = (to: Spot) => advances.filter((a) => a.to === to).length;
-  const issue = n('Home') !== runs || n('Out') !== outs ? `moves give ${n('Home')}R ${n('Out')}O, Naver ${runs}R ${outs}O` : null;
+  const issue = n('Home') !== runs || n('Out') !== outs ? `moves give ${n('Home')}R ${n('Out')}O, Naver ${runs}R ${outs}O`
+    : guessed.includes('Home') && guessed.includes('Out') ? 'no runner lines: guessed which runner scored and which was out'
+    : null;
   return { advances, issue };
 }
 

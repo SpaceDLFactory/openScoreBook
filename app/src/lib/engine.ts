@@ -5,7 +5,8 @@ export type PaResultType =
   | 'Single' | 'Double' | 'Triple' | 'HomeRun' | 'Walk' | 'HitByPitch' | 'Strikeout'
   | 'GroundOut' | 'FlyOut' | 'DoublePlay' | 'FieldersChoice' | 'Error' | 'SacFly' | 'SacBunt';
 export type Spot = 'Batter' | 'First' | 'Second' | 'Third' | 'Home' | 'Out';
-export interface Advance { from: Spot; to: Spot }
+/** no_rbi: the run counts but earns no RBI (scored on a wild pitch, passed ball, balk or error) */
+export interface Advance { from: Spot; to: Spot; no_rbi?: boolean }
 export type EngineEvent =
   | { kind: 'PlateAppearance'; result: { type: PaResultType }; advances?: Advance[] }
   | { kind: 'Runners'; advances: Advance[] };
@@ -20,6 +21,8 @@ export interface Derived {
   };
   away_box: BatLine[];
   home_box: BatLine[];
+  /** moves the engine skipped as impossible */
+  issues: string[];
 }
 
 let ready: Promise<unknown> | null = null;
