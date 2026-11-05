@@ -1,5 +1,5 @@
-// User-recorded batted balls, keyed by the PA's relay number. Stored per game in localStorage for now
-// (same keys as the prototype, so its recordings carry over).
+// User-recorded batted balls, keyed by the PA's relay number. The source of truth is the event log
+// (events.ts, store.ts); this file has the derived shape and the reader for records made before the log.
 import type { ResClass } from './naver/parse';
 
 export interface Landing {
@@ -19,18 +19,13 @@ export interface Landing {
 }
 export type Landings = Record<string, Landing>;
 
-const key = (gameId: string) => `scorebook:landings:${gameId}`;
-
-export function loadLandings(gameId: string): Landings {
+/** Landings the prototype kept in localStorage (key scorebook:landings:<gameId>); early ones were in feet. */
+export function legacyLandings(gameId: string): Landings {
   let v: Record<string, Landing & { unit?: string }> = {};
-  try { v = JSON.parse(localStorage.getItem(key(gameId)) || '{}'); } catch { /* private mode, bad JSON */ }
+  try { v = JSON.parse(localStorage.getItem(`scorebook:landings:${gameId}`) || '{}'); } catch { /* private mode, bad JSON */ }
   for (const l of Object.values(v))
-    if (l.unit !== 'm') { l.x = Math.round(l.x * 0.3048); l.y = Math.round(l.y * 0.3048); l.unit = 'm'; } // early recordings were in feet
+    if (l.unit !== 'm') { l.x = Math.round(l.x * 0.3048); l.y = Math.round(l.y * 0.3048); l.unit = 'm'; }
   return v as Landings;
-}
-
-export function saveLandings(gameId: string, v: Landings) {
-  try { localStorage.setItem(key(gameId), JSON.stringify(v)); } catch { /* quota, private mode */ }
 }
 
 /** "54m · 펜스 107m · 이후 32m" */

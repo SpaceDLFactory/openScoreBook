@@ -2,7 +2,9 @@
   import { fixtureSource } from './lib/source';
   import type { Game, ResClass } from './lib/naver/parse';
   import type { NaverGameMeta } from './lib/naver/types';
-  import { loadLandings, saveLandings, type Landings } from './lib/landings';
+  import { legacyLandings } from './lib/landings';
+  import { eventsFromLegacy, foldLandings, newId, type GameEvent, type LandingEvent } from './lib/events';
+  import * as store from './lib/store';
   import { isView, type View } from './lib/views';
   import Tabs from './components/Tabs.svelte';
   import GameSelect from './components/GameSelect.svelte';
@@ -18,7 +20,9 @@
 
   let games = $state<NaverGameMeta[]>([]);
   let game = $state<Game | null>(null);
-  let landings = $state<Landings>({});
+  let events = $state<GameEvent[]>([]);
+  const landings = $derived(foldLandings(events));
+  let saveError = $state<string | null>(null);
   let idx = $state(0);
   let view = $state<View>('chart');
   let error = $state<string | null>(null);
@@ -46,13 +50,20 @@
   async function openGame(id: string, first = false) {
     const g = await source.loadGame(id);
     try { localStorage.setItem(LAST_GAME, id); } catch { /* private mode */ }
-    landings = loadLandings(id);
+    let evs = await store.gameEvents(id);
+    if (!evs.length) {
+      // first open since the event log: carry over what the prototype stored in localStorage (left in place)
+      const legacy = eventsFromLegacy(id, legacyLandings(id));
+      if (legacy.length) { await store.append(legacy); evs = await store.gameEvents(id); }
+    }
+    events = evs;
     idx = 0;
     game = g;
     if (first) readHash(g);
   }
 
   (async () => {
+    await store.flushPending();
     games = await source.listGames();
     let pick = new URLSearchParams(location.search).get('game');
     if (!pick) { try { pick = localStorage.getItem(LAST_GAME); } catch { /* private mode */ } }
@@ -69,27 +80,26 @@
   function pick(i: number) { go(i); view = 'chart'; scrollTo(0, 0); }
   function select(v: View) { view = v; scrollTo(0, 0); }
 
-  // ---- landing edits (current PA)
+  // ---- landing edits (current PA): append to the log; the view folds it
   const pa = $derived(game?.pas[idx]);
-  function persist() { if (game) saveLandings(game.gameId, $state.snapshot(landings) as Landings); }
-  function tap(pt: [number, number]) {
-    if (!pa) return;
-    const cur = landings[pa.no];
-    if (cur) cur.path.push(pt);
-    else landings[pa.no] = { unit: 'm', x: pt[0], y: pt[1], path: [], res: pa.res, inn: pa.inn, batter: pa.batter, result: pa.result, at: Date.now() };
-    persist();
+  function record(e: LandingEvent) {
+    if (!game) return;
+    const ev: GameEvent = { ...e, id: newId(), gameId: game.gameId, at: Date.now() };
+    events.push(ev);
+    store.record(ev).catch((err) => (saveError = `기록 저장 실패: ${err?.message ?? err}`));
   }
-  function undo() {
+  function tap([x, y]: [number, number]) {
     if (!pa) return;
-    const v = landings[pa.no];
-    if (v?.path.length) v.path.pop(); else delete landings[pa.no];
-    persist();
+    if (landings[pa.no]) record({ kind: 'landing.path', pa: pa.no, x, y });
+    else record({ kind: 'landing.set', pa: pa.no, x, y, res: pa.res, inn: pa.inn, batter: pa.batter, result: pa.result });
   }
-  function clear() { if (pa) { delete landings[pa.no]; persist(); } }
-  function setRes(r: ResClass) { const v = pa && landings[pa.no]; if (v) { v.res = r; v.resManual = r !== pa.res; persist(); } }
-  function setTraj(t: string) { const v = pa && landings[pa.no]; if (v) { v.traj = t; persist(); } }
+  function undo() { if (pa && landings[pa.no]) record({ kind: 'landing.undo', pa: pa.no }); }
+  function clear() { if (pa && landings[pa.no]) record({ kind: 'landing.clear', pa: pa.no }); }
+  function setRes(r: ResClass) { if (pa && landings[pa.no]) record({ kind: 'landing.res', pa: pa.no, res: r, manual: r !== pa.res }); }
+  function setTraj(t: string) { if (pa && landings[pa.no]) record({ kind: 'landing.traj', pa: pa.no, traj: t }); }
   function exportJSON() {
-    return navigator.clipboard.writeText(JSON.stringify({ gameId: game?.gameId, landings }, null, 2)).then(() => true, () => false);
+    const data = { gameId: game?.gameId, landings, events: $state.snapshot(events) };
+    return navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => true, () => false);
   }
 
   function onkey(e: KeyboardEvent) {
@@ -104,6 +114,7 @@
 
 <svelte:window onkeydown={onkey} />
 
+{#if saveError}<div class="err">{saveError}</div>{/if}
 {#if error}
   <div class="err">{error}</div>
 {:else if game && fin}
