@@ -102,7 +102,7 @@ export function engineEvents(events: readonly ManualEvent[]): { config: EngineCo
 }
 
 type Row = NaverBatter;
-interface PitcherRow { p: Player; seqno: number; pitches: number; outs: number; hit: number; kk: number; bb: number; runs: number }
+interface PitcherRow { p: Player; seqno: number; pitches: number; outs: number; hit: number; kk: number; bb: number; er: number }
 
 /** The current situation for the input screen, plus the Game every view reads. `steps` = deriveSteps(engineEvents). */
 export function manualGame(gameId: string, edits: readonly ManualEvent[], steps: Derived[]): { game: Game; now: Now } {
@@ -121,7 +121,7 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
   };
   const addPitcher = (side: Side, p: Player) => {
     names[p.id] = p.name;
-    prow[side].push({ p, seqno: prow[side].length + 1, pitches: 0, outs: 0, hit: 0, kk: 0, bb: 0, runs: 0 });
+    prow[side].push({ p, seqno: prow[side].length + 1, pitches: 0, outs: 0, hit: 0, kk: 0, bb: 0, er: 0 });
   };
   (['away', 'home'] as const).forEach((side) => { setup[side].forEach((p, i) => addRow(side, i, p)); addPitcher(side, pitcher[side]); });
   const rowOf = (side: Side, id: string) => rows[side].find((r) => r.pcode === id)!;
@@ -161,20 +161,35 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
   const close = (after = state()) => { if (cur) { cur.after = after; pas.push(cur); } cur = null; balls = strikes = 0; pitchNo = 0; };
   /** state right after a play; when it ended the half, as Naver shows it: three outs, bases cleared, same batter */
   const afterPlay = (ended: boolean, before: State): State => (ended ? { ...state(), out: 3, bases: [0, 0, 0], batter: before.batter, pitcher: before.pitcher } : state());
-  /** apply an engine step, crediting runs and RBI from the box deltas */
-  const step = (k: number, side: Side, batterId: string | null) => {
+  // Earned runs, approximated: a run is charged to the pitcher who let that runner on (a pinch runner takes his place),
+  // and is unearned when the runner reached on an error, scored on a passed ball, or scored after the defense
+  // should have had three outs (outs plus errors this half, counting the outs on the scoring play itself when errors
+  // are involved: without them that play ends the half; a run that beats a real third out still counts). Finer points (fielder's choices swapping runners,
+  // a reliever not getting the benefit of earlier errors) are left out.
+  const resp: Record<Side, (PitcherRow | null)[]> = { away: Array(9).fill(null), home: Array(9).fill(null) };
+  const onError: Record<Side, boolean[]> = { away: Array(9).fill(false), home: Array(9).fill(false) };
+  let missedOuts = 0;
+  /** apply an engine step, crediting runs and RBI from the box deltas. batter: the batter's slot and whether he reached on an error */
+  const step = (k: number, side: Side, batter: { id: string; slot: number; error: boolean } | null, pb = false) => {
     const before = snap, next = steps[k];
     const boxOf = (d: Derived | null) => (side === 'away' ? d?.away_box : d?.home_box);
-    for (let slot = 0; slot < 9; slot++) {
-      const b0 = boxOf(before)?.[slot], b1 = boxOf(next)![slot];
-      const dr = b1.r - (b0?.r ?? 0), drbi = b1.rbi - (b0?.rbi ?? 0);
-      if (dr) rowOf(side, lineup[side][slot].id).run += dr;
-      if (drbi && batterId) rowOf(side, batterId).rbi += drbi;
-    }
     const pr = curPitcherRow(side === 'away' ? 'home' : 'away');
     const outsBefore = before?.state.outs ?? 0, halfChanged = next.state.half !== (before?.state.half ?? 'Top');
-    pr.outs += halfChanged ? 3 - outsBefore : next.state.outs - outsBefore;
-    pr.runs += (side === 'away' ? next.state.away_score - (before?.state.away_score ?? 0) : next.state.home_score - (before?.state.home_score ?? 0));
+    const outsOnPlay = halfChanged ? 3 - outsBefore : next.state.outs - outsBefore;
+    const dr = (slot: number) => boxOf(next)![slot].r - (boxOf(before)?.[slot]?.r ?? 0);
+    if (batter && (dr(batter.slot) > 0 || next.state.bases.some((b) => b?.slot === batter.slot))) {
+      resp[side][batter.slot] = pr; onError[side][batter.slot] = batter.error;
+    }
+    if (batter?.error) missedOuts++;
+    for (let slot = 0; slot < 9; slot++) {
+      const runs = dr(slot), drbi = boxOf(next)![slot].rbi - (boxOf(before)?.[slot]?.rbi ?? 0);
+      if (runs) rowOf(side, lineup[side][slot].id).run += runs;
+      if (drbi && batter) rowOf(side, batter.id).rbi += drbi;
+      const virtualOuts = outsBefore + missedOuts + (missedOuts ? outsOnPlay : 0);
+      if (runs && !onError[side][slot] && !pb && virtualOuts < 3) (resp[side][slot] ?? pr).er += runs;
+    }
+    pr.outs += outsOnPlay;
+    if (halfChanged) missedOuts = 0;
     snap = next;
     return halfChanged;
   };
@@ -200,12 +215,12 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
     } else if (e.kind === 'm.runners') {
       const side = batSide(), pa = open(), before = state();
       const lines = moveLines(e.advances, side, PLAY_NAME[e.play]);
-      const ended = step(at[i], side, null), after = afterPlay(ended, before);
+      const ended = step(at[i], side, null, e.play === 'PB'), after = afterPlay(ended, before);
       pa.events.push(...lines);
       pa.plays.push({ kind: 'runners', before, after, texts: lines } satisfies Play);
-      if (ended) close(after);
+      if (ended) close(after); else pa.after = after;
     } else if (e.kind === 'm.pa') {
-      const side = batSide(), pa = open(), before = state(), b = batter();
+      const side = batSide(), pa = open(), before = state(), b = batter(), slot = side === 'away' ? eng().away_idx : eng().home_idx;
       const text = `${b.name} : ${resultText(e.result, e.fielders, e.line, e.ibb)}`;
       const lines = moveLines(e.advances, side, '');
       const row = rowOf(side, b.id), pr = curPitcherRow(fieldSide());
@@ -214,7 +229,7 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
       if (e.result === 'Error') errors[side === 'away' ? 'home' : 'away']++;
       if (e.result === 'Walk') { row.bb++; pr.bb++; }
       if (e.result === 'Strikeout') { row.so++; pr.kk++; }
-      const after = afterPlay(step(at[i], side, b.id), before);
+      const after = afterPlay(step(at[i], side, { id: b.id, slot, error: e.result === 'Error' }), before);
       pa.result = text; pa.events.push(...lines); pa.res = classify(text);
       pa.inPlay = pa.pitches[pa.pitches.length - 1]?.call === 'H';
       pa.plays.push({ kind: 'result', before, after, texts: lines } satisfies Play);
@@ -235,13 +250,18 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
   const inningScore = { away: {} as Record<string, string>, home: {} as Record<string, string> };
   const last = snap as Derived | null; // assigned inside the closures above
   for (const h of last?.state.linescore ?? []) inningScore[h.half === 'Top' ? 'away' : 'home'][String(h.inning)] = String(h.runs);
-  if (cur) inningScore[(cur as PA).top ? 'away' : 'home'][String((cur as PA).inn)] ??= '0';
+  const shown = [...pas, ...(cur ? [cur as PA] : [])];
+  // the half in progress isn't in the engine's linescore yet: its runs are the side's score less its finished halves
+  const curSide: Side = fin.half === 'Top' ? 'away' : 'home';
+  if (shown.some((q) => q.inn === fin.inning && q.top === (fin.half === 'Top'))) {
+    const done = (last?.state.linescore ?? []).filter((h) => (h.half === 'Top') === (curSide === 'away')).reduce((t, h) => t + h.runs, 0);
+    inningScore[curSide][String(fin.inning)] = String((curSide === 'away' ? fin.away_score : fin.home_score) - done);
+  }
   const pitcherLines = (side: Side): NaverPitcher[] => prow[side].map((r) => ({
     pcode: r.p.id, name: r.p.name, seqno: r.seqno, inn: `${Math.floor(r.outs / 3)}${r.outs % 3 ? ` ${r.outs % 3}/3` : ''}`,
-    ballCount: r.pitches, hit: r.hit, kk: r.kk, bb: r.bb, er: r.runs,
+    ballCount: r.pitches, hit: r.hit, kk: r.kk, bb: r.bb, er: r.er,
   }));
   const lineups: Record<Side, NaverLineup> = { away: { batter: rows.away, pitcher: pitcherLines('away') }, home: { batter: rows.home, pitcher: pitcherLines('home') } };
-  const shown = [...pas, ...(cur ? [cur as PA] : [])];
   const game: Game = {
     gameId, stadium: setup.stadium, pas: shown, names, hands: {}, lineups, inningScore,
     awayName: setup.awayName, homeName: setup.homeName,

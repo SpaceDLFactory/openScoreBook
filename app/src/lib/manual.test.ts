@@ -69,6 +69,54 @@ describe('manual scoring', () => {
     expect(now.bases[1]?.id).toBe('X');
   });
 
+  it('runs go to the pitcher who let the runner on', async () => {
+    const { game } = await build([{ kind: 'm.setup', setup },
+      p('H'), pa('Single', [false, false, false], [8]),
+      { kind: 'm.sub', side: 'home', role: 'P', slot: 0, player: { id: 'HP2', name: 'HP2', pos: '투수' } },
+      p('H'), { kind: 'm.pa', result: 'Double', fielders: [7], advances: [{ from: 'First', to: 'Home' }, { from: 'Batter', to: 'Second' }] }, // A1 scores: the starter's runner
+      p('H'), pa('HomeRun', [false, true, false], [8])]); // A2 (the reliever's) and A3
+    expect(game.lineups.home.pitcher.map((r) => [r.name, r.er])).toEqual([['HP', 1], ['HP2', 2]]);
+  });
+
+  it('unearned: reached on an error, scored after the third out should have been made, or on a passed ball', async () => {
+    const { game, now } = await build([{ kind: 'm.setup', setup },
+      p('H'), pa('GroundOut', [false, false, false], [6, 3]), p('H'), pa('GroundOut', [false, false, false], [4, 3]),
+      p('H'), pa('Error', [false, false, false], [6]), // A3 on by error with two outs: the half should be over
+      p('H'), { kind: 'm.pa', result: 'Double', fielders: [7], advances: [{ from: 'First', to: 'Home' }, { from: 'Batter', to: 'Second' }] }, // A3 scores
+      p('H'), pa('HomeRun', [false, true, false], [8]), // A4, A5 score
+      p('H'), pa('FlyOut', [false, false, false], [9]),
+      p('H'), pa('Triple', [false, false, false], [9]), // H1
+      { kind: 'm.runners', play: 'PB', advances: [{ from: 'Third', to: 'Home' }] },
+      p('H'), pa('Triple', [false, false, false], [9]), // H2
+      { kind: 'm.runners', play: 'WP', advances: [{ from: 'Third', to: 'Home' }] }]);
+    expect([now.awayScore, now.homeScore]).toEqual([3, 2]);
+    expect(game.lineups.home.pitcher[0].er).toBe(0);
+    expect(game.lineups.away.pitcher[0].er).toBe(1); // the wild pitch run is earned
+  });
+
+  it('unearned: the scoring play would have been the third out without the error', async () => {
+    const { game, now } = await build([{ kind: 'm.setup', setup },
+      p('S'), p('S'), p('S'), pa('Strikeout', [false, false, false]),
+      p('H'), pa('Triple', [false, false, false], [9]), // A2 on third
+      p('H'), { kind: 'm.pa', result: 'Error', fielders: [6], advances: [{ from: 'Batter', to: 'First' }] }, // would be out two
+      p('H'), pa('SacFly', [true, false, true], [8])]); // A2 scores on what would be out three
+    expect([now.awayScore, now.outs]).toEqual([1, 2]);
+    expect(game.lineups.home.pitcher[0].er).toBe(0);
+  });
+
+  it('a run scored on a runner play shows at once, as does the half in progress', async () => {
+    const lead = await build([{ kind: 'm.setup', setup }, p('H'), pa('HomeRun', [false, false, false], [7])]);
+    expect(lead.game.inningScore.away['1']).toBe('1');
+    const more = await build([{ kind: 'm.setup', setup }, p('H'), pa('HomeRun', [false, false, false], [7]), p('B')]);
+    expect(more.game.inningScore.away['1']).toBe('1');
+    const { game } = await build([{ kind: 'm.setup', setup },
+      p('H'), pa('Triple', [false, false, false], [9]), p('B'),
+      { kind: 'm.runners', play: 'WP', advances: [{ from: 'Third', to: 'Home' }] }]);
+    expect(game.pas.at(-1)!.after.awayScore).toBe(2 - 1);
+    expect(game.inningScore.away['1']).toBe('1');
+    expect(game.inningScore.home['1']).toBeUndefined();
+  });
+
   it('result texts read back as the same notation', () => {
     const cases: [Parameters<typeof resultText>, string][] = [
       [['GroundOut', [6, 3]], '6-3'], [['FlyOut', [8]], 'F8'], [['FlyOut', [6], true], 'L6'], [['DoublePlay', [6, 4, 3]], '6-4-3 DP'],
