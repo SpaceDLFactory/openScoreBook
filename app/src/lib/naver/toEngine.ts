@@ -57,7 +57,12 @@ export function playAdvances(p: Play, top: boolean, batterSlot: number | null, r
   if (batterSlot !== null) {
     const j = where.get(batterSlot);
     if (j !== undefined) advances.push({ from: 'Batter', to: BASE[j] });
-    else gone.push({ from: 'Batter', base: 0, line: /홈런/.test(resultText ?? '') ? '홈런 홈인' : lineOf('타자주자 ') });
+    else {
+      // once on, the batter's own lines read as a runner's ("1루주자 X : 실책으로 홈인"): find them by his name
+      const name = resultText?.split(' : ')[0];
+      const own = name ? p.texts.filter((t) => t.includes(`주자 ${name} : `)).at(-1) : undefined;
+      gone.push({ from: 'Batter', base: 0, line: /홈런/.test(resultText ?? '') ? '홈런 홈인' : own ?? lineOf('타자주자 ') });
+    }
   }
   const hinted = (g: Gone): 'Home' | 'Out' | null => (g.line && /홈인/.test(g.line) ? 'Home' : g.line && /아웃/.test(g.line) ? 'Out' : null);
   let homesLeft = runs - gone.filter((g) => hinted(g) === 'Home').length;

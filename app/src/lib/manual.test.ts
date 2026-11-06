@@ -131,6 +131,15 @@ describe('manual scoring', () => {
       p('H'), { kind: 'm.pa', result: 'Single', fielders: [8], advances: [{ from: 'Second', to: 'Home' }, { from: 'Batter', to: 'First' }] }]); // scores from second
     expect(batter.game.pas[0].events).toEqual(['1루주자 A1 : 실책으로 2루까지 진루']);
     expect([batter.now.awayScore, batter.game.lineups.home.pitcher[0].er]).toEqual([1, 0]);
+    // all the way home on the error: no RBI, and the engine check reads the batter's own line the same way
+    const home = await build([{ kind: 'm.setup', setup },
+      p('H'), { kind: 'm.pa', result: 'Single', fielders: [9], advances: [{ from: 'Batter', to: 'Home' }], err: ['Batter'] }]);
+    expect(home.game.pas[0].events).toEqual(['1루주자 A1 : 실책으로 홈인']);
+    expect([home.now.awayScore, home.game.lineups.away.batter[0].rbi, home.game.lineups.home.pitcher[0].er]).toEqual([1, 0, 0]);
+    const { toEngine, compareRuns, compareBox } = await import('./naver/toEngine');
+    const { derive } = await import('./engine');
+    const t = toEngine(home.game), d = await derive(t.config, t.events);
+    expect([t.issues, compareRuns(home.game, d), compareBox(home.game, d)]).toEqual([[], {}, []]);
     const clean = await build([{ kind: 'm.setup', setup },
       p('H'), { kind: 'm.pa', result: 'Single', fielders: [9], advances: [{ from: 'Batter', to: 'Second' }] },
       p('H'), { kind: 'm.pa', result: 'Single', fielders: [8], advances: [{ from: 'Second', to: 'Home' }, { from: 'Batter', to: 'First' }] }]);
