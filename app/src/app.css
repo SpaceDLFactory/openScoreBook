@@ -53,7 +53,7 @@
   .foot{margin:14px 12px 0;font-size:11px;color:var(--dim);display:flex;justify-content:space-between;align-items:center;}
   .foot button{background:none;border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--muted);font-size:11px;}
   body{padding-bottom:84px;}
-  .tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;display:flex;background:rgba(13,16,20,.96);border-top:1px solid var(--line);padding:6px 6px 14px;backdrop-filter:blur(8px);}
+  .tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:10;width:100%;max-width:390px;display:flex;background:rgba(13,16,20,.96);border-top:1px solid var(--line);padding:6px 6px 14px;backdrop-filter:blur(8px);}
   .tabs button{flex:1;height:40px;background:none;border:none;color:var(--dim);font-size:12px;font-weight:700;border-radius:9px;}
   .tabs button.on{color:var(--txt);background:var(--panel2);}
   .h1{font-size:17px;font-weight:800;margin:14px 14px 2px;}
