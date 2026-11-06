@@ -31,24 +31,32 @@ LIVE_TTL = 15  # s; Naver's relay itself updates every few seconds
 
 
 class Cache:
+    """Fetch-once cache. A value is reused while younger than its TTL; a value stored as final is reused for good.
+    Asking with final=True refetches an entry that wasn't final once (it may predate the last play), then keeps it.
+    One fetch per key at a time, so simultaneous requests share a single call to Naver."""
+
     def __init__(self):
         self.lock = threading.Lock()
-        self.data = {}
+        self.data = {}  # key -> (fetched_at, value, final)
+        self.inflight = {}  # key -> lock
 
     def peek(self, key):
         with self.lock:
             hit = self.data.get(key)
         return hit[1] if hit else None
 
-    def get(self, key, ttl, fetch):
+    def get(self, key, ttl, fetch, final=False):
         with self.lock:
-            hit = self.data.get(key)
-            if hit and (ttl is None or time.time() - hit[0] < ttl):
+            key_lock = self.inflight.setdefault(key, threading.Lock())
+        with key_lock:
+            with self.lock:
+                hit = self.data.get(key)
+            if hit and (hit[2] or (not final and time.time() - hit[0] < ttl)):
                 return hit[1]
-        value = fetch()
-        with self.lock:
-            self.data[key] = (time.time(), value)
-        return value
+            value = fetch()
+            with self.lock:
+                self.data[key] = (time.time(), value, final)
+            return value
 
 
 CACHE = Cache()
@@ -126,7 +134,10 @@ def meta(game_id):
         return replay_meta(game_id)
     if finished_on_disk(game_id):
         return fixture(game_id, "game.json")
-    return CACHE.get(("meta", game_id), LIVE_TTL, lambda: naver_relay.get(f"/schedule/games/{game_id}")["result"]["game"])
+    m = CACHE.get(("meta", game_id), LIVE_TTL, lambda: naver_relay.get(f"/schedule/games/{game_id}")["result"]["game"])
+    if m.get("statusCode") == "RESULT":  # over: keep it
+        CACHE.get(("meta", game_id), LIVE_TTL, lambda: m, final=True)
+    return m
 
 
 def inning(game_id, n):
@@ -137,8 +148,8 @@ def inning(game_id, n):
     has = lambda d: bool(d and d["result"]["textRelayData"]["textRelays"])  # noqa: E731
     # an inning is over once the next one has relays: then Naver need not be asked again
     over = meta(game_id).get("statusCode") == "RESULT" or has(CACHE.peek(("inning", game_id, n + 1)))
-    data = CACHE.get(("inning", game_id, n), None if over else LIVE_TTL,
-                     lambda: naver_relay.get(f"/schedule/games/{game_id}/relay?inning={n}"))
+    data = CACHE.get(("inning", game_id, n), LIVE_TTL,
+                     lambda: naver_relay.get(f"/schedule/games/{game_id}/relay?inning={n}"), final=over)
     return data if has(data) else None
 
 
