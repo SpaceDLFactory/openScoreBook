@@ -95,7 +95,7 @@
       try { pick = localStorage.getItem(LAST_GAME); } catch { /* private mode */ }
       if (games.length && !games.some((g) => g.gameId === pick)) pick = games[0].gameId;
     }
-    if (!pick) throw new Error('경기 데이터가 없어요. tools/naver_relay.py relay <gameId> 로 먼저 받아 주세요.');
+    if (!pick) throw new Error('경기 데이터가 없어요. 먼저 중계 데이터를 받아 주세요.');
     // the last game may not be loadable (offline and never cached): fall back to the others
     let firstErr: unknown = null;
     for (const id of [pick, ...games.map((g) => g.gameId).filter((id) => id !== pick)]) {

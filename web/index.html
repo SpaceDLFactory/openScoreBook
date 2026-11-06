@@ -400,7 +400,7 @@ function render(){
       <div class="it"><span class="d" style="background:var(--ball)"></span>볼</div>
       <div class="it"><span class="d" style="background:var(--foul)"></span>파울</div>
       <div class="it"><span class="d" style="border:2px dashed var(--inplay)"></span>인플레이</div>
-      <div class="src">네이버 PTS<br>자동 반영</div>
+      <div class="src">PTS<br>자동 반영</div>
     </div>
   </div>
   <div class="log">${log}</div>
@@ -410,7 +410,7 @@ function render(){
     <div class="card fieldcard">${fieldSVG(pa)}</div>
     ${saved ? `<div class="pathbar"><button id="undo">↶ 되돌리기</button><button id="clear">지우기</button><span>흐름 ${saved.path?.length||0}점</span></div>` : ''}
     <div class="fnote">${G.stadium||'구장 미상'} 펜스 기준${G.fence.p?' · 위성사진 기반 윤곽':''}${G.fence.src.includes('sat')?' · ≈ 위성사진 기반 값':''}${G.fence.src.some(x=>x!=='ok'&&x!=='sat')?' · * 추정/비공식 수치':''}</div>
-    <div class="sect"><span>결과</span><span>${saved?.resManual?'직접 수정':'네이버 판정 자동'}</span></div>
+    <div class="sect"><span>결과</span><span>${saved?.resManual?'직접 수정':'자동 판정'}</span></div>
     <div class="chips res">${RES.map(([k,l,c]) => `<button class="chip ${curRes(pa)===k?'sel':''}" data-r="${k}" style="${curRes(pa)===k?`border-color:${c};color:${c};background:${c}1a`:''}">${l}</button>`).join('')}</div>
     <div class="sect"><span>궤적</span></div>
     <div class="chips">${TRAJ.map(t => `<button class="chip ${saved?.traj===t?'sel':''}" data-t="${t}">${t}</button>`).join('')}</div>`
@@ -546,7 +546,7 @@ function viewSheet(){
     for (const e of pa.events){ const m = e.match(/(\S+) : 홈인/); if (m) set.add(origin(m[1])); }
     if (/홈런/.test(pa.result || '')) set.add(G.names[pa.batter]);
   }
-  let h = `<div class="h1">기록지</div><div class="sub">${scoreLine()} · 결과는 네이버 문자중계 텍스트에서 자동 변환</div>`;
+  let h = `<div class="h1">기록지</div><div class="sub">${scoreLine()}</div>`;
   for (const side of ['away','home']){
     const top = side === 'away', L = G.lineups[side];
     const cells = {};
@@ -638,7 +638,7 @@ function viewWP(){
   for (const p of top3) svg += `<circle cx="${X(p.i)}" cy="${Y(p.wr)}" r="4" fill="var(--inplay)" stroke="#0d1014" stroke-width="2"/>`;
   svg += `<text x="12" y="20" font-size="9" fill="#5c6672">${G.homeName} 100%</text><text x="12" y="${H-14}" font-size="9" fill="#5c6672">${G.awayName} 100%</text></svg>`;
   const fin = pts[pts.length-1].wr;
-  return `<div class="h1">승부 확률</div><div class="sub">${scoreLine()} · ${G.homeName} 승리확률 기준 · 네이버 제공값</div>
+  return `<div class="h1">승부 확률</div><div class="sub">${scoreLine()} · ${G.homeName} 승리확률 기준</div>
   <div class="card wpc">${svg}</div>
   <div class="sect"><span>결정적 장면 · 승리확률 변동</span><span>최종 ${G.homeName} ${Math.round(fin)}%</span></div>
   <div class="swings">${top3.map((p, k) => `<div class="swing" data-pa="${p.idx}"><span class="rk">${k+1}</span><div class="tx">${(p.pa.result||p.pa.events.join(' · ')).replace(/^[^:]+ : /, `${G.names[p.pa.batter]} `)}<small>${halfName(p.pa)} · ${p.pa.top?G.awayName:G.homeName} 공격 · ${p.pa.after.awayScore}:${p.pa.after.homeScore}</small></div>

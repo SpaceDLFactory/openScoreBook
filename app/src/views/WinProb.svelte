@@ -22,7 +22,7 @@
 </script>
 
 <div class="h1">승부 확률</div>
-<div class="sub">{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName} · {game.homeName} 승리확률 기준 · 네이버 제공값</div>
+<div class="sub">{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName} · {game.homeName} 승리확률 기준</div>
 <div class="card wpc">
   <svg width="100%" viewBox="0 0 {W} {H}">
     <line x1="10" x2={W - 10} y1={Y(50)} y2={Y(50)} stroke="#2b333f" stroke-dasharray="3 3" />

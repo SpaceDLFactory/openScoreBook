@@ -7,7 +7,7 @@
   const check = $derived.by(async () => {
     const { config, events, unmapped, issues } = toEngine(game);
     const d = await derive(config, events);
-    const runs = Object.entries(compareRuns(game, d)).map(([h, [e, n]]) => `${h} 득점 엔진 ${e} / 네이버 ${n}`);
+    const runs = Object.entries(compareRuns(game, d)).map(([h, [e, n]]) => `${h} 득점 엔진 ${e} / 중계 ${n}`);
     return [...unmapped.map((p) => `변환 못 한 타석: ${p.result}`), ...issues, ...d.issues.map((i) => `엔진: ${i}`), ...runs, ...compareBox(game, d)];
   });
   const fin = $derived(game.pas[game.pas.length - 1].after);
@@ -31,7 +31,7 @@
   <div class="fnote" id="enginecheck">엔진 검산 중…</div>
 {:then off}
   <div class="fnote" id="enginecheck" style="color:{off.length ? 'var(--out)' : 'var(--inplay)'}">
-    {off.length ? `엔진 검산 · ${off.length}곳 불일치` : '엔진 검산 · 이닝별 득점과 타순별 타격 기록이 네이버와 일치'}
+    {off.length ? `엔진 검산 · ${off.length}곳 불일치` : '엔진 검산 · 이닝별 득점과 타순별 타격 기록 일치'}
   </div>
   {#each off.slice(0, 8) as o}<div class="fnote">{o}</div>{/each}
 {:catch e}

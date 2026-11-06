@@ -31,7 +31,7 @@
 </script>
 
 <div class="h1">기록지</div>
-<div class="sub">{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName} · 결과는 네이버 문자중계 텍스트에서 자동 변환</div>
+<div class="sub">{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName}</div>
 {#each sides as s (s.side)}
   <div class="sect"><span>{s.top ? '원정' : '홈'} · {s.name}</span></div>
   <div class="card sheet"><table>

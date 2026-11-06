@@ -55,7 +55,7 @@
       <div class="it"><span class="d" style="background:var(--ball)"></span>볼</div>
       <div class="it"><span class="d" style="background:var(--foul)"></span>파울</div>
       <div class="it"><span class="d" style="border:2px dashed var(--inplay)"></span>인플레이</div>
-      <div class="src">네이버 PTS<br />자동 반영</div>
+      <div class="src">PTS<br />자동 반영</div>
     </div>
   </div>
   <div class="log">
@@ -75,7 +75,7 @@
       <div class="pathbar"><button id="undo" onclick={onundo}>↶ 되돌리기</button><button id="clear" onclick={onclear}>지우기</button><span>흐름 {saved.path?.length ?? 0}점</span></div>
     {/if}
     <div class="fnote">{note}</div>
-    <div class="sect"><span>결과</span><span>{saved?.resManual ? '직접 수정' : '네이버 판정 자동'}</span></div>
+    <div class="sect"><span>결과</span><span>{saved?.resManual ? '직접 수정' : '자동 판정'}</span></div>
     <div class="chips res">
       {#each RES as [k, l, c]}
         <button class="chip" class:sel={curRes === k} data-r={k} style={curRes === k ? `border-color:${c};color:${c};background:${c}1a` : ''} onclick={() => onres(k)}>{l}</button>
