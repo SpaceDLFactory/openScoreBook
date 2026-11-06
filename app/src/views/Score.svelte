@@ -37,7 +37,7 @@
     spot = null;
   }
   function intentional() { onrecord([pa('Walk', [], defaultAdvances('Walk', occupied), { ibb: true })]); }
-  const pa = (result: PaResultType, fielders: number[], advances: Advance[], extra: { line?: boolean; ibb?: boolean; auto?: boolean } = {}): ManualEvent =>
+  const pa = (result: PaResultType, fielders: number[], advances: Advance[], extra: { line?: boolean; ibb?: boolean; auto?: boolean; err?: Spot[] } = {}): ManualEvent =>
     ({ kind: 'm.pa', result, fielders, advances, ...extra });
 
   // ---- panels
@@ -51,12 +51,17 @@
   let resKey = $state<string | null>(null);
   let fielders = $state<number[]>([]);
   let dest = $state<Record<string, Spot>>({}); // from -> to (rows not listed stay)
+  let err = $state<Spot[]>([]); // rows whose move came on an error
+  const toggleErr = (f: Spot) => { err = err.includes(f) ? err.filter((x) => x !== f) : [...err, f]; };
+  // the mark counts on a runner's advance, or the batter's going past first (reaching on an error is the 실책 result)
+  const errable = (from: Spot, to: Spot | undefined) => !!to && to !== from && to !== 'Out' && !(from === 'Batter' && to === 'First');
+  const errOf = (mv: Advance[]) => { const e = err.filter((f) => mv.some((a) => a.from === f && errable(f, a.to))); return e.length ? { err: e } : {}; };
   const START: Spot[] = ['First', 'Second', 'Third'];
   const DEST_LABEL: [Spot, string][] = [['First', '1루'], ['Second', '2루'], ['Third', '3루'], ['Home', '홈'], ['Out', '아웃']];
   const setDest = (adv: Advance[]) => { dest = Object.fromEntries(adv.map((a) => [a.from, a.to])); };
-  function openResult() { panel = 'result'; resKey = null; fielders = []; dest = { Batter: 'Out' }; }
+  function openResult() { panel = 'result'; resKey = null; fielders = []; dest = { Batter: 'Out' }; err = []; }
   function chooseResult(k: string) {
-    resKey = k;
+    resKey = k; err = [];
     const r = RESULTS.find((x) => x[0] === k)![1];
     setDest(defaultAdvances(r, occupied));
   }
@@ -64,20 +69,21 @@
     Object.entries(dest).filter(([from, to]) => (withBatter || from !== 'Batter') && from !== to).map(([from, to]) => ({ from: from as Spot, to }));
   function confirmResult() {
     const [, r, line] = RESULTS.find((x) => x[0] === resKey)!;
-    onrecord([pa(r, fielders, moves(true), { line })]);
+    const mv = moves(true);
+    onrecord([pa(r, fielders, mv, { line, ...errOf(mv) })]);
     panel = null;
   }
 
   const PLAYS: [RunnerPlay, string][] = [['SB', '도루'], ['CS', '도루실패'], ['WP', '폭투'], ['PB', '포일'], ['BK', '보크'], ['PO', '견제사'], ['ETC', '기타']];
   let play = $state<RunnerPlay>('SB');
   function openRunners() {
-    panel = 'runners'; play = 'SB';
+    panel = 'runners'; play = 'SB'; err = [];
     // default: the lead runner takes the next base
     const lead = [2, 1, 0].find((i) => occupied[i]);
     dest = lead === undefined ? {} : { [START[lead]]: lead === 2 ? 'Home' : START[lead + 1] };
   }
   function choosePlay(p: RunnerPlay) {
-    play = p;
+    play = p; err = [];
     const up = (i: number): Spot => (i === 2 ? 'Home' : START[i + 1]);
     const runners = [0, 1, 2].filter((i) => occupied[i]);
     const lead = runners.at(-1);
@@ -86,7 +92,7 @@
     else if (p === 'SB' && lead !== undefined) dest = { [START[lead]]: up(lead) };
     else dest = {};
   }
-  function confirmRunners() { onrecord([{ kind: 'm.runners', play, advances: moves(false) }]); panel = null; }
+  function confirmRunners() { const mv = moves(false); onrecord([{ kind: 'm.runners', play, advances: mv, ...errOf(mv) }]); panel = null; }
 
   let role = $state<SubRole>('PH'), subName = $state(''), subPos = $state(''), subSlot = $state(0), subBase = $state(0);
   function openSub() { panel = 'sub'; role = 'PH'; subName = ''; subPos = ''; subSlot = now.slot; subBase = occupied.findIndex(Boolean); }
@@ -191,15 +197,23 @@
             {#each DEST_LABEL.filter(([s]) => s === 'Out' || s === 'Home' || START.indexOf(s) > i) as [s, l]}
               <button class="chip" data-from={START[i]} data-to={s} class:sel={dest[START[i]] === s} onclick={() => (dest = { ...dest, [START[i]]: s })}>{l}</button>
             {/each}
+            {@render errChip(START[i])}
           </div>
         </div>
       {/if}
     {/each}
     {#if withBatter}
       <div class="arow"><span>타자 {now.batter.name}</span>
-        <div class="chips res">{#each DEST_LABEL as [s, l]}<button class="chip" data-from="Batter" data-to={s} class:sel={dest.Batter === s} onclick={() => (dest = { ...dest, Batter: s })}>{l}</button>{/each}</div>
+        <div class="chips res">{#each DEST_LABEL as [s, l]}<button class="chip" data-from="Batter" data-to={s} class:sel={dest.Batter === s} onclick={() => (dest = { ...dest, Batter: s })}>{l}</button>{/each}{@render errChip('Batter')}</div>
       </div>
     {/if}
     {#if !withBatter && !occupied.some(Boolean)}<div class="sub">주자가 없어요.</div>{/if}
   </div>
+{/snippet}
+
+{#snippet errChip(from: Spot)}
+  {#if errable(from, dest[from])}
+    {@const on = err.includes(from)}
+    <button class="chip" data-err={from} class:sel={on} style={on ? 'border-color:#ef4444;color:#ef4444;background:#ef44441a' : ''} onclick={() => toggleErr(from)}>실책으로</button>
+  {/if}
 {/snippet}
