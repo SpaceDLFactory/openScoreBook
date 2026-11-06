@@ -53,6 +53,13 @@
   let dest = $state<Record<string, Spot>>({}); // from -> to (rows not listed stay)
   let err = $state<Spot[]>([]); // rows whose move came on an error
   const toggleErr = (f: Spot) => { err = err.includes(f) ? err.filter((x) => x !== f) : [...err, f]; };
+  /** a row's new move (null: stays); a changed move drops its error mark */
+  function moveRow(from: Spot, to: Spot | null) {
+    const d = { ...dest };
+    if (to) d[from] = to; else delete d[from];
+    if (d[from] !== dest[from]) err = err.filter((x) => x !== from);
+    dest = d;
+  }
   // the mark counts on a runner's advance, or the batter's going past first (reaching on an error is the 실책 result)
   const errable = (from: Spot, to: Spot | undefined) => !!to && to !== from && to !== 'Out' && !(from === 'Batter' && to === 'First');
   const errOf = (mv: Advance[]) => { const e = err.filter((f) => mv.some((a) => a.from === f && errable(f, a.to))); return e.length ? { err: e } : {}; };
@@ -193,9 +200,9 @@
       {#if occupied[i]}
         <div class="arow"><span>{i + 1}루 {now.bases[i]?.name}</span>
           <div class="chips res">
-            <button class="chip" class:sel={!dest[START[i]] || dest[START[i]] === START[i]} onclick={() => { const d = { ...dest }; delete d[START[i]]; dest = d; }}>그대로</button>
+            <button class="chip" class:sel={!dest[START[i]] || dest[START[i]] === START[i]} onclick={() => moveRow(START[i], null)}>그대로</button>
             {#each DEST_LABEL.filter(([s]) => s === 'Out' || s === 'Home' || START.indexOf(s) > i) as [s, l]}
-              <button class="chip" data-from={START[i]} data-to={s} class:sel={dest[START[i]] === s} onclick={() => (dest = { ...dest, [START[i]]: s })}>{l}</button>
+              <button class="chip" data-from={START[i]} data-to={s} class:sel={dest[START[i]] === s} onclick={() => moveRow(START[i], s)}>{l}</button>
             {/each}
             {@render errChip(START[i])}
           </div>
@@ -204,7 +211,7 @@
     {/each}
     {#if withBatter}
       <div class="arow"><span>타자 {now.batter.name}</span>
-        <div class="chips res">{#each DEST_LABEL as [s, l]}<button class="chip" data-from="Batter" data-to={s} class:sel={dest.Batter === s} onclick={() => (dest = { ...dest, Batter: s })}>{l}</button>{/each}{@render errChip('Batter')}</div>
+        <div class="chips res">{#each DEST_LABEL as [s, l]}<button class="chip" data-from="Batter" data-to={s} class:sel={dest.Batter === s} onclick={() => moveRow('Batter', s)}>{l}</button>{/each}{@render errChip('Batter')}</div>
       </div>
     {/if}
     {#if !withBatter && !occupied.some(Boolean)}<div class="sub">주자가 없어요.</div>{/if}
