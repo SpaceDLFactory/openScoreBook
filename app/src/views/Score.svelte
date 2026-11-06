@@ -17,24 +17,27 @@
   const W = 230, H = 260, KX = 56, KZ = 50, sx = (x: number) => W / 2 + x * KX, sz = (z: number) => H - 16 - z * KZ;
   let spot = $state<[number, number] | null>(null);
   let stuff = $state<string | null>(null);
+  let speed = $state(''); // km/h as typed
   const STUFF = ['직구', '투심', '커터', '슬라이더', '커브', '체인지업', '포크', '기타'];
   function tapZone(e: MouseEvent) {
     const r = (e.currentTarget as SVGSVGElement).getBoundingClientRect(), k = W / r.width;
     const px = (e.clientX - r.left) * k, py = (e.clientY - r.top) * k;
     spot = [Math.round(((px - W / 2) / KX) * 100) / 100, Math.round(((H - 16 - py) / KZ) * 100) / 100];
   }
+  /** the pitch's location, type and speed as entered so far */
+  const what = () => { const v = parseInt(speed); return { ...(spot ? { x: spot[0], z: spot[1] } : {}), ...(stuff ? { stuff } : {}), ...(v > 0 ? { speed: v } : {}) }; };
   function pitch(call: 'B' | 'T' | 'S' | 'F' | 'H') {
-    const evs: ManualEvent[] = [{ kind: 'm.pitch', call, ...(spot ? { x: spot[0], z: spot[1] } : {}), ...(stuff ? { stuff } : {}) }];
+    const evs: ManualEvent[] = [{ kind: 'm.pitch', call, ...what() }];
     const balls = now.balls + (call === 'B' ? 1 : 0), strikes = now.strikes + (call === 'T' || call === 'S' || (call === 'F' && now.strikes < 2) ? 1 : 0);
     if (call === 'B' && balls === 4) evs.push(pa('Walk', [], defaultAdvances('Walk', occupied), { auto: true }));
     if ((call === 'T' || call === 'S') && strikes === 3) evs.push(pa('Strikeout', [], defaultAdvances('Strikeout', occupied), { auto: true }));
     onrecord(evs);
-    spot = null; stuff = null;
+    spot = null; stuff = null; speed = '';
     if (call === 'H') openResult();
   }
   function hitByPitch() {
-    onrecord([{ kind: 'm.pitch', call: 'B', ...(spot ? { x: spot[0], z: spot[1] } : {}) }, pa('HitByPitch', [], defaultAdvances('HitByPitch', occupied), { auto: true })]);
-    spot = null;
+    onrecord([{ kind: 'm.pitch', call: 'B', ...what() }, pa('HitByPitch', [], defaultAdvances('HitByPitch', occupied), { auto: true })]);
+    spot = null; stuff = null; speed = '';
   }
   function intentional() { onrecord([pa('Walk', [], defaultAdvances('Walk', occupied), { ibb: true })]); }
   const pa = (result: PaResultType, fielders: number[], advances: Advance[], extra: { line?: boolean; ibb?: boolean; auto?: boolean; err?: Spot[] } = {}): ManualEvent =>
@@ -144,6 +147,7 @@
       {#if spot}<circle cx={sx(spot[0])} cy={sz(spot[1])} r="11" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3 2" />{/if}
     </svg>
     <div class="calls">
+      <input id="speed" class="speed" type="text" inputmode="numeric" maxlength="3" placeholder="구속 km/h" bind:value={speed} />
       <button data-call="B" style="--c:var(--ball)" onclick={() => pitch('B')}>볼</button>
       <button data-call="T" style="--c:var(--strike)" onclick={() => pitch('T')}>스트라이크</button>
       <button data-call="S" style="--c:var(--strike)" onclick={() => pitch('S')}>헛스윙</button>
@@ -155,7 +159,7 @@
   </div>
   <div class="chips res">{#each STUFF as t}<button class="chip" class:sel={stuff === t} onclick={() => (stuff = stuff === t ? null : t)}>{t}</button>{/each}</div>
   {#if cur?.pitches.length}
-    <div class="plist">{#each cur.pitches as p}<span style="color:{callColor(p.call)}">{p.n} {p.stuff ? p.stuff + ' ' : ''}{callLabel(p.call)}</span>{/each}</div>
+    <div class="plist">{#each cur.pitches as p}<span style="color:{callColor(p.call)}">{p.n} {p.stuff ? p.stuff + ' ' : ''}{p.speed ? p.speed + ' ' : ''}{callLabel(p.call)}</span>{/each}</div>
   {/if}
   <div class="actions">
     <button id="openResult" onclick={openResult}>결과 입력</button>
