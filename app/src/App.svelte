@@ -229,7 +229,7 @@
       {#if view === 'sheet'}<Sheet {game} onpick={pick} />
       {:else if view === 'log'}<Log {game} onpick={pick} />
       {:else if view === 'box'}<Box {game} />
-      {:else if view === 'pitcher'}<Pitcher {game} />
+      {:else if view === 'pitcher'}<Pitcher {game} {landings} onpick={pick} />
       {:else if view === 'wp' && !manual}<WinProb {game} onpick={pick} />{/if}
     </main>
   {/if}
