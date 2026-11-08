@@ -168,6 +168,9 @@ describe('manual scoring', () => {
     const cases: [Parameters<typeof resultText>, string][] = [
       [['GroundOut', [6, 3]], '6-3'], [['FlyOut', [8]], 'F8'], [['FlyOut', [6], true], 'L6'], [['DoublePlay', [6, 4, 3]], '6-4-3 DP'],
       [['SacBunt', [1, 3]], 'SAC 1-3'], [['SacFly', [9]], 'SF9'], [['Error', [5]], 'E5'], [['FieldersChoice', [4]], 'FC'],
+      // no fielders picked: the bare play
+      [['GroundOut', []], 'G'], [['DoublePlay', []], 'DP'], [['SacBunt', []], 'SAC'], [['FlyOut', []], 'F'], [['FlyOut', [], true], 'L'],
+      [['SacFly', []], 'SF'], [['Error', []], 'E'],
     ];
     for (const [args, code] of cases)
       expect(notation({ result: `X : ${resultText(...args)}`, pitches: [] } as never)?.c, args.join(' ')).toBe(code);

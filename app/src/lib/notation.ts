@@ -29,12 +29,13 @@ export function notation(pa: PA): Note | null {
   if (/야수선택|땅볼로 출루/.test(t)) return { c: 'FC', k: 'er' };
   const chain = ((t.match(/\(([^)]*)\)/) ?? [])[1]?.match(POS_RE) ?? []).map((p) => POS[p]);
   const nums = (chain.length ? chain : [first]).join('-');
-  if (/희생번트/.test(t)) return { c: 'SAC ' + nums, k: 'out' };
+  if (/희생번트/.test(t)) return { c: ('SAC ' + nums).trim(), k: 'out' };
   if (/희생플라이/.test(t)) return { c: 'SF' + first, k: 'out' };
-  if (/병살/.test(t)) return { c: nums + ' DP', k: 'out' };
+  if (/병살/.test(t)) return { c: (nums + ' DP').trim(), k: 'out' };
   if (/플라이/.test(t)) return { c: 'F' + first, k: 'out' };
   if (/라인드라이브|직선타/.test(t)) return { c: 'L' + first, k: 'out' };
-  if (/땅볼|번트/.test(t)) return { c: chain.length > 1 ? nums : first + 'U', k: 'out' };
+  // "U" is an unassisted out by that fielder; a manual record may name none ("G")
+  if (/땅볼|번트/.test(t)) return { c: chain.length > 1 ? nums : first ? first + 'U' : 'G', k: 'out' };
   return { c: t.slice(0, 5), k: 'out' };
 }
 
