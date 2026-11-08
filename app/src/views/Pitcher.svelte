@@ -8,7 +8,8 @@
   import { zoneOf } from '../lib/scout';
   import { TYPE_COL, callColor } from '../lib/ui';
   let { game, landings, onpick }: { game: Game; landings: Landings; onpick: (i: number) => void } = $props();
-  const order = $derived([...new Set(game.pas.flatMap((p) => p.pitches.map((q) => q.pitcher)))]);
+  // pa.pitcher too: a pitcher whose only PA had no pitch (an intentional walk) still gets his chip
+  const order = $derived([...new Set(game.pas.flatMap((p) => [...p.pitches.map((q) => q.pitcher), p.pitcher]))]);
   let picked = $state<string | null>(null);
   const sel = $derived(picked && order.includes(picked) ? picked : order[0]);
   const mine = $derived(game.pas.filter((p) => p.pitches.some((q) => q.pitcher === sel)));
