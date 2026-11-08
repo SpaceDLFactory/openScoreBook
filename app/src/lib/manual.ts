@@ -211,14 +211,14 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
 
   events.forEach((e, i) => {
     if (e.kind === 'm.pitch') {
-      const pa = open();
+      const pa = open(), count: [number, number] = [balls, strikes];
       if (e.call === 'B') balls++;
       else if (e.call === 'T' || e.call === 'S') strikes++;
       else if (e.call === 'F' && strikes < 2) strikes++;
       const pr = curPitcherRow(fieldSide());
       pr.pitches++;
       const p: Pitch = { pitcher: pitcher[fieldSide()].id, n: ++pitchNo, call: e.call, stuff: e.stuff, speed: e.speed != null ? String(e.speed) : undefined,
-        xz: e.x != null && e.z != null ? [e.x, e.z] : null, sz: [1.6, 3.4], state: state() };
+        xz: e.x != null && e.z != null ? [e.x, e.z] : null, sz: [1.6, 3.4], count, state: state() };
       pa.pitches.push(p);
       pa.pitcher = p.pitcher; pa.pitcherPitches = pr.pitches; pa.after = p.state;
     } else if (e.kind === 'm.runners') {

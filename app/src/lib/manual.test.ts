@@ -45,6 +45,11 @@ describe('manual scoring', () => {
     expect([t.issues, compareRuns(game, d), compareBox(game, d)]).toEqual([[], {}, []]);
   });
 
+  it('each pitch carries the count before it', async () => {
+    const { game } = await build([{ kind: 'm.setup', setup }, p('B'), p('F'), p('F'), p('F'), p('S'), pa('Strikeout', [false, false, false])]);
+    expect(game.pas[0].pitches.map((x) => x.count.join('-'))).toEqual(['0-0', '1-0', '1-1', '1-2', '1-2']);
+  });
+
   it('undo takes back the latest edit; the count follows', async () => {
     const { now } = await build([{ kind: 'm.setup', setup }, p('B'), p('S'), { kind: 'm.undo' }, p('B')]);
     expect([now.balls, now.strikes]).toEqual([2, 0]);

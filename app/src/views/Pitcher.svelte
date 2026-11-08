@@ -1,9 +1,11 @@
 <script lang="ts">
   // One pitcher's game: pitch mix with average and top velocity, every pitch location colored by type, and a
-  // scout's pitch sheet: one row per batter faced, one cell per pitch (type, speed, location, call), then the result.
+  // scout's pitch sheet: one row per batter faced, one cell per pitch (count, type, call, speed, location number),
+  // then the result.
   import type { Game, Pitch } from '../lib/naver/parse';
   import type { Landings } from '../lib/landings';
   import { notation } from '../lib/notation';
+  import { zoneOf } from '../lib/scout';
   import { TYPE_COL, callColor } from '../lib/ui';
   let { game, landings, onpick }: { game: Game; landings: Landings; onpick: (i: number) => void } = $props();
   const order = $derived([...new Set(game.pas.flatMap((p) => p.pitches.map((q) => q.pitcher)))]);
@@ -44,8 +46,6 @@
   }));
   const cols = $derived(Math.max(1, ...rows.map((r) => r.cells.length)));
   const side = (pcode: string) => (game.hands[pcode] ?? '').slice(2, 3);
-  // mini strike zone per pitch: x -1.5..1.5 ft, z 0.8..4.2 ft
-  const gx = (x: number) => clamp(1 + ((x + 1.5) / 3) * 12, 1.5, 12.5), gz = (z: number) => clamp(15 - ((z - 0.8) / 3.4) * 14, 1.5, 14.5);
 </script>
 
 <div class="h1">투수 분석</div>
@@ -86,10 +86,11 @@
       <td class="nm"><b class:ditto={j > 0 && rows[j - 1].pa.inn === r.pa.inn}>{r.pa.inn}회</b>{game.names[r.pa.batter]}<span class="pos">{side(r.pa.batter)}</span></td>
       {#each { length: cols } as _, k}
         {@const q = r.cells[k]}
+        {@const zn = q ? zoneOf(q) : null}
         <td class="pc">{#if q}<div class="pw">
+          <span class="bs">{q.count.join('-')}</span>
           <span class="ty" style="color:{colOf[q.stuff || '기타']}">{code(q.stuff)}</span><span class="cl" style="color:{callColor(q.call)}">{LETTER[q.call] ?? q.call}</span>
-          <span class="sp">{q.speed ?? ''}</span>
-          {#if q.xz}<svg class="gz" width="14" height="16" viewBox="0 0 14 16"><rect x={gx(-0.708)} y={gz(3.4)} width={gx(0.708) - gx(-0.708)} height={gz(1.6) - gz(3.4)} fill="none" stroke="#4a5566" /><circle cx={gx(q.xz[0])} cy={gz(q.xz[1])} r="1.8" fill={callColor(q.call)} /></svg>{/if}
+          <span class="sp">{q.speed ?? ''}</span><span class="zn" class:out={zn != null && zn > 9}>{zn ?? ''}</span>
         </div>{/if}</td>
       {/each}
       <td class="res">{#if r.note}<span class="nt {r.note.k}">{r.note.c}</span>{:else if r.pa.result}<span class="hitd">교체</span>{/if}{#if r.hit}<span class="hitd">{r.hit}</span>{/if}</td>
@@ -98,6 +99,12 @@
   </tbody>
 </table></div>
 <div class="sheetleg">
+  <svg class="znleg" width="54" height="54" viewBox="0 0 54 54" aria-label="코스 번호 · 포수 시점">
+    <rect x="0.5" y="0.5" width="53" height="53" rx="4" fill="none" stroke="#2f3744" />
+    {#each [[11, 6, 9], [12, 48, 9], [13, 6, 50], [14, 48, 50]] as [n, x, y]}<text {x} {y} text-anchor="middle" font-size="7" fill="#5c6672">{n}</text>{/each}
+    <rect x="13" y="13" width="28" height="28" fill="none" stroke="#4a5566" />
+    {#each { length: 9 } as _, k}<text x={17.7 + (k % 3) * 9.3} y={20.5 + Math.floor(k / 3) * 9.3} text-anchor="middle" font-size="7" font-weight="700" fill="#8b95a3">{k + 1}</text>{/each}
+  </svg>
   {#each types as t (t.t)}<span style="color:{t.col}">{code(t.t)} {t.t}</span>{/each}
-  <span>· <b style="color:var(--ball)">B</b> 볼 <b style="color:var(--strike)">C</b> 루킹 <b style="color:var(--strike)">S</b> 헛스윙 <b style="color:var(--foul)">F</b> 파울 <b style="color:var(--foul)">L</b> 번트파울 <b style="color:var(--inplay)">X</b> 타격 · 행을 누르면 그 타석으로 이동</span>
+  <span>· <b style="color:var(--ball)">B</b> 볼 <b style="color:var(--strike)">C</b> 루킹 <b style="color:var(--strike)">S</b> 헛스윙 <b style="color:var(--foul)">F</b> 파울 <b style="color:var(--foul)">L</b> 번트파울 <b style="color:var(--inplay)">X</b> 타격 · 칸 위 숫자는 던지기 전 카운트, 오른쪽 아래는 코스 번호(포수 시점) · 행을 누르면 그 타석으로 이동</span>
 </div>

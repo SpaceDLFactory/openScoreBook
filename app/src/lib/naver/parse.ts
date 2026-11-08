@@ -34,6 +34,8 @@ export interface Pitch {
   xz: [number, number] | null;
   /** strike zone [bottom, top] in feet */
   sz: [number, number] | null;
+  /** balls, strikes before the pitch (a pitch-clock violation adds one with no pitch) */
+  count: [number, number];
   state: State;
 }
 
@@ -128,7 +130,7 @@ export function buildGame(gameId: string, meta: NaverGameMeta | null, innings: N
       let result: string | null = null;
       let prev = before, open: Play | null = null, res: Play | null = null;
       for (const o of opts.slice(1)) {
-        const st = toState(o.currentGameState);
+        const st = toState(o.currentGameState), was = prev;
         if (o.type === 13 || o.type === 23) { res = { kind: 'result', before: prev, after: st, texts: [] }; plays.push(res); open = null; }
         else if (o.type === 14 || o.type === 24) {
           const cur = res ?? (open ??= plays[plays.push({ kind: 'runners', before: prev, after: st, texts: [] }) - 1]);
@@ -143,7 +145,7 @@ export function buildGame(gameId: string, meta: NaverGameMeta | null, innings: N
           const p = o.ptsPitchId ? pts[o.ptsPitchId] : undefined;
           pitches.push({
             pitcher: pc, n: o.pitchNum ?? pitches.length + 1, call: o.pitchResult as Call, speed: o.speed, stuff: o.stuff,
-            xz: p ? plateXZ(p) : null, sz: p ? [p.bottomSz, p.topSz] : null, state: toState(o.currentGameState),
+            xz: p ? plateXZ(p) : null, sz: p ? [p.bottomSz, p.topSz] : null, count: [was.ball, was.strike], state: toState(o.currentGameState),
           });
         } else if (o.type === 13 || o.type === 23) result = o.text ?? null;
         else if (o.text) events.push(o.text);

@@ -133,13 +133,17 @@
   .scout tr{cursor:pointer;}
   .scout tr.newinn td{border-top:2px solid #3a4352;}
   .scout .ditto{visibility:hidden;}
-  .scout td.pc{min-width:36px;height:36px;padding:3px 3px;}
+  .scout td.pc{min-width:36px;height:44px;padding:3px 3px;}
   .scout .pw{display:grid;grid-template-columns:auto auto;justify-content:space-between;align-items:center;gap:1px 3px;}
+  .scout .bs{grid-column:1 / -1;font-size:9px;color:var(--dim);line-height:1;}
+  .scout .zn{font-size:10px;font-weight:800;color:var(--txt);text-align:right;}
+  .scout .zn.out{color:var(--dim);font-weight:600;}
   .scout .ty{font-size:12px;font-weight:800;}
   .scout .cl{font-size:10px;font-weight:800;}
   .scout .sp{font-size:10px;color:var(--muted);}
   .scout td.res{white-space:nowrap;text-align:left;padding:4px 10px 4px 6px;}
   .scout .hitd{display:block;font-size:10px;color:var(--muted);margin-top:2px;}
+  .znleg{flex-shrink:0;}
   .sheetleg{margin:10px 14px;font-size:11px;color:var(--dim);display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   /* ---------- wide (PC) layout */
   body.wide{max-width:none;padding:0 0 32px;}
