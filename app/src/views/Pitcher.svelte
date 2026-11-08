@@ -2,7 +2,7 @@
   // One pitcher's game: pitch mix with average and top velocity, every pitch location colored by type, and a
   // scout's pitch sheet: one row per batter faced, one cell per pitch (count, type, call, speed, location number),
   // then the result.
-  import type { Game, Pitch } from '../lib/naver/parse';
+  import type { Game } from '../lib/naver/parse';
   import type { Landings } from '../lib/landings';
   import { notation } from '../lib/notation';
   import { zoneOf } from '../lib/scout';
@@ -38,10 +38,9 @@
   /** spray direction of a landing, meters from home (x < 0: left field) */
   const dir = (x: number, y: number) => { const a = (Math.atan2(x, y) * 180) / Math.PI; return Math.abs(a) > 45 ? '파울' : DIRS[Math.min(4, Math.floor((a + 45) / 18))]; };
   const rows = $derived(game.pas.flatMap((pa, i) => {
-    const own = pa.pitches.filter((q) => q.pitcher === sel);
-    if (!own.length && pa.pitcher !== sel) return [];
-    const cells: (Pitch | undefined)[] = [];
-    for (const q of own) cells[q.n - 1] = q;
+    if (pa.pitcher !== sel && !pa.pitches.some((q) => q.pitcher === sel)) return [];
+    // a column per pitch thrown in the PA (a pitch-clock call is not one), a reliever's pitches in their place
+    const cells = pa.pitches.map((q) => (q.pitcher === sel ? q : undefined));
     const l = landings[pa.no];
     return [{ pa, i, cells, note: pa.pitcher === sel ? notation(pa) : null, hit: l ? [l.traj, dir(l.x, l.y)].filter(Boolean).join(' · ') : '' }];
   }));
