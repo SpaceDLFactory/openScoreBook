@@ -18,6 +18,8 @@
   let spot = $state<[number, number] | null>(null);
   let stuff = $state<string | null>(null);
   let speed = $state(''); // km/h as typed
+  /** clear what was entered for the next pitch: after a pitch, and when the PA ends without one */
+  const resetPitch = () => { spot = null; stuff = null; speed = ''; };
   const STUFF = ['직구', '투심', '커터', '슬라이더', '커브', '체인지업', '포크', '기타'];
   function tapZone(e: MouseEvent) {
     const r = (e.currentTarget as SVGSVGElement).getBoundingClientRect(), k = W / r.width;
@@ -32,14 +34,14 @@
     if (call === 'B' && balls === 4) evs.push(pa('Walk', [], defaultAdvances('Walk', occupied), { auto: true }));
     if ((call === 'T' || call === 'S') && strikes === 3) evs.push(pa('Strikeout', [], defaultAdvances('Strikeout', occupied), { auto: true }));
     onrecord(evs);
-    spot = null; stuff = null; speed = '';
+    resetPitch();
     if (call === 'H') openResult();
   }
   function hitByPitch() {
     onrecord([{ kind: 'm.pitch', call: 'B', ...what() }, pa('HitByPitch', [], defaultAdvances('HitByPitch', occupied), { auto: true })]);
-    spot = null; stuff = null; speed = '';
+    resetPitch();
   }
-  function intentional() { onrecord([pa('Walk', [], defaultAdvances('Walk', occupied), { ibb: true })]); }
+  function intentional() { onrecord([pa('Walk', [], defaultAdvances('Walk', occupied), { ibb: true })]); resetPitch(); }
   const pa = (result: PaResultType, fielders: number[], advances: Advance[], extra: { line?: boolean; ibb?: boolean; auto?: boolean; err?: Spot[] } = {}): ManualEvent =>
     ({ kind: 'm.pa', result, fielders, advances, ...extra });
 
@@ -81,7 +83,7 @@
     const [, r, line] = RESULTS.find((x) => x[0] === resKey)!;
     const mv = moves(true);
     onrecord([pa(r, fielders, mv, { line, ...errOf(mv) })]);
-    panel = null;
+    panel = null; resetPitch();
   }
 
   const PLAYS: [RunnerPlay, string][] = [['SB', '도루'], ['CS', '도루실패'], ['WP', '폭투'], ['PB', '포일'], ['BK', '보크'], ['PO', '견제사'], ['ETC', '기타']];
