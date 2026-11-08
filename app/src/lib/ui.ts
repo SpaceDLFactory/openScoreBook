@@ -3,7 +3,7 @@ import type { Call, PA, ResClass } from './naver/parse';
 
 export const CALL: Record<Call, [string, string]> = {
   B: ['볼', 'var(--ball)'], T: ['루킹 스트라이크', 'var(--strike)'], S: ['헛스윙', 'var(--strike)'],
-  F: ['파울', 'var(--foul)'], H: ['타격', 'var(--inplay)'],
+  F: ['파울', 'var(--foul)'], W: ['번트파울', 'var(--foul)'], H: ['타격', 'var(--inplay)'],
 };
 export const callLabel = (c: string) => CALL[c as Call]?.[0] ?? c;
 export const callColor = (c: string) => CALL[c as Call]?.[1] ?? 'var(--foul)';

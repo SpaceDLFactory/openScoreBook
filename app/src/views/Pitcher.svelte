@@ -2,7 +2,7 @@
   // One pitcher's game: pitch mix with average and top velocity, every pitch location colored by type, and a
   // scout's pitch sheet: one row per batter faced, one cell per pitch (count, type, call, speed, location number),
   // then the result.
-  import type { Game } from '../lib/naver/parse';
+  import type { Call, Game } from '../lib/naver/parse';
   import type { Landings } from '../lib/landings';
   import { notation } from '../lib/notation';
   import { zoneOf } from '../lib/scout';
@@ -33,7 +33,7 @@
   // ---- pitch sheet
   const CODE: Record<string, string> = { 직구: '직', 투심: '투', 싱커: '싱', 커터: '컷', 슬라이더: '슬', 스위퍼: '스', 커브: '커', 체인지업: '체', 포크: '포', 너클볼: '너' };
   const code = (s: string | undefined) => (s && s !== '기타' ? (CODE[s] ?? s[0]) : '·');
-  const LETTER: Record<string, string> = { B: 'B', T: 'C', S: 'S', F: 'F', W: 'L', H: 'X' }; // W: Naver's foul bunt
+  const LETTER: Record<Call, string> = { B: 'B', T: 'C', S: 'S', F: 'F', W: 'L', H: 'X' };
   const DIRS = ['좌', '좌중', '중', '우중', '우'];
   /** spray direction of a landing, meters from home (x < 0: left field) */
   const dir = (x: number, y: number) => { const a = (Math.atan2(x, y) * 180) / Math.PI; return Math.abs(a) > 45 ? '파울' : DIRS[Math.min(4, Math.floor((a + 45) / 18))]; };
@@ -89,7 +89,7 @@
         {@const zn = q ? zoneOf(q) : null}
         <td class="pc">{#if q}<div class="pw">
           <span class="bs">{q.count.join('-')}</span>
-          <span class="ty" style="color:{colOf[q.stuff || '기타']}">{code(q.stuff)}</span><span class="cl" style="color:{callColor(q.call)}">{LETTER[q.call] ?? q.call}</span>
+          <span class="ty" style="color:{colOf[q.stuff || '기타']}">{code(q.stuff)}</span><span class="cl" style="color:{callColor(q.call)}">{LETTER[q.call]}</span>
           <span class="sp">{q.speed ?? ''}</span><span class="zn" class:out={zn != null && zn > 9}>{zn ?? ''}</span>
         </div>{/if}</td>
       {/each}

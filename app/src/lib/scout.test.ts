@@ -41,7 +41,7 @@ describe.skipIf(!ids.length)('the count before each pitch, fetched games', () =>
     for (const pa of load(id).pas) {
       if (pa.pitches[0] && pa.pitches[0].count.join() !== '0,0' && !pa.events.some((e) => e.includes('피치클락'))) off.push(`${pa.no} starts ${pa.pitches[0].count}`);
       pa.pitches.slice(1).forEach((q, k) => {
-        const [b, s] = pa.pitches[k].count, c: string = pa.pitches[k].call; // Naver also sends W (foul bunt), outside Call
+        const [b, s] = pa.pitches[k].count, c = pa.pitches[k].call;
         const want = c === 'B' ? [b + 1, s] : STRIKE.has(c) || ((c === 'F' || c === 'W') && s < 2) ? [b, s + 1] : [b, s];
         n++;
         if (q.count.join() !== want.join() && !pa.events.some((e) => e.includes('피치클락'))) off.push(`${pa.no}#${q.n} ${q.count} vs ${want}`);

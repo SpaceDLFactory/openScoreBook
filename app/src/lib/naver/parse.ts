@@ -1,7 +1,8 @@
 // Turn Naver relay innings into plate appearances with pitches, results and score state.
 import type { InningScore, NaverGameMeta, NaverGameState, NaverInning, NaverLineup, NaverMetric, NaverPitchTrack } from './types';
 
-export type Call = 'B' | 'T' | 'S' | 'F' | 'H';
+/** W: a foul bunt */
+export type Call = 'B' | 'T' | 'S' | 'F' | 'W' | 'H';
 export type ResClass = '1B' | '2B' | '3B' | 'HR' | 'OUT' | 'E' | 'ETC';
 
 export interface State {
