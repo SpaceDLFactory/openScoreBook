@@ -4,6 +4,16 @@
 네이버 문자중계가 있는 경기는 투구 데이터를 받아 채우고, 사람은 낙구지점만 탭하면 된다.
 오프라인에서 동작하는 PWA이고, 스코어링 엔진은 Rust로 짜서 WASM으로 돌린다.
 
+### PC
+
+<img src="docs/screenshots/pc_chart.png" alt="PC 차팅: 왼쪽 타석 목록, 가운데 투구, 오른쪽 낙구지점">
+
+| 투수 분석 · 투구 기록지 | 기록지 |
+| :-: | :-: |
+| <img src="docs/screenshots/pc_pitcher.png" width="420"> | <img src="docs/screenshots/pc_sheet.png" width="420"> |
+
+### 폰
+
 | 기록 입력 | 투수 분석 · 투구 기록지 | 차팅 · 낙구지점 |
 | :-: | :-: | :-: |
 | <img src="docs/screenshots/score.png" width="260"> | <img src="docs/screenshots/pitcher.png" width="260"> | <img src="docs/screenshots/chart.png" width="260"> |
