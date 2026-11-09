@@ -93,7 +93,7 @@
     let pick = new URLSearchParams(location.search).get('game');
     if (!pick) {
       try { pick = localStorage.getItem(LAST_GAME); } catch { /* private mode */ }
-      if (games.length && !games.some((g) => g.gameId === pick)) pick = games[0].gameId;
+      if (!games.some((g) => g.gameId === pick)) pick = games[0]?.gameId ?? null;
     }
     if (!pick) return; // no games at all (a fresh install): the empty screen offers a manual one
     // the last game may not be loadable (offline and never cached): fall back to the others

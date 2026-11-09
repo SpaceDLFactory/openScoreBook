@@ -10,6 +10,7 @@ The data is laid out like fixtures/naver, so the app reads it the same way:
   /api/<id>/inning-N.json    relay of inning N; 404 once there is no such inning yet
 Naver is asked only when the app asks, through naver_relay.get (curl, HTTP/1.1, browser UA + Referer), with a
 short cache for games in progress; finished games already in fixtures/naver are served from disk.
+The app must be built with relay games in: VITE_RELAY=1 npm run build (or VITE_RELAY=1 npm run dev for fixtures).
 Replay mode shows a fetched game's relays a few at a time (one plate appearance every 10 s / speed) with status
 STARTED until the end. The box score it shows is the final one (the fixture only has that).
 """
