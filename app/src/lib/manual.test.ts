@@ -4,7 +4,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { deriveSteps, loadEngine } from './engine';
-import { defaultAdvances, engineEvents, manualGame, resolve, resultText, type ManualEvent, type Player, type Setup } from './manual';
+import { baseClash, defaultAdvances, engineEvents, manualGame, resolve, resultText, type ManualEvent, type Player, type Setup } from './manual';
 import type { Spot } from './engine';
 import { buildGame, type Game, type Play } from './naver/parse';
 import type { NaverInning } from './naver/types';
@@ -25,6 +25,21 @@ const pa = (result: ManualEvent & { kind: 'm.pa' } extends infer T ? T extends {
   ({ kind: 'm.pa', result, fielders, advances: defaultAdvances(result, bases) });
 
 describe('manual scoring', () => {
+  it('spots two runners ending on one base, and no default move does that', () => {
+    const on = [true, true, false];
+    expect(baseClash(on, [{ from: 'First', to: 'Second' }])).toBe(true); // the runner on second stayed
+    expect(baseClash(on, [{ from: 'First', to: 'Third' }, { from: 'Second', to: 'Third' }])).toBe(true);
+    expect(baseClash(on, [{ from: 'Batter', to: 'First' }])).toBe(true);
+    expect(baseClash(on, [{ from: 'First', to: 'Second' }, { from: 'Second', to: 'Third' }, { from: 'Batter', to: 'First' }])).toBe(false);
+    expect(baseClash(on, [{ from: 'First', to: 'Out' }, { from: 'Batter', to: 'First' }])).toBe(false);
+    expect(baseClash([true, true, true], [{ from: 'First', to: 'Home' }, { from: 'Second', to: 'Home' }, { from: 'Batter', to: 'Out' }])).toBe(false);
+    const results = ['Single', 'Double', 'Triple', 'HomeRun', 'GroundOut', 'FlyOut', 'DoublePlay', 'FieldersChoice', 'Error', 'SacFly', 'SacBunt', 'Strikeout', 'Walk', 'HitByPitch'] as const;
+    for (const r of results) for (let m = 0; m < 8; m++) {
+      const b = [!!(m & 1), !!(m & 2), !!(m & 4)];
+      expect(baseClash(b, defaultAdvances(r, b)), `${r} ${m}`).toBe(false);
+    }
+  });
+
   it('counts, a walk, a two-run homer, outs and a half flip', async () => {
     const { game, now } = await build([{ kind: 'm.setup', setup },
       p('B'), p('B'), p('B'), p('B'), pa('Walk', [false, false, false]),

@@ -89,6 +89,13 @@ export function defaultAdvances(r: PaResultType, bases: boolean[]): Advance[] {
   return [mv('Batter', 'Out')]; // strikeout, ground out, fly out
 }
 
+/** Would two runners (or a runner and the batter) end on one base? The engine would drop one of them. */
+export function baseClash(bases: boolean[], advances: Advance[]): boolean {
+  const ends = [...BASES.filter((_, i) => bases[i]).map((f) => advances.find((a) => a.from === f)?.to ?? f),
+    ...advances.filter((a) => a.from === 'Batter').map((a) => a.to)].filter((s) => BASES.includes(s));
+  return new Set(ends).size < ends.length;
+}
+
 /** Engine input for the edits in effect, and for each edit the index of its engine event (or -1). */
 export function engineEvents(events: readonly ManualEvent[]): { config: EngineConfig; events: EngineEvent[]; at: number[] } {
   const setup = events.find((e) => e.kind === 'm.setup')?.setup;

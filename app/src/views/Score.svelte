@@ -3,7 +3,7 @@
   // with runner moves, runner plays and substitutions. Walks and strikeouts complete themselves from the count.
   import type { Advance, PaResultType, Spot } from '../lib/engine';
   import type { Game } from '../lib/naver/parse';
-  import { POS_NAME, defaultAdvances, type ManualEvent, type Now, type RunnerPlay, type Side, type SubRole } from '../lib/manual';
+  import { POS_NAME, baseClash, defaultAdvances, type ManualEvent, type Now, type RunnerPlay, type Side, type SubRole } from '../lib/manual';
   import { callColor, callLabel } from '../lib/ui';
 
   let { game, now, onrecord, onundo }: { game: Game; now: Now; onrecord: (e: ManualEvent[]) => void; onundo: () => void } = $props();
@@ -80,6 +80,7 @@
   }
   const moves = (withBatter: boolean): Advance[] =>
     Object.entries(dest).filter(([from, to]) => (withBatter || from !== 'Batter') && from !== to).map(([from, to]) => ({ from: from as Spot, to }));
+  const clash = $derived(baseClash(occupied, moves(panel === 'result')));
   function confirmResult() {
     const [, r, line] = RESULTS.find((x) => x[0] === resKey)!;
     const mv = moves(true);
@@ -177,12 +178,12 @@
   <div class="chips res">{#each POS_NAME.slice(1) as p, i}<button class="chip" data-f={i + 1} onclick={() => (fielders = [...fielders, i + 1])}>{i + 1} {p}</button>{/each}</div>
   {#if fielders.length}<div class="plist" id="chain">{fielders.join('-')}</div>{/if}
   {#if resKey}{@render editor(true)}{/if}
-  <div class="nav"><button onclick={() => (panel = null)}>취소</button><button class="next" id="confirmResult" disabled={!resKey} onclick={confirmResult}>확정</button></div>
+  <div class="nav"><button onclick={() => (panel = null)}>취소</button><button class="next" id="confirmResult" disabled={!resKey || clash} onclick={confirmResult}>확정</button></div>
 {:else if panel === 'runners'}
   <div class="sect"><span>주루 플레이</span><button class="x" onclick={() => (panel = null)}>닫기</button></div>
   <div class="chips res">{#each PLAYS as [k, l]}<button class="chip" data-play={k} class:sel={play === k} onclick={() => choosePlay(k)}>{l}</button>{/each}</div>
   {@render editor(false)}
-  <div class="nav"><button onclick={() => (panel = null)}>취소</button><button class="next" id="confirmRunners" onclick={confirmRunners}>확정</button></div>
+  <div class="nav"><button onclick={() => (panel = null)}>취소</button><button class="next" id="confirmRunners" disabled={clash} onclick={confirmRunners}>확정</button></div>
 {:else}
   <div class="sect"><span>선수 교체</span><button class="x" onclick={() => (panel = null)}>닫기</button></div>
   <div class="chips res">{#each [['PH', '대타'], ['PR', '대주자'], ['P', '투수'], ['DEF', '수비']] as [k, l]}<button class="chip" data-role={k} class:sel={role === k} onclick={() => (role = k as SubRole)}>{l}</button>{/each}</div>
@@ -222,6 +223,7 @@
       </div>
     {/if}
     {#if !withBatter && !occupied.some(Boolean)}<div class="sub">주자가 없어요.</div>{/if}
+    {#if clash}<div class="sub" id="clash" style="color:#ef4444">한 베이스에 주자가 둘이에요. 이동을 고쳐 주세요.</div>{/if}
   </div>
 {/snippet}
 
