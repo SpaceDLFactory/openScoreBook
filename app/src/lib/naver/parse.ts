@@ -81,7 +81,7 @@ export function classify(t: string | null | undefined): ResClass | null {
   if (/홈런/.test(t)) return 'HR';
   if (/3루타/.test(t)) return '3B';
   if (/2루타/.test(t)) return '2B';
-  if (/1루타|안타/.test(t)) return '1B'; // 내야안타, 번트안타 too, as notation() reads them
+  if (/1루타|내야안타/.test(t)) return '1B';
   if (/실책/.test(t)) return 'E';
   if (/야수선택|땅볼로 출루|희생/.test(t)) return 'ETC';
   if (/아웃/.test(t)) return 'OUT';

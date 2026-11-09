@@ -14,7 +14,7 @@ export function engineResult(pa: PA): PaResultType | null {
   if (/홈런/.test(t)) return 'HomeRun';
   if (/3루타/.test(t)) return 'Triple';
   if (/2루타/.test(t)) return 'Double';
-  if (/1루타|안타/.test(t)) return 'Single'; // 내야안타, 번트안타 too, as notation() reads them
+  if (/1루타|내야안타/.test(t)) return 'Single';
   if (/실책/.test(t)) return 'Error';
   if (/야수선택|땅볼로 출루/.test(t)) return 'FieldersChoice';
   if (/병살|삼중살/.test(t)) return 'DoublePlay';
