@@ -8,7 +8,7 @@ import { defaultAdvances, engineEvents, manualGame, resolve, resultText, type Ma
 import type { Spot } from './engine';
 import { buildGame, type Game, type Play } from './naver/parse';
 import type { NaverInning } from './naver/types';
-import { engineResult, playAdvances } from './naver/toEngine';
+import { engineResult, playAdvances, toEngine } from './naver/toEngine';
 import { notation } from './notation';
 
 beforeAll(async () => { await loadEngine(readFileSync(join(__dirname, '../engine/engine_bg.wasm'))); });
@@ -267,6 +267,8 @@ describe.skipIf(!ids.length)('fetched games re-entered as manual scoring', () =>
       expect(off).toEqual([]);
       expect(b.length).toBe(a.length);
       expect(now.issues).toEqual([]);
+      // the box view's check reads the manual game's own states back into engine moves: they must add up too
+      expect(toEngine(m).issues).toEqual([]);
       // team errors, and earned runs per pitcher
       const errs = (x: Game) => { const f = x.pas[x.pas.length - 1].after; return [f.awayError, f.homeError]; };
       expect(errs(m)).toEqual(errs(g));

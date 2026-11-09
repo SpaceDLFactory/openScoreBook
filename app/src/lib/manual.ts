@@ -164,7 +164,16 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
   };
   const close = (after = state()) => { if (cur) { cur.after = after; pas.push(cur); } cur = null; balls = strikes = 0; pitchNo = 0; };
   /** state right after a play; when it ended the half, as Naver shows it: three outs, bases cleared, same batter */
-  const afterPlay = (ended: boolean, before: State): State => (ended ? { ...state(), out: 3, bases: [0, 0, 0], batter: before.batter, pitcher: before.pitcher } : state());
+  /** at a half's end the engine has moved on to the next half: the bases are read off the play's moves instead, as
+   *  Naver leaves them (runners left on stay where they stood; one put out or scoring is gone). batter: his base value */
+  const afterPlay = (ended: boolean, before: State, advances: Advance[], batter = 0): State => {
+    if (!ended) return state();
+    const bases: State['bases'] = [...before.bases];
+    const who = (f: Spot) => (f === 'Batter' ? batter : before.bases[BASES.indexOf(f)]);
+    for (const a of advances) if (a.from !== 'Batter') bases[BASES.indexOf(a.from)] = 0;
+    for (const a of advances) if (BASES.includes(a.to)) bases[BASES.indexOf(a.to)] = who(a.from);
+    return { ...state(), out: 3, bases, batter: before.batter, pitcher: before.pitcher };
+  };
   // Earned runs, approximated: a run is charged to the pitcher who let that runner on (a pinch runner takes his place),
   // and is unearned when the runner reached or advanced on an error, scored on a passed ball, or scored after the defense
   // should have had three outs (outs plus errors this half, counting the outs on the scoring play itself when errors
@@ -225,7 +234,7 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
       const side = batSide(), pa = open(), before = state();
       const lines = moveLines(e.advances, side, PLAY_NAME[e.play], e.err);
       if (e.err?.length) errors[fieldSide()]++;
-      const ended = step(at[i], side, null, e.play === 'PB', e.err), after = afterPlay(ended, before);
+      const ended = step(at[i], side, null, e.play === 'PB', e.err), after = afterPlay(ended, before, e.advances);
       pa.events.push(...lines);
       pa.plays.push({ kind: 'runners', before, after, texts: lines } satisfies Play);
       if (ended) close(after); else pa.after = after;
@@ -242,7 +251,7 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
       if (e.result === 'Error' || e.err?.length) errors[side === 'away' ? 'home' : 'away']++; // one error per play
       if (e.result === 'Walk') { row.bb++; pr.bb++; }
       if (e.result === 'Strikeout') { row.so++; pr.kk++; }
-      const after = afterPlay(step(at[i], side, { id: b.id, slot, error: e.result === 'Error' }, false, e.err), before);
+      const after = afterPlay(step(at[i], side, { id: b.id, slot, error: e.result === 'Error' }, false, e.err), before, e.advances, slot + 1);
       pa.result = text; pa.events.push(...lines); pa.res = classify(text);
       pa.inPlay = pa.pitches[pa.pitches.length - 1]?.call === 'H';
       pa.plays.push({ kind: 'result', before, after, texts: lines } satisfies Play);
