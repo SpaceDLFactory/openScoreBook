@@ -1,7 +1,7 @@
 {
   "name": "openScoreBook",
   "short_name": "openScoreBook",
-  "description": "투구는 문자중계에서, 타구는 직접 찍는 KBO 직관 기록장",
+  "description": "투구와 타구를 직접 기록하는 KBO 스코어북",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
