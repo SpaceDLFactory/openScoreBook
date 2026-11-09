@@ -22,7 +22,8 @@ export function notation(pa: PA): Note | null {
   if (/홈런/.test(t)) return { c: 'HR', k: 'hit' };
   if (/3루타/.test(t)) return { c: '3B', k: 'hit' };
   if (/2루타/.test(t)) return { c: '2B', k: 'hit' };
-  if (/1루타|내야안타/.test(t)) return { c: '1B', k: 'hit' };
+  // any other 안타 is a single: 내야안타, and a bunt hit, which the 번트 out branch below would take
+  if (/1루타|안타/.test(t)) return { c: '1B', k: 'hit' };
   const pos0 = t.match(POS_RE)?.[0];
   const first = pos0 ? POS[pos0] : '';
   if (/실책/.test(t)) return { c: 'E' + first, k: 'er' };
