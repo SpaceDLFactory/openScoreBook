@@ -214,7 +214,7 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
       const pa = open(), count: [number, number] = [balls, strikes];
       if (e.call === 'B') balls++;
       else if (e.call === 'T' || e.call === 'S') strikes++;
-      else if (e.call === 'F' && strikes < 2) strikes++;
+      else if ((e.call === 'F' || e.call === 'W') && strikes < 2) strikes++; // W: a foul bunt (a relay game re-entered)
       const pr = curPitcherRow(fieldSide());
       pr.pitches++;
       const p: Pitch = { pitcher: pitcher[fieldSide()].id, n: ++pitchNo, call: e.call, stuff: e.stuff, speed: e.speed != null ? String(e.speed) : undefined,

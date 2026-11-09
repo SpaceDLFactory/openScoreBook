@@ -256,6 +256,10 @@ describe.skipIf(!ids.length)('fetched games re-entered as manual scoring', () =>
       // per pitcher: pitches thrown
       const thrown = (x: Game) => Object.fromEntries([...x.lineups.away.pitcher, ...x.lineups.home.pitcher].map((r) => [r.pcode, +r.ballCount]));
       expect(thrown(m)).toEqual(thrown(g));
+      // the count before each pitch, but in a PA where a pitch-clock violation (no manual event) added one
+      const clock = g.pas.flatMap((q) => q.pitches.map(() => q.events.some((e) => e.includes('피치클락'))));
+      const counts = (x: Game) => x.pas.flatMap((q) => q.pitches.map((p) => p.count.join('-'))).filter((_, i) => !clock[i]);
+      expect(counts(m)).toEqual(counts(g));
       // notation of every PA with a result, in order
       const codes = (x: Game) => x.pas.filter((q) => q.result).map((q) => notation(q)?.c);
       const a = codes(g), b = codes(m), off = a.map((c, i) => [c, b[i]]).filter(([c, d]) => c !== d);
