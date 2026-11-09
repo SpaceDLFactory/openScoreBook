@@ -238,3 +238,6 @@
 {:else if loaded}
   <div class="empty">경기가 없어요. <button class="newgame" id="newgame" onclick={() => (view = 'setup')}>＋ 새 기록</button></div>
 {/if}
+
+<!-- AGPL-3.0 section 13: whoever uses the app can get its source; a modified copy should point at its own -->
+<footer class="source"><a id="source" href="https://github.com/SpaceDLFactory/openScoreBook" target="_blank" rel="noopener">소스 코드 · AGPL-3.0</a></footer>
