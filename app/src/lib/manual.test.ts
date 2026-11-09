@@ -3,12 +3,13 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { deriveSteps, loadEngine } from './engine';
+import { derive, deriveSteps, loadEngine } from './engine';
+import sample from './sample-game.json';
 import { baseClash, defaultAdvances, engineEvents, manualGame, resolve, resultText, type ManualEvent, type Player, type Setup } from './manual';
 import type { Spot } from './engine';
 import { buildGame, type Game, type Play } from './naver/parse';
 import type { NaverInning } from './naver/types';
-import { engineResult, playAdvances, toEngine } from './naver/toEngine';
+import { compareBox, compareRuns, engineResult, playAdvances, toEngine } from './naver/toEngine';
 import { notation } from './notation';
 
 beforeAll(async () => { await loadEngine(readFileSync(join(__dirname, '../engine/engine_bg.wasm'))); });
@@ -23,6 +24,20 @@ const build = async (edits: ManualEvent[]) => {
 const p = (call: 'B' | 'T' | 'S' | 'F' | 'H'): ManualEvent => ({ kind: 'm.pitch', call });
 const pa = (result: ManualEvent & { kind: 'm.pa' } extends infer T ? T extends { result: infer R } ? R : never : never, bases: boolean[], fielders: number[] = []): ManualEvent =>
   ({ kind: 'm.pa', result, fielders, advances: defaultAdvances(result, bases) });
+
+describe('sample game', () => {
+  it('folds cleanly, agrees with the engine, and its batted balls are on in-play PAs', async () => {
+    const edits = sample.filter((e) => e.kind.startsWith('m.')) as unknown as ManualEvent[];
+    const { game, now } = await build(edits);
+    expect([now.inning, now.top, now.awayScore, now.homeScore]).toEqual([9, false, 4, 5]);
+    const te = toEngine(game), d = await derive(te.config, te.events);
+    expect([te.unmapped, te.issues, d.issues, compareRuns(game, d), compareBox(game, d)]).toEqual([[], [], [], {}, []]);
+    const inPlay = new Set(game.pas.filter((p) => p.inPlay).map((p) => p.no));
+    const set = sample.filter((e) => e.kind === 'landing.set') as unknown as { pa: number; res: string | null }[];
+    expect(new Set(set.map((l) => l.pa))).toEqual(inPlay);
+    for (const l of set) expect(l.res, `PA ${l.pa}`).toBe(game.pas.find((p) => p.no === l.pa)!.res);
+  });
+});
 
 describe('manual scoring', () => {
   it('spots two runners ending on one base, and no default move does that', () => {

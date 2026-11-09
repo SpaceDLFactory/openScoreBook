@@ -112,7 +112,7 @@ npm run engine   # ../engine (Rust)을 WASM으로 빌드해 src/engine에 넣는
 npm run dev      # http://localhost:5173
 ```
 
-첫 화면의 `＋ 새 기록`으로 기록을 시작한다.
+처음 열면 가상의 예시 경기(청룡 vs 백호)가 하나 들어 있다. 이어서 기록해 봐도 되고, `＋ 새 기록`으로 새 경기를 시작하면 된다.
 
 ```sh
 npm test            # vitest

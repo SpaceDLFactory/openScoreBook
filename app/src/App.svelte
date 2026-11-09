@@ -88,7 +88,9 @@
   (async () => {
     await store.flushPending();
     source = await pickSource();
-    games = [...(await store.manualSetups()).map(manualMeta), ...(await source.listGames())];
+    const listed = async () => [...(await store.manualSetups()).map(manualMeta), ...(await source.listGames())];
+    games = await listed();
+    if (!games.length) { await addSample().catch(() => {}); games = await listed(); } // a fresh install starts with a made-up game
     // ?game= opens that game even when the list doesn't have it (e.g. an older game through the relay server)
     let pick = new URLSearchParams(location.search).get('game');
     if (!pick) {
@@ -132,6 +134,11 @@
   function manualMeta(e: GameEvent): NaverGameMeta {
     const s = (e as unknown as { setup: GameSetup }).setup;
     return { gameId: e.gameId, gameDate: s.date, stadium: s.stadium, awayTeamName: s.awayName, homeTeamName: s.homeName, statusCode: 'MANUAL' };
+  }
+  async function addSample() {
+    const { default: sample } = await import('./lib/sample-game.json');
+    const at = Date.now();
+    await store.append(sample.map((e) => ({ ...e, id: newId(), gameId: 'm-sample', at })) as unknown as GameEvent[]);
   }
   async function createGame(setup: GameSetup) {
     const id = `m-${Date.now().toString(36)}`;
