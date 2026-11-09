@@ -2,6 +2,7 @@
   import type { Game } from '../lib/naver/parse';
   import { derive } from '../lib/engine';
   import { compareBox, compareRuns, toEngine } from '../lib/naver/toEngine';
+  import { isOver } from '../lib/source';
   let { game }: { game: Game } = $props();
   // Replay the relay through the scoring engine (wasm) and check it lands on Naver's score and box.
   const check = $derived.by(async () => {
@@ -21,7 +22,7 @@
 </script>
 
 <div class="h1">박스스코어</div>
-<div class="sub">{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName} · 최종</div>
+<div class="sub">{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName}{isOver(game.meta?.statusCode) ? ' · 최종' : ''}</div>
 <div class="card tbl"><table class="ls"><tbody>
   <tr><th>팀</th>{#each cols as c}<th>{c}</th>{/each}<th>R</th><th>H</th><th>E</th></tr>
   <tr><td>{game.awayName}</td>{#each cols as c}<td>{game.inningScore.away[c]}</td>{/each}<td class="rhe">{fin.awayScore}</td><td class="rhe">{fin.awayHit}</td><td class="rhe">{fin.awayError}</td></tr>
