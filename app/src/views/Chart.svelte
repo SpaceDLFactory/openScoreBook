@@ -43,7 +43,7 @@
     <button class="ico" id="next" onclick={() => ongo(idx + 1)}>›</button>
   </div>
   <div class="mu">
-    <div class="side"><div class="r">P</div><div class="n">{game.names[pa.pitcher] ?? pa.pitcher}</div><div class="s">{pa.pitcherPitches}구 · {(game.hands[pa.pitcher] ?? '').slice(0, 2)}</div></div>
+    <div class="side"><div class="r">P</div><div class="n">{game.names[pa.pitcher] ?? pa.pitcher}</div><div class="s">{[`${pa.pitcherPitches}구`, (game.hands[pa.pitcher] ?? '').slice(0, 2)].filter(Boolean).join(' · ')}</div></div>
     <div class="arw">→</div>
     <div class="side"><div class="r">AB</div><div class="n">{game.names[pa.batter] ?? pa.batter} <span style="font-size:11px;color:var(--muted)">{slotOf(pa)}번</span></div><div class="s">{(game.hands[pa.batter] ?? '').slice(2)}</div></div>
     <div class="cnt"><div class="bs">{st.ball}-{st.strike}</div><div class="o">{'●'.repeat(pa.before.out)}{'○'.repeat(3 - pa.before.out)} {pa.before.out}아웃</div></div>

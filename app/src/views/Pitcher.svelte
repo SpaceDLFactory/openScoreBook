@@ -49,7 +49,7 @@
 </script>
 
 <div class="h1">투수 분석</div>
-<div class="sub">{team} · {(game.hands[sel] ?? '').slice(0, 2)} · 이 경기</div>
+<div class="sub">{[team, (game.hands[sel] ?? '').slice(0, 2), '이 경기'].filter(Boolean).join(' · ')}</div>
 <div class="pchips">{#each order as c (c)}<button data-p={c} class:on={c === sel} onclick={() => (picked = c)}>{game.names[c]}</button>{/each}</div>
 <div class="kpis">
   <div class="card kpi"><b>{rec?.inn ?? '-'}</b><span>이닝</span></div><div class="card kpi"><b>{ps.length}</b><span>투구</span></div>
