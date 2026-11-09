@@ -18,8 +18,11 @@
   let spot = $state<[number, number] | null>(null);
   let stuff = $state<string | null>(null);
   let speed = $state(''); // km/h as typed
-  /** clear what was entered for the next pitch: after a pitch, and when the PA ends without one */
+  /** what was entered for the next pitch goes with any edit or undo: a runner play can end the half, an undo can
+   *  bring back another batter */
   const resetPitch = () => { spot = null; stuff = null; speed = ''; };
+  const record = (evs: ManualEvent[]) => { onrecord(evs); resetPitch(); };
+  const undo = () => { onundo(); resetPitch(); };
   const STUFF = ['직구', '투심', '커터', '슬라이더', '커브', '체인지업', '포크', '기타'];
   function tapZone(e: MouseEvent) {
     const r = (e.currentTarget as SVGSVGElement).getBoundingClientRect(), k = W / r.width;
@@ -33,15 +36,13 @@
     const balls = now.balls + (call === 'B' ? 1 : 0), strikes = now.strikes + (call === 'T' || call === 'S' || (call === 'F' && now.strikes < 2) ? 1 : 0);
     if (call === 'B' && balls === 4) evs.push(pa('Walk', [], defaultAdvances('Walk', occupied), { auto: true }));
     if ((call === 'T' || call === 'S') && strikes === 3) evs.push(pa('Strikeout', [], defaultAdvances('Strikeout', occupied), { auto: true }));
-    onrecord(evs);
-    resetPitch();
+    record(evs);
     if (call === 'H') openResult();
   }
   function hitByPitch() {
-    onrecord([{ kind: 'm.pitch', call: 'B', ...what() }, pa('HitByPitch', [], defaultAdvances('HitByPitch', occupied), { auto: true })]);
-    resetPitch();
+    record([{ kind: 'm.pitch', call: 'B', ...what() }, pa('HitByPitch', [], defaultAdvances('HitByPitch', occupied), { auto: true })]);
   }
-  function intentional() { onrecord([pa('Walk', [], defaultAdvances('Walk', occupied), { ibb: true })]); resetPitch(); }
+  function intentional() { record([pa('Walk', [], defaultAdvances('Walk', occupied), { ibb: true })]); }
   const pa = (result: PaResultType, fielders: number[], advances: Advance[], extra: { line?: boolean; ibb?: boolean; auto?: boolean; err?: Spot[] } = {}): ManualEvent =>
     ({ kind: 'm.pa', result, fielders, advances, ...extra });
 
@@ -82,8 +83,8 @@
   function confirmResult() {
     const [, r, line] = RESULTS.find((x) => x[0] === resKey)!;
     const mv = moves(true);
-    onrecord([pa(r, fielders, mv, { line, ...errOf(mv) })]);
-    panel = null; resetPitch();
+    record([pa(r, fielders, mv, { line, ...errOf(mv) })]);
+    panel = null;
   }
 
   const PLAYS: [RunnerPlay, string][] = [['SB', '도루'], ['CS', '도루실패'], ['WP', '폭투'], ['PB', '포일'], ['BK', '보크'], ['PO', '견제사'], ['ETC', '기타']];
@@ -104,7 +105,7 @@
     else if (p === 'SB' && lead !== undefined) dest = { [START[lead]]: up(lead) };
     else dest = {};
   }
-  function confirmRunners() { const mv = moves(false); onrecord([{ kind: 'm.runners', play, advances: mv, ...errOf(mv) }]); panel = null; }
+  function confirmRunners() { const mv = moves(false); record([{ kind: 'm.runners', play, advances: mv, ...errOf(mv) }]); panel = null; }
 
   let role = $state<SubRole>('PH'), subName = $state(''), subPos = $state(''), subSlot = $state(0), subBase = $state(0);
   function openSub() { panel = 'sub'; role = 'PH'; subName = ''; subPos = ''; subSlot = now.slot; subBase = occupied.findIndex(Boolean); }
@@ -113,7 +114,7 @@
     const slot = role === 'PH' ? now.slot : role === 'PR' ? now.lineup[side].findIndex((p) => p.id === now.bases[subBase]?.id) : subSlot;
     if (slot < 0) return;
     const s: Side = role === 'P' || role === 'DEF' ? subSide : side;
-    onrecord([{ kind: 'm.sub', side: s, role, slot, player: { id: `p-${Date.now().toString(36)}`, name: subName.trim(), pos: role === 'P' ? '투수' : subPos } }]);
+    record([{ kind: 'm.sub', side: s, role, slot, player: { id: `p-${Date.now().toString(36)}`, name: subName.trim(), pos: role === 'P' ? '투수' : subPos } }]);
     panel = null;
   }
   let subSide = $state<Side>('home');
@@ -167,7 +168,7 @@
     <button id="openResult" onclick={openResult}>결과 입력</button>
     <button id="openRunners" onclick={openRunners} disabled={!occupied.some(Boolean)}>주루</button>
     <button id="openSub" onclick={openSub}>교체</button>
-    <button id="undoEdit" onclick={onundo}>↶ 되돌리기</button>
+    <button id="undoEdit" onclick={undo}>↶ 되돌리기</button>
   </div>
 {:else if panel === 'result'}
   <div class="sect"><span>타석 결과 · {now.batter.name}</span><button class="x" onclick={() => (panel = null)}>닫기</button></div>

@@ -219,7 +219,7 @@
   {/if}
 
   {#if view === 'score' && manual && now}
-    <main class={wide ? 'dmain' : ''}><Score {game} {now} onrecord={recordManual} onundo={undoManual} /></main>
+    <main class={wide ? 'dmain' : ''}>{#key game.gameId}<Score {game} {now} onrecord={recordManual} onundo={undoManual} />{/key}</main>
   {:else if !game.pas.length}
     <div class="empty">아직 기록한 타석이 없어요.{#if manual} <b>기록</b> 탭에서 시작해요.{/if}</div>
   {:else if view === 'chart'}
