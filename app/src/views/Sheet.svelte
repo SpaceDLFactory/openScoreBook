@@ -20,7 +20,7 @@
         const run = !!scored[pa.inn + (top ? 't' : 'b')]?.includes(game.names[pa.batter]);
         (cells[slot + ':' + pa.inn] ??= []).push({ ...no, run, i });
       });
-      const slots = Array.from({ length: 9 }, (_, k) => {
+      const slots = Array.from({ length: Math.max(9, ...L.batter.map((b) => b.batOrder)) }, (_, k) => {
         const ps = L.batter.filter((b) => b.batOrder === k + 1).sort((x, y) => x.seqno - y.seqno);
         const sum = (key: 'ab' | 'hit' | 'rbi') => ps.reduce((t, b) => t + (+b[key] || 0), 0);
         return { slot: k + 1, ps, ab: sum('ab'), hit: sum('hit'), rbi: sum('rbi') };

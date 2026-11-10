@@ -10,7 +10,7 @@ export type Side = 'away' | 'home';
 export interface Player { id: string; name: string; pos: string }
 export interface Setup {
   date: string; stadium: string; awayName: string; homeName: string;
-  /** batting order, 9 each */
+  /** batting order: 9 each, or more where a league bats extra hitters */
   away: Player[]; home: Player[];
   awayPitcher: Player; homePitcher: Player;
   /** distances of a park the user measured, kept with the game so later edits of the park don't redraw it */
@@ -27,7 +27,7 @@ export type ManualEvent =
    *  err (here and on m.runners): the moves from these spots were made on an error */
   | { kind: 'm.pa'; result: PaResultType; fielders: number[]; advances: Advance[]; line?: boolean; ibb?: boolean; auto?: boolean; err?: Spot[] }
   | { kind: 'm.runners'; play: RunnerPlay; advances: Advance[]; err?: Spot[] }
-  /** slot 0-8 for PH/PR/DEF; P replaces the side's pitcher */
+  /** batting slot (0-based) for PH/PR/DEF; P replaces the side's pitcher */
   | { kind: 'm.sub'; side: Side; role: SubRole; slot: number; player: Player }
   /** take back the last edit (setup can't be taken back) */
   | { kind: 'm.undo' };
@@ -189,8 +189,8 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
   // should have had three outs (outs plus errors this half, counting the outs on the scoring play itself when errors
   // are involved: without them that play ends the half; a run that beats a real third out still counts). Finer points (fielder's choices swapping runners,
   // a reliever not getting the benefit of earlier errors) are left out.
-  const resp: Record<Side, (PitcherRow | null)[]> = { away: Array(9).fill(null), home: Array(9).fill(null) };
-  const onError: Record<Side, boolean[]> = { away: Array(9).fill(false), home: Array(9).fill(false) };
+  const resp: Record<Side, (PitcherRow | null)[]> = { away: lineup.away.map(() => null), home: lineup.home.map(() => null) };
+  const onError: Record<Side, boolean[]> = { away: lineup.away.map(() => false), home: lineup.home.map(() => false) };
   let missedOuts = 0;
   /** apply an engine step, crediting runs and RBI from the box deltas. batter: the batter's slot and whether he reached on an error;
    *  err: spots whose runner moved on an error (marked so his run, now or later, is unearned) */
@@ -209,7 +209,7 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
       if (slot != null) onError[side][slot] = true;
     }
     if (batter?.error) missedOuts++;
-    for (let slot = 0; slot < 9; slot++) {
+    for (let slot = 0; slot < lineup[side].length; slot++) {
       const runs = dr(slot), drbi = boxOf(next)![slot].rbi - (boxOf(before)?.[slot]?.rbi ?? 0);
       if (runs) rowOf(side, lineup[side][slot].id).run += runs;
       if (drbi && batter) rowOf(side, batter.id).rbi += drbi;

@@ -27,14 +27,14 @@ pub enum Half {
     Bottom,
 }
 
-/// Identifies a player by their team and batting-order slot (0..=8).
+/// Identifies a player by their team and batting-order slot (0-based).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayerRef {
     pub side: Side,
     pub slot: usize,
 }
 
-/// Batting lineups (9 names each, in batting order).
+/// Batting lineups in batting order: 9 names each in pro ball, more where a league bats extra hitters.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub away: Vec<String>,
@@ -183,10 +183,11 @@ impl GameState {
         }
     }
 
-    fn advance_bat_idx(&mut self) {
+    /// `n`: the batting side's lineup length.
+    fn advance_bat_idx(&mut self, n: usize) {
         match self.batting_side() {
-            Side::Away => self.away_idx = (self.away_idx + 1) % 9,
-            Side::Home => self.home_idx = (self.home_idx + 1) % 9,
+            Side::Away => self.away_idx = (self.away_idx + 1) % n,
+            Side::Home => self.home_idx = (self.home_idx + 1) % n,
         }
     }
 }
@@ -209,6 +210,14 @@ impl Derived {
             Side::Home => &mut self.home_box[p.slot],
         }
     }
+
+    fn next_batter(&mut self) {
+        let n = match self.state.batting_side() {
+            Side::Away => self.away_box.len(),
+            Side::Home => self.home_box.len(),
+        };
+        self.state.advance_bat_idx(n);
+    }
 }
 
 /// Replay an event log into a derived snapshot.
@@ -224,11 +233,11 @@ pub fn derive_steps(config: &Config, events: &[Event]) -> Vec<Derived> {
     steps
 }
 
-fn derive_with(_config: &Config, events: &[Event], mut after_each: impl FnMut(&Derived)) -> Derived {
+fn derive_with(config: &Config, events: &[Event], mut after_each: impl FnMut(&Derived)) -> Derived {
     let mut d = Derived {
         state: GameState::new(),
-        away_box: vec![BatLine::default(); 9],
-        home_box: vec![BatLine::default(); 9],
+        away_box: vec![BatLine::default(); config.away.len()],
+        home_box: vec![BatLine::default(); config.home.len()],
         issues: Vec::new(),
     };
     let mut half_runs: u16 = 0;
@@ -415,7 +424,7 @@ fn apply_pa(d: &mut Derived, result: PaResult, half_runs: &mut u16) {
             line.rbi += runs;
         }
     }
-    d.state.advance_bat_idx();
+    d.next_batter();
     end_play(d, outs_added, half_runs);
 }
 
@@ -449,7 +458,7 @@ fn apply_explicit_pa(d: &mut Derived, result: PaResult, advances: &[Advance], ha
         line.so += 1;
     }
     line.rbi += rbi;
-    d.state.advance_bat_idx();
+    d.next_batter();
     end_play(d, outs, half_runs);
 }
 
@@ -797,5 +806,21 @@ mod tests {
         assert_eq!((steps[4].state.half, steps[4].state.outs), (Half::Bottom, 0));
         // the last step is the final state
         assert_eq!(steps[4].state.away_idx, derive(&cfg(), &evs).state.away_idx);
+    }
+
+    #[test]
+    fn a_ten_man_lineup_bats_its_tenth_hitter_before_turning_over() {
+        let c = Config { away: (1..=10).map(|i| format!("A{i}")).collect(), home: cfg().home };
+        // away: slots 1-3 walk, 4-6 strike out; home: three outs; away: slot 7 singles, 8-10 strike out
+        let mut evs: Vec<Event> = (0..3).map(|_| pa(PaResult::Walk)).collect();
+        evs.extend((0..6).map(|_| pa(PaResult::Strikeout)));
+        evs.push(pa(PaResult::Single));
+        evs.extend((0..3).map(|_| pa(PaResult::Strikeout)));
+        let d = derive(&c, &evs);
+        assert_eq!(d.away_box.len(), 10);
+        assert_eq!(d.home_box.len(), 9);
+        assert_eq!(d.state.away_idx, 0, "slot 10 batted; the order turns over");
+        assert_eq!(d.away_box[9].ab, 1);
+        assert_eq!(d.state.home_idx, 3);
     }
 }

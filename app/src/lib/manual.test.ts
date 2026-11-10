@@ -46,6 +46,25 @@ describe('manual scoring', () => {
     expect(custom.game.fence?.f).toEqual([70, null, 90, null, 72]);
     expect((await build([{ kind: 'm.setup', setup }])).game.fence).toBeUndefined();
   });
+  it('bats extra hitters: a 10-man order turns over after the 10th, and box, sheet rows and engine check agree', async () => {
+    const ten: Player[] = [...team('A'), { id: 'A10', name: 'A10', pos: '추가타자' }];
+    const { game, now } = await build([
+      { kind: 'm.setup', setup: { ...setup, away: ten } },
+      pa('Walk', [false, false, false]), pa('Walk', [true, false, false]), pa('Walk', [true, true, false]),
+      pa('Single', [true, true, true]), // A4: bases loaded, a run scores
+      ...Array.from({ length: 3 }, () => pa('Strikeout', [true, true, true])), // A5-A7: inning over
+      ...Array.from({ length: 3 }, () => pa('Strikeout', [false, false, false])), // home side
+      pa('Single', [false, false, false]), pa('Strikeout', [true, false, false]), pa('Strikeout', [true, false, false]), // A8 1B, A9 K, A10 K
+    ]);
+    expect([now.top, now.outs, now.slot, now.batter.name]).toEqual([true, 2, 0, 'A1']); // after A10, back to the top
+    const rows = game.lineups.away.batter;
+    expect(rows.map((b) => b.batOrder)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(rows.find((b) => b.name === 'A10')!.ab).toBe(1);
+    const te = toEngine(game), d = await derive(te.config, te.events);
+    expect(te.config.away).toHaveLength(10);
+    expect([te.issues, d.issues, compareRuns(game, d), compareBox(game, d)]).toEqual([[], [], {}, []]);
+    expect(d.state.away_idx).toBe(0);
+  });
   it('spots two runners ending on one base, and no default move does that', () => {
     const on = [true, true, false];
     expect(baseClash(on, [{ from: 'First', to: 'Second' }])).toBe(true); // the runner on second stayed

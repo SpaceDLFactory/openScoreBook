@@ -5,10 +5,16 @@
   import { STADIUMS, customFence, fenceOk, type Park } from '../lib/stadiums';
   import { FH, FW, HX, HY, fieldOf } from '../lib/field';
   let { parks, oncreate, oncancel }: { parks: Park[]; oncreate: (s: Setup) => void; oncancel: () => void } = $props();
-  const POSITIONS = [...POS_NAME.slice(1), '지명타자'];
+  const POSITIONS = [...POS_NAME.slice(1), '지명타자', '추가타자'];
+  const COUNTS = [9, 10, 11, 12, 13, 14, 15];
   const today = new Date().toISOString().slice(0, 10);
   let date = $state(today), stadium = $state('대구'), awayName = $state(''), homeName = $state('');
   const blank = () => Array.from({ length: 9 }, () => ({ name: '', pos: '' }));
+  /** extra hitters (some amateur leagues bat 10 or more) */
+  function setCount(list: { name: string; pos: string }[], n: number) {
+    while (list.length < n) list.push({ name: '', pos: '' });
+    list.splice(n);
+  }
   let away = $state(blank()), home = $state(blank());
   let awayPitcher = $state(''), homePitcher = $state('');
   const NEW_PARK = '__new', FENCE_LABELS = ['좌', '좌중', '중', '우중', '우'];
@@ -52,6 +58,7 @@
     {@const list = side === 'away' ? away : home}
     <div class="card setup">
       <label>{side === 'away' ? '원정' : '홈'} 팀 {#if side === 'away'}<input id="awayName" bind:value={awayName} placeholder="원정" />{:else}<input id="homeName" bind:value={homeName} placeholder="홈" />{/if}</label>
+      <label>타자 수 <select class="nbat" data-side={side} value={list.length} onchange={(e) => setCount(list, +e.currentTarget.value)}>{#each COUNTS as n}<option value={n}>{n}명</option>{/each}</select></label>
       {#each list as b, i}
         <div class="lrow"><b>{i + 1}</b><input class="bname" data-side={side} bind:value={b.name} placeholder="{i + 1}번 타자" />
           <select bind:value={b.pos}><option value="">포지션</option>{#each POSITIONS as p}<option value={p}>{p}</option>{/each}</select></div>

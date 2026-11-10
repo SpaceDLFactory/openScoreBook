@@ -87,9 +87,12 @@ export function playAdvances(p: Play, top: boolean, batterSlot: number | null, r
   return { advances, issue };
 }
 
+/** Batting slots of a side: 9, or more where a league bats extra hitters. */
+const slotCount = (g: Game, side: 'away' | 'home') => Math.max(9, ...g.lineups[side].batter.map((b) => b.batOrder));
+
 export function toEngine(g: Game) {
   const starters = (side: 'away' | 'home') =>
-    Array.from({ length: 9 }, (_, i) => g.lineups[side].batter.filter((b) => b.batOrder === i + 1).sort((a, b) => a.seqno - b.seqno)[0]?.name ?? `${i + 1}번`);
+    Array.from({ length: slotCount(g, side) }, (_, i) => g.lineups[side].batter.filter((b) => b.batOrder === i + 1).sort((a, b) => a.seqno - b.seqno)[0]?.name ?? `${i + 1}번`);
   const config: EngineConfig = { away: starters('away'), home: starters('home') };
   const events: EngineEvent[] = [], unmapped: PA[] = [], issues: string[] = [];
   // batting slot by player code; a pinch hitter's PA title ("대타 김호령") has no slot number
@@ -133,7 +136,7 @@ export function compareBox(g: Game, d: Derived): string[] {
   const out: string[] = [];
   for (const side of ['away', 'home'] as const) {
     const eng = side === 'away' ? d.away_box : d.home_box;
-    for (let slot = 1; slot <= 9; slot++) {
+    for (let slot = 1; slot <= slotCount(g, side); slot++) {
       const ps = g.lineups[side].batter.filter((b) => b.batOrder === slot);
       for (const [ek, nk] of STATS) {
         const nv = ps.reduce((t, b) => t + (+b[nk] || 0), 0), ev = eng[slot - 1][ek];
