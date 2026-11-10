@@ -21,6 +21,10 @@
 | :-: | :-: |
 | <img src="docs/screenshots/sheet.png" width="260"> | <img src="docs/screenshots/box.png" width="260"> |
 
+| 경기 설정 · 직접 입력한 구장 | 경기 목록 |
+| :-: | :-: |
+| <img src="docs/screenshots/setup.png" width="260"> | <img src="docs/screenshots/games.png" width="260"> |
+
 스크린샷은 가상의 팀과 선수로 직접 기록한 경기다.
 
 ## 기능
