@@ -55,7 +55,6 @@
       <div class="it"><span class="d" style="background:var(--ball)"></span>볼</div>
       <div class="it"><span class="d" style="background:var(--foul)"></span>파울</div>
       <div class="it"><span class="d" style="border:2px dashed var(--inplay)"></span>인플레이</div>
-      <div class="src">PTS<br />자동 반영</div>
     </div>
   </div>
   <div class="log">
