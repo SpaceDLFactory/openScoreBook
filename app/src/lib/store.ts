@@ -64,6 +64,9 @@ export function importEvents(events: GameEvent[]): Promise<GameEvent[]> {
       tx.onerror = tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
     });
     added = todo;
+    // a game restored on purpose is no longer one to keep out
+    const gone = deleted();
+    if (todo.some((e) => gone.delete(e.gameId))) setDeleted(gone);
   }).then(() => added);
 }
 
@@ -93,7 +96,14 @@ function mirror(): boolean {
 let chain: Promise<void> = Promise.resolve();
 const serial = (job: () => Promise<void>) => (chain = chain.catch(() => {}).then(job));
 
+// Deleted games, kept in localStorage: another tab's queued edits of one are dropped instead of stored again.
+const DELETED = 'scorebook:deleted';
+const deleted = (): Set<string> => { try { return new Set(JSON.parse(localStorage.getItem(DELETED) || '[]')); } catch { return new Set(); } };
+const setDeleted = (s: Set<string>) => { try { localStorage.setItem(DELETED, JSON.stringify([...s])); } catch { /* private mode */ } };
+
 async function drain() {
+  const gone = deleted();
+  if (pending().some((e) => gone.has(e.gameId))) { queue = pending().filter((e) => !gone.has(e.gameId)); mirror(); }
   const batch = [...pending()];
   if (!batch.length) return;
   // skip edits already stored (a write that committed just before the page closed)
@@ -113,6 +123,22 @@ export function record(ev: GameEvent): Promise<void> {
   const mirrored = mirror();
   return serial(drain).then(() => {
     if (!mirrored) throw new Error('임시 저장(localStorage)에 실패했어요. 기록은 저장됐지만 탭 직후 앱을 닫으면 유실될 수 있어요.');
+  });
+}
+
+/** Delete a game for good: its stored events and any of its edits still queued. Runs after queued edits. */
+export function deleteGame(gameId: string): Promise<void> {
+  return serial(async () => {
+    setDeleted(deleted().add(gameId));
+    queue = pending().filter((e) => e.gameId !== gameId);
+    mirror();
+    const tx = (await open()).transaction(EVENTS, 'readwrite');
+    const req = tx.objectStore(EVENTS).index('gameId').openCursor(IDBKeyRange.only(gameId));
+    req.onsuccess = () => { const c = req.result; if (c) { c.delete(); c.continue(); } };
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+    });
   });
 }
 

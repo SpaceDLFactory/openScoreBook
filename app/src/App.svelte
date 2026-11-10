@@ -20,9 +20,11 @@
   import WinProb from './views/WinProb.svelte';
   import Score from './views/Score.svelte';
   import Setup from './views/Setup.svelte';
+  import Games from './views/Games.svelte';
 
   let source: GameSource;
   const LAST_GAME = 'scorebook:game';
+  const SAMPLE_SEEN = 'scorebook:sample'; // the sample comes once: deleting every game doesn't bring it back
 
   let games = $state<NaverGameMeta[]>([]);
   let game = $state<Game | null>(null);
@@ -64,12 +66,15 @@
     return manualGame(id, edits, await deriveSteps(ee.config, ee.events));
   }
 
+  let opening = 0; // a later open (or a delete) makes an open still loading drop its result
   async function openGame(id: string, first = false) {
+    const t = ++opening;
     const g = isManualId(id) ? null : await source.loadGame(id);
-    try { localStorage.setItem(LAST_GAME, id); } catch { /* private mode */ }
     let evs = await store.gameEvents(id);
     if (!g) {
       const m = await manualFrom(id, evs);
+      if (t !== opening) return;
+      try { localStorage.setItem(LAST_GAME, id); } catch { /* private mode */ }
       events = evs; idx = Math.max(0, m.game.pas.length - 1); now = m.now; game = m.game; view = 'score';
       if (first) readHash(m.game);
       return;
@@ -80,6 +85,8 @@
       const legacy = eventsFromLegacy(id, legacyLandings(id));
       if (legacy.length) { await store.append(legacy); evs = await store.gameEvents(id); }
     }
+    if (t !== opening) return;
+    try { localStorage.setItem(LAST_GAME, id); } catch { /* private mode */ }
     events = evs;
     idx = 0;
     game = g;
@@ -92,7 +99,9 @@
     await store.flushPending();
     source = await pickSource();
     games = await listed();
-    if (!games.length) { await addSample().catch(() => {}); games = await listed(); } // a fresh install starts with a made-up game
+    let seen = games.some((g) => g.gameId === 'm-sample');
+    try { seen ||= !!localStorage.getItem(SAMPLE_SEEN); localStorage.setItem(SAMPLE_SEEN, '1'); } catch { /* private mode */ }
+    if (!games.length && !seen) { await addSample().catch(() => {}); games = await listed(); } // a fresh install starts with a made-up game
     // ?game= opens that game even when the list doesn't have it (e.g. an older game through the relay server)
     let pick = new URLSearchParams(location.search).get('game');
     if (!pick) {
@@ -145,7 +154,7 @@
   // earlier games are the list of parks the user has made
   let parks = $state<Park[]>([]);
   $effect(() => {
-    if (view !== 'setup') return;
+    void games; // re-read when a game is added, deleted or restored
     store.manualSetups().then((l) => (parks = savedParks(l.map((e) => (e as unknown as { setup: GameSetup }).setup))));
   });
   async function createGame(setup: GameSetup) {
@@ -203,6 +212,24 @@
     return navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => true, () => false);
   }
 
+  // ---- game list
+  let back: View = 'chart';
+  function showGames() { if (view !== 'games') back = view; view = 'games'; scrollTo(0, 0); }
+  function openFromList(id: string) {
+    notice = null;
+    if (id === game?.gameId) { view = back; return; }
+    openGame(id).then(() => { if (view === 'games') view = 'chart'; scrollTo(0, 0); }, (e) => (notice = e.message));
+  }
+  async function removeGame(id: string) {
+    info = null; notice = null;
+    opening++; // an open still loading (maybe this game) is dropped
+    // close it first, so nothing can be scored into it while it is being deleted
+    if (game?.gameId === id) { game = null; events = []; now = null; view = 'games'; }
+    try { if (localStorage.getItem(LAST_GAME) === id) localStorage.removeItem(LAST_GAME); } catch { /* private mode */ }
+    try { await store.deleteGame(id); } catch (err) { notice = `삭제 실패: ${(err as Error).message}`; }
+    games = await listed();
+  }
+
   // ---- backup: a file with every game of this browser; restoring adds what this browser doesn't have
   let info = $state<string | null>(null);
   async function saveBackup() {
@@ -252,7 +279,9 @@
 {#if saveError}<div class="err">{saveError}</div>{/if}
 {#if notice}<div class="err" id="notice">{notice}</div>{/if}
 {#if info}<div class="err info" id="info">{info}</div>{/if}
-{#if view === 'setup'}
+{#if view === 'games'}
+  <main class={wide ? 'dmain' : ''}><Games {games} current={game?.gameId ?? null} onopen={openFromList} ondelete={removeGame} onnew={() => (view = 'setup')} onclose={game ? () => (view = back) : null} /></main>
+{:else if view === 'setup'}
   <main class={wide ? 'dmain' : ''}><Setup {parks} oncreate={createGame} oncancel={() => (view = game ? (manual ? 'score' : 'chart') : 'chart')} /></main>
 {:else if error}
   <div class="err">{error}</div>
@@ -261,11 +290,12 @@
     <header class="dhead">
       <div class="dtitle"><b>{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName}{#if live} <span class="live">LIVE</span>{/if}</b><span>{[game.meta?.gameDate, game.stadium, manual ? '직접 기록' : ''].filter(Boolean).join(' · ')}</span></div>
       <GameSelect {games} current={game.gameId} onchange={switchGame} />
+      <button class="glistbtn" id="games" onclick={showGames}>목록</button>
       <button class="newgame" id="newgame" onclick={() => (view = 'setup')}>＋ 새 기록</button>
       <Tabs {view} {manual} onselect={select} />
     </header>
   {:else}
-    <div class="gbar">{#if live}<span class="live">LIVE</span>{/if}<GameSelect {games} current={game.gameId} onchange={switchGame} /><button class="newgame" id="newgame" onclick={() => (view = 'setup')}>＋ 새 기록</button></div>
+    <div class="gbar">{#if live}<span class="live">LIVE</span>{/if}<GameSelect {games} current={game.gameId} onchange={switchGame} /><button class="glistbtn" id="games" onclick={showGames}>목록</button><button class="newgame" id="newgame" onclick={() => (view = 'setup')}>＋ 새 기록</button></div>
   {/if}
 
   {#if view === 'score' && manual && now}

@@ -212,4 +212,13 @@
   .adv{margin:0 12px;display:flex;flex-direction:column;gap:8px;}
   .arow{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;}
   .arow .chips{margin:0;}
+  .glistbtn{height:36px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-weight:700;font-size:12px;white-space:nowrap;}
+  .glist{margin:8px 12px;padding:4px 0;}
+  .glist .grow{display:flex;align-items:center;gap:8px;padding:4px 8px 4px 4px;border-bottom:1px solid var(--line);}
+  .glist .grow:last-child{border-bottom:0;}
+  .glist .grow.cur .gopen b{color:#7ee2a4;}
+  .glist .gopen{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:10px 8px;border:0;background:none;color:var(--txt);font:inherit;text-align:left;cursor:pointer;}
+  .glist .gopen b{font-size:14px;}
+  .glist .gopen span{font-size:12px;color:var(--muted);}
+  .glist .gdel{height:32px;padding:0 12px;border-radius:8px;border:1px solid rgba(239,68,68,.45);background:rgba(239,68,68,.08);color:var(--out);font:inherit;font-size:12px;}
   .newgame{height:36px;padding:0 12px;border-radius:9px;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.10);color:#7ee2a4;font-weight:700;font-size:12px;white-space:nowrap;}
