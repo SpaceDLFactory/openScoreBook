@@ -40,6 +40,12 @@ describe('sample game', () => {
 });
 
 describe('manual scoring', () => {
+  it('keeps a measured park with the game, and draws a listed one from its name', async () => {
+    const custom = await build([{ kind: 'm.setup', setup: { ...setup, stadium: '한강', fence: [70, null, 90, null, 72] } }]);
+    expect(custom.game.stadium).toBe('한강');
+    expect(custom.game.fence?.f).toEqual([70, null, 90, null, 72]);
+    expect((await build([{ kind: 'm.setup', setup }])).game.fence).toBeUndefined();
+  });
   it('spots two runners ending on one base, and no default move does that', () => {
     const on = [true, true, false];
     expect(baseClash(on, [{ from: 'First', to: 'Second' }])).toBe(true); // the runner on second stayed

@@ -50,9 +50,10 @@ export function fenceDist(fence: Fence, a: number): number {
     const u = Math.min(90, Math.max(0, a + 45)), i = Math.min(89, Math.floor(u));
     return p[i] + (p[i + 1] - p[i]) * (u - i);
   }
-  // Unknown gap distance: midpoint of line and CF + 6 m (avg bulge of the parks with known gaps).
+  // Unknown gap distance: midpoint of line and CF, bulged in proportion (+6 m on a 99/122 park, the average of the
+  // parks with known gaps) so a small field doesn't get a pro park's bulge.
   const f = fence.f as number[];
-  const r = fence.f.map((v, i) => v ?? ((i === 1 ? f[0] : f[4]) + f[2]) / 2 + 6);
+  const r = fence.f.map((v, i) => v ?? (((i === 1 ? f[0] : f[4]) + f[2]) / 2) * (116.5 / 110.5));
   const u = Math.min(3.9999, Math.max(0, (a + 45) / 22.5)), i = Math.floor(u), t = u - i;
   const p0 = r[Math.max(0, i - 1)], p1 = r[i], p2 = r[i + 1], p3 = r[Math.min(4, i + 2)];
   // Catmull-Rom on radius vs angle: smooth through every known distance.
@@ -60,3 +61,17 @@ export function fenceDist(fence: Fence, a: number): number {
 }
 
 export const fenceFor = (stadium: string | null | undefined): Fence => (stadium && STADIUMS[stadium]) || DEFAULT_FENCE;
+
+/** A park the user measured: distances (m) at LF line, LCF, CF, RCF, RF; the two gaps may be empty. */
+export const customFence = (f: (number | null)[]): Fence => ({ f, src: f.map((v) => (v == null ? 'est' : 'ok')) });
+
+const inRange = (v: number | null) => v != null && v >= 30 && v <= 200;
+export const fenceOk = (f: (number | null)[]) => f.every((v, i) => (i % 2 ? v == null || inRange(v) : inRange(v)));
+
+export interface Park { name: string; fence: (number | null)[] }
+/** The parks made in earlier games, newest first; of two with one name the newer wins. `setups` is newest first. */
+export function savedParks(setups: { stadium: string; fence?: (number | null)[] }[]): Park[] {
+  const out = new Map<string, Park>();
+  for (const { stadium: name, fence } of setups) if (fence && !out.has(name)) out.set(name, { name, fence });
+  return [...out.values()];
+}

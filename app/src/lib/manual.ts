@@ -4,6 +4,7 @@
 import type { Advance, Derived, EngineConfig, EngineEvent, PaResultType, Spot } from './engine';
 import { classify, type Call, type Game, type PA, type Pitch, type Play, type State } from './naver/parse';
 import type { NaverBatter, NaverLineup, NaverPitcher } from './naver/types';
+import { customFence } from './stadiums';
 
 export type Side = 'away' | 'home';
 export interface Player { id: string; name: string; pos: string }
@@ -12,6 +13,8 @@ export interface Setup {
   /** batting order, 9 each */
   away: Player[]; home: Player[];
   awayPitcher: Player; homePitcher: Player;
+  /** distances of a park the user measured, kept with the game so later edits of the park don't redraw it */
+  fence?: (number | null)[];
 }
 export type RunnerPlay = 'SB' | 'CS' | 'WP' | 'PB' | 'BK' | 'PO' | 'ETC';
 export type SubRole = 'PH' | 'PR' | 'DEF' | 'P';
@@ -292,7 +295,7 @@ export function manualGame(gameId: string, edits: readonly ManualEvent[], steps:
   }));
   const lineups: Record<Side, NaverLineup> = { away: { batter: rows.away, pitcher: pitcherLines('away') }, home: { batter: rows.home, pitcher: pitcherLines('home') } };
   const game: Game = {
-    gameId, stadium: setup.stadium, pas: shown, names, hands: {}, lineups, inningScore,
+    gameId, stadium: setup.stadium, ...(setup.fence && { fence: customFence(setup.fence) }), pas: shown, names, hands: {}, lineups, inningScore,
     awayName: setup.awayName, homeName: setup.homeName,
     meta: { gameId, gameDate: setup.date, stadium: setup.stadium, awayTeamName: setup.awayName, homeTeamName: setup.homeName,
       awayTeamScore: fin.away_score, homeTeamScore: fin.home_score, statusCode: 'MANUAL' },

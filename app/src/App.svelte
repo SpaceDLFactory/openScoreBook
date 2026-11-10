@@ -8,6 +8,7 @@
   import { isManualId, isView, type View } from './lib/views';
   import { engineEvents, manualGame, resolve, type ManualEvent, type Now, type Setup as GameSetup } from './lib/manual';
   import { deriveSteps } from './lib/engine';
+  import { savedParks, type Park } from './lib/stadiums';
   import Tabs from './components/Tabs.svelte';
   import GameSelect from './components/GameSelect.svelte';
   import Chart from './views/Chart.svelte';
@@ -140,6 +141,12 @@
     const at = Date.now();
     await store.append(sample.map((e) => ({ ...e, id: newId(), gameId: 'm-sample', at })) as unknown as GameEvent[]);
   }
+  // earlier games are the list of parks the user has made
+  let parks = $state<Park[]>([]);
+  $effect(() => {
+    if (view !== 'setup') return;
+    store.manualSetups().then((l) => (parks = savedParks(l.map((e) => (e as unknown as { setup: GameSetup }).setup))));
+  });
   async function createGame(setup: GameSetup) {
     const id = `m-${Date.now().toString(36)}`;
     const ev = { kind: 'm.setup', setup: $state.snapshot(setup), id: newId(), gameId: id, at: Date.now() } as GameEvent;
@@ -210,7 +217,7 @@
 {#if saveError}<div class="err">{saveError}</div>{/if}
 {#if notice}<div class="err" id="notice">{notice}</div>{/if}
 {#if view === 'setup'}
-  <main class={wide ? 'dmain' : ''}><Setup oncreate={createGame} oncancel={() => (view = game ? (manual ? 'score' : 'chart') : 'chart')} /></main>
+  <main class={wide ? 'dmain' : ''}><Setup {parks} oncreate={createGame} oncancel={() => (view = game ? (manual ? 'score' : 'chart') : 'chart')} /></main>
 {:else if error}
   <div class="err">{error}</div>
 {:else if game && fin}

@@ -3,11 +3,12 @@
   // with its line from home and the ball's later path.
   import type { PA } from '../lib/naver/parse';
   import type { Landings } from '../lib/landings';
-  import { FH, FW, HX, HY, fencePath, toM, toPx } from '../lib/field';
+  import { FH, FW, HX, HY, fieldOf } from '../lib/field';
   import { fenceDist, type Fence } from '../lib/stadiums';
   import { RES_COL } from '../lib/ui';
   let { pa, fence, landings, ontap }: { pa: PA; fence: Fence; landings: Landings; ontap: (pt: [number, number]) => void } = $props();
   const b = 27.43 / Math.SQRT2;
+  const { toPx, toM, path: fencePts } = $derived(fieldOf(fence));
   const labels = $derived(
     [-45, -22.5, 0, 22.5, 45].map((a, i) => {
       const d = fence.f[i] ?? Math.round(fenceDist(fence, a) * 2) / 2, rad = (a * Math.PI) / 180, k = fence.src[i];
@@ -25,7 +26,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 <svg id="field" viewBox="0 0 {FW} {FH}" onclick={tap} role="img" aria-label="필드 · 탭해서 낙구지점 기록">
-  <path d="M{HX} {HY} L{fencePath(fence)} Z" fill="rgba(34,197,94,.06)" stroke="#3a5a44" stroke-width="1.5" />
+  <path d="M{HX} {HY} L{fencePts} Z" fill="rgba(34,197,94,.06)" stroke="#3a5a44" stroke-width="1.5" />
   <path d="M{HX} {HY} L{toPx(-b, b)} L{toPx(0, 2 * b)} L{toPx(b, b)} Z" fill="rgba(160,120,80,.12)" stroke="#4a5566" />
   <circle cx={toPx(0, 18.44)[0]} cy={toPx(0, 18.44)[1]} r="4" fill="#4a5566" />
   {#each labels as l}<text x={l.x} y={l.y} text-anchor="middle" font-size="9" fill="#5c6672">{l.t}</text>{/each}

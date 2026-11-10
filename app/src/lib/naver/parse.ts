@@ -1,4 +1,5 @@
 // Turn Naver relay innings into plate appearances with pitches, results and score state.
+import type { Fence } from '../stadiums';
 import type { InningScore, NaverGameMeta, NaverGameState, NaverInning, NaverLineup, NaverMetric, NaverPitchTrack } from './types';
 
 /** W: a foul bunt */
@@ -66,6 +67,8 @@ export interface Game {
   meta: NaverGameMeta | null;
   gameId: string;
   stadium: string | null;
+  /** a park the user measured; otherwise the fence comes from the stadium's name */
+  fence?: Fence;
   pas: PA[];
   names: Record<string, string>;
   hands: Record<string, string>;

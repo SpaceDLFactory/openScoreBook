@@ -18,7 +18,7 @@
   let { game, idx, landings, wide, ongo, ontap, onundo, onclear, onres, ontraj, onexport }: Props = $props();
 
   const pa = $derived(game.pas[idx]);
-  const fence = $derived(fenceFor(game.stadium));
+  const fence = $derived(game.fence ?? fenceFor(game.stadium));
   const st = $derived(pa.pitches[pa.pitches.length - 1]?.state ?? pa.after);
   const saved = $derived(landings[pa.no]);
   const isOut = $derived(/아웃|병살/.test(pa.result ?? ''));
