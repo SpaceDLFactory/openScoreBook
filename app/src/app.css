@@ -109,6 +109,9 @@
   .pa.cur{background:var(--panel2);box-shadow:inset 3px 0 0 var(--inplay);}
   .source{margin:18px 14px 0;text-align:center;font-size:11px;}
   .source a{color:var(--dim);}
+  .source .backup{display:flex;justify-content:center;gap:8px;margin-bottom:10px;}
+  .source .backup button,.source .backup label{padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);font:inherit;font-size:12px;cursor:pointer;}
+  .err.info{margin:12px 16px;color:var(--inplay);}
   .empty{margin:40px 16px;color:var(--dim);font-size:13px;line-height:1.7;text-align:center;}
   kbd{display:inline-block;min-width:20px;padding:1px 5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;font:11px ui-monospace,monospace;color:var(--muted);text-align:center;}
   .keys{margin:12px 14px;font-size:11px;color:var(--dim);}

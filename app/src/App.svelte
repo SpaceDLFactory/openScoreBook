@@ -5,6 +5,7 @@
   import { legacyLandings } from './lib/landings';
   import { eventsFromLegacy, foldLandings, newId, type GameEvent, type LandingEvent } from './lib/events';
   import * as store from './lib/store';
+  import { backupName, backupText, readBackup } from './lib/backup';
   import { isManualId, isView, type View } from './lib/views';
   import { engineEvents, manualGame, resolve, type ManualEvent, type Now, type Setup as GameSetup } from './lib/manual';
   import { deriveSteps } from './lib/engine';
@@ -86,10 +87,10 @@
     if (first) readHash(g);
   }
 
+  const listed = async () => [...(await store.manualSetups()).map(manualMeta), ...(await source.listGames())];
   (async () => {
     await store.flushPending();
     source = await pickSource();
-    const listed = async () => [...(await store.manualSetups()).map(manualMeta), ...(await source.listGames())];
     games = await listed();
     if (!games.length) { await addSample().catch(() => {}); games = await listed(); } // a fresh install starts with a made-up game
     // ?game= opens that game even when the list doesn't have it (e.g. an older game through the relay server)
@@ -202,6 +203,40 @@
     return navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => true, () => false);
   }
 
+  // ---- backup: a file with every game of this browser; restoring adds what this browser doesn't have
+  let info = $state<string | null>(null);
+  async function saveBackup() {
+    info = null; notice = null;
+    // edits still waiting for IndexedDB go in too; a backup that would miss some is not made
+    try { await store.flushPending(); } catch (err) { notice = `백업 실패: 저장 안 된 기록이 있어요. ${(err as Error).message}`; return; }
+    const url = URL.createObjectURL(new Blob([backupText(await store.allEvents())], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = backupName(); a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  async function restoreBackup(e: Event) {
+    const input = e.currentTarget as HTMLInputElement, file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    info = null; notice = null;
+    try {
+      const events = readBackup(await file.text());
+      // replay every game that would change, with what this browser has of it, before storing anything
+      const fresh = await store.missing(events);
+      for (const id of new Set(fresh.filter((x) => isManualId(x.gameId)).map((x) => x.gameId))) {
+        const all = [...(await store.gameEvents(id)), ...fresh.filter((x) => x.gameId === id)];
+        try { await manualFrom(id, all); } catch { throw new Error('백업 파일의 경기 기록이 손상됐어요.'); }
+      }
+      const added = await store.importEvents(events);
+      games = await listed();
+      // show what came in: the newest restored game, or the game that got new edits
+      const id = (added.findLast((x) => x.kind === 'm.setup') ?? added.at(-1))?.gameId;
+      if (id) await openGame(id);
+      info = added.length ? `기록 ${added.length}개를 가져왔어요.` : '새로 가져올 기록이 없어요.';
+    } catch (err) { notice = `복원 실패: ${(err as Error).message}`; }
+    scrollTo(0, 0);
+  }
+
   function onkey(e: KeyboardEvent) {
     if (!game || view !== 'chart' || (e.target as HTMLElement).closest?.('input,textarea,select')) return;
     const nextInPlay = () => { const j = game!.pas.findIndex((p, i) => i > idx && p.inPlay); return j < 0 ? game!.pas.length - 1 : j; };
@@ -216,6 +251,7 @@
 
 {#if saveError}<div class="err">{saveError}</div>{/if}
 {#if notice}<div class="err" id="notice">{notice}</div>{/if}
+{#if info}<div class="err info" id="info">{info}</div>{/if}
 {#if view === 'setup'}
   <main class={wide ? 'dmain' : ''}><Setup {parks} oncreate={createGame} oncancel={() => (view = game ? (manual ? 'score' : 'chart') : 'chart')} /></main>
 {:else if error}
@@ -254,4 +290,7 @@
 {/if}
 
 <!-- AGPL-3.0 section 13: whoever uses the app can get its source; a modified copy should point at its own -->
-<footer class="source"><a id="source" href="https://github.com/SpaceDLFactory/openScoreBook" target="_blank" rel="noopener">소스 코드 · AGPL-3.0</a></footer>
+<footer class="source">
+  <div class="backup"><button id="backup" onclick={saveBackup}>기록 백업</button><label>백업 복원<input id="restore" type="file" accept=".json,application/json" onchange={restoreBackup} hidden /></label></div>
+  <a id="source" href="https://github.com/SpaceDLFactory/openScoreBook" target="_blank" rel="noopener">소스 코드 · AGPL-3.0</a>
+</footer>

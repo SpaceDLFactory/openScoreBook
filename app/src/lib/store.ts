@@ -32,6 +32,41 @@ export async function manualSetups(): Promise<GameEvent[]> {
   return all.filter((e) => e.kind === 'm.setup').sort((a, b) => b.at - a.at);
 }
 
+/** Every stored event in log order. */
+export async function allEvents(): Promise<GameEvent[]> {
+  const tx = (await open()).transaction(EVENTS, 'readonly');
+  const all = await done(tx.objectStore(EVENTS).getAll() as IDBRequest<GameEvent[]>);
+  return all.sort((a, b) => a.seq! - b.seq!);
+}
+
+/** The events this browser doesn't have yet (matched by id). */
+export async function missing(events: GameEvent[]): Promise<GameEvent[]> {
+  await flushPending();
+  const have = new Set((await allEvents()).map((e) => e.id));
+  return events.filter((e) => !have.has(e.id) && have.add(e.id));
+}
+
+/** Store the events this browser doesn't have yet, in the given order; returns those. Runs after queued edits, and
+ *  checks and adds in one transaction, so a second restore (or another tab) can't add an event twice. */
+export function importEvents(events: GameEvent[]): Promise<GameEvent[]> {
+  let added: GameEvent[] = [];
+  return serial(async () => {
+    await drain();
+    const tx = (await open()).transaction(EVENTS, 'readwrite'), store = tx.objectStore(EVENTS);
+    const todo: GameEvent[] = [];
+    const req = store.getAll() as IDBRequest<GameEvent[]>;
+    req.onsuccess = () => {
+      const have = new Set(req.result.map((e) => e.id));
+      for (const e of events) if (!have.has(e.id)) { have.add(e.id); todo.push(e); store.add(e); }
+    };
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+    });
+    added = todo;
+  }).then(() => added);
+}
+
 /** Append events in one transaction, in order; resolves once they are durable. A failing request aborts the
  *  transaction, so either all of them are stored or none. */
 export async function append(events: GameEvent[]): Promise<void> {
