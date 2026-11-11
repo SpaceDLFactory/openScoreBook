@@ -103,7 +103,7 @@
 
 ## 실행
 
-Node.js, Rust, [wasm-pack](https://rustwasm.github.io/wasm-pack/)이 필요하다.
+Node.js, Rust, [wasm-pack](https://wasm-bindgen.github.io/wasm-pack/)이 필요하다.
 
 ```sh
 git clone https://github.com/SpaceDLFactory/openScoreBook.git
