@@ -21,6 +21,8 @@
   import Score from './views/Score.svelte';
   import Setup from './views/Setup.svelte';
   import Games from './views/Games.svelte';
+  import Compare from './views/Compare.svelte';
+  import { compareGames, type Comparison } from './lib/compare';
 
   let source: GameSource;
   const LAST_GAME = 'scorebook:game';
@@ -230,6 +232,28 @@
     games = await listed();
   }
 
+  // ---- comparing two records of one game
+  let comparison = $state<{ c: Comparison; labelA: string; labelB: string } | null>(null);
+  let comparing = 0; // a newer compare, or leaving the list, drops one still loading
+  async function compare(a: string, b: string) {
+    notice = null;
+    const t = ++comparing;
+    const load = async (id: string) => {
+      const evs = await store.gameEvents(id);
+      return { game: (await manualFrom(id, evs)).game, landings: foldLandings(evs) };
+    };
+    const label = (id: string) => {
+      const g = games.find((x) => x.gameId === id);
+      return g ? [g.gameDate, `${g.awayTeamName} : ${g.homeTeamName}`, g.stadium].filter(Boolean).join(' · ') : id;
+    };
+    try {
+      const [x, y] = await Promise.all([load(a), load(b)]);
+      if (t !== comparing || view !== 'games') return;
+      comparison = { c: compareGames(x.game, x.landings, y.game, y.landings), labelA: label(a), labelB: label(b) };
+      view = 'compare'; scrollTo(0, 0);
+    } catch (err) { if (t === comparing) notice = `비교 실패: ${(err as Error).message}`; }
+  }
+
   // ---- backup: a file with every game of this browser; restoring adds what this browser doesn't have
   let info = $state<string | null>(null);
   async function saveBackup() {
@@ -280,7 +304,9 @@
 {#if notice}<div class="err" id="notice">{notice}</div>{/if}
 {#if info}<div class="err info" id="info">{info}</div>{/if}
 {#if view === 'games'}
-  <main class={wide ? 'dmain' : ''}><Games {games} current={game?.gameId ?? null} onopen={openFromList} ondelete={removeGame} onnew={() => (view = 'setup')} onclose={game ? () => (view = back) : null} /></main>
+  <main class={wide ? 'dmain' : ''}><Games {games} current={game?.gameId ?? null} onopen={openFromList} ondelete={removeGame} oncompare={compare} onnew={() => (view = 'setup')} onclose={game ? () => (view = back) : null} /></main>
+{:else if view === 'compare' && comparison}
+  <main class={wide ? 'dmain' : ''}><Compare {...comparison} onclose={() => (view = 'games')} /></main>
 {:else if view === 'setup'}
   <main class={wide ? 'dmain' : ''}><Setup {parks} oncreate={createGame} oncancel={() => (view = game ? (manual ? 'score' : 'chart') : 'chart')} /></main>
 {:else if error}
