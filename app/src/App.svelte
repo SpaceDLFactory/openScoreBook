@@ -22,6 +22,8 @@
   import Setup from './views/Setup.svelte';
   import Games from './views/Games.svelte';
   import Compare from './views/Compare.svelte';
+  import Merge from './views/Merge.svelte';
+  import { checkMerged, consensus, type Consensus } from './lib/consensus';
   import { compareGames, type Comparison } from './lib/compare';
 
   let source: GameSource;
@@ -254,6 +256,48 @@
     } catch (err) { if (t === comparing) notice = `비교 실패: ${(err as Error).message}`; }
   }
 
+  // ---- merging several records of one game by vote
+  let merging = $state<{ c: Consensus; labels: { label: string; text: string }[]; check: { pas: number; issues: string[]; score: string }; from: string } | null>(null);
+  let mergeTok = 0;
+  const gameLabel = (id: string) => {
+    const g = games.find((x) => x.gameId === id);
+    return g ? [g.gameDate, `${g.awayTeamName} : ${g.homeTeamName}`, g.stadium].filter(Boolean).join(' · ') : id;
+  };
+  async function merge(ids: string[]) {
+    notice = null;
+    const t = ++mergeTok;
+    try {
+      const sources = await Promise.all(ids.map(async (id, i) => {
+        const evs = await store.gameEvents(id);
+        const edits = resolve(evs.filter((e) => e.kind.startsWith('m.')) as unknown as ManualEvent[]);
+        const ee = engineEvents(edits), steps = await deriveSteps(ee.config, ee.events);
+        return { label: 'ABCDEFGH'[i], edits, steps, game: manualGame(id, edits, steps).game, landings: foldLandings(evs) };
+      }));
+      const c = consensus(sources);
+      // replay the merged record as the app will when it is opened
+      const ee = engineEvents(c.edits), m = manualGame('m-merge', c.edits, await deriveSteps(ee.config, ee.events));
+      if (t !== mergeTok || view !== 'games') return;
+      const check = { pas: m.game.pas.length, issues: checkMerged(c, m.game, m.now.issues), score: `${m.game.awayName} ${m.now.awayScore} : ${m.now.homeScore} ${m.game.homeName}` };
+      merging = { c, labels: ids.map((id, i) => ({ label: 'ABCDEFGH'[i], text: gameLabel(id) })), check, from: ids[0] };
+      view = 'merge'; scrollTo(0, 0);
+    } catch (err) { if (t === mergeTok) notice = `합의 실패: ${(err as Error).message}`; }
+  }
+  async function saveMerge() {
+    if (!merging) return;
+    const id = `m-merge-${Date.now().toString(36)}`, at = Date.now();
+    // plain copies (IndexedDB can't clone the state proxies), without the log position they had in their own record
+    const evs = $state.snapshot([...merging.c.edits, ...merging.c.landings])
+      .map((e) => { const { seq: _, ...rest } = e as Partial<GameEvent>; return { ...rest, id: newId(), gameId: id, at } as GameEvent; });
+    try { await store.importEvents(evs); } catch (err) { notice = `저장 실패: ${(err as Error).message}`; return; }
+    // stored: whatever happens next, this merge is done
+    merging = null; view = 'games';
+    try {
+      games = await listed();
+      await openGame(id);
+      info = '합의 기록을 새 경기로 저장했어요.';
+    } catch (err) { notice = `합의 기록은 저장했지만 열지 못했어요: ${(err as Error).message}`; }
+  }
+
   // ---- backup: a file with every game of this browser; restoring adds what this browser doesn't have
   let info = $state<string | null>(null);
   async function saveBackup() {
@@ -304,9 +348,11 @@
 {#if notice}<div class="err" id="notice">{notice}</div>{/if}
 {#if info}<div class="err info" id="info">{info}</div>{/if}
 {#if view === 'games'}
-  <main class={wide ? 'dmain' : ''}><Games {games} current={game?.gameId ?? null} onopen={openFromList} ondelete={removeGame} oncompare={compare} onnew={() => (view = 'setup')} onclose={game ? () => (view = back) : null} /></main>
+  <main class={wide ? 'dmain' : ''}><Games {games} current={game?.gameId ?? null} onopen={openFromList} ondelete={removeGame} oncompare={compare} onmerge={merge} oncancel={() => { comparing++; mergeTok++; }} onnew={() => (view = 'setup')} onclose={game ? () => (view = back) : null} /></main>
 {:else if view === 'compare' && comparison}
   <main class={wide ? 'dmain' : ''}><Compare {...comparison} onclose={() => (view = 'games')} /></main>
+{:else if view === 'merge' && merging}
+  <main class={wide ? 'dmain' : ''}><Merge c={merging.c} labels={merging.labels} check={merging.check} onsave={saveMerge} onclose={() => (view = 'games')} /></main>
 {:else if view === 'setup'}
   <main class={wide ? 'dmain' : ''}><Setup {parks} oncreate={createGame} oncancel={() => (view = game ? (manual ? 'score' : 'chart') : 'chart')} /></main>
 {:else if error}

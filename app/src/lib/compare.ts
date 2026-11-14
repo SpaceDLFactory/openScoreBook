@@ -31,23 +31,23 @@ export interface Comparison {
   };
 }
 
-const halfKey = (p: PA) => `${p.inn}${p.top ? 'T' : 'B'}`;
+export const halfKey = (p: PA) => `${p.inn}${p.top ? 'T' : 'B'}`;
 /** the result without the batter's name, so two scorers' names for one player don't count as a difference */
-const resultOf = (p: PA) => p.result?.replace(/^[^:]*:\s*/, '') ?? null;
+export const resultOf = (p: PA) => p.result?.replace(/^[^:]*:\s*/, '') ?? null;
 /** outs, runners and score after a PA, e.g. "1사 1·3루 2:1" */
-const situation = (s: State) => {
+export const situation = (s: State) => {
   const on = s.bases.flatMap((b, i) => (b ? [`${i + 1}`] : []));
   return `${s.out}사 ${on.length ? on.join('·') + '루' : '주자 없음'} ${s.awayScore}:${s.homeScore}`;
 };
 const callName: Record<string, string> = { B: '볼', T: '스트라이크', S: '헛스윙', F: '파울', W: '번트 파울', H: '타격' };
 
-function slotOf(g: Game, p: PA): number {
+export function slotOf(g: Game, p: PA): number {
   const rows = (p.top ? g.lineups.away : g.lineups.home).batter;
   return rows.find((r) => r.pcode === p.batter)?.batOrder ?? 0;
 }
 
 /** Pairs of indexes into xs and ys along their longest common subsequence; unpaired items get null. */
-function align<T>(xs: T[], ys: T[]): [number | null, number | null][] {
+export function align<T>(xs: T[], ys: T[]): [number | null, number | null][] {
   const n = xs.length, m = ys.length;
   const L = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
   for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = xs[i] === ys[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
