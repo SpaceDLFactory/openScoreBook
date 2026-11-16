@@ -25,6 +25,7 @@
   import Merge from './views/Merge.svelte';
   import { checkMerged, consensus, type Consensus } from './lib/consensus';
   import { summaryOf } from './lib/card';
+  import { rosters, type Roster } from './lib/rosters';
   import { fetchShare } from './lib/shareApi';
   import { compareGames, type Comparison } from './lib/compare';
 
@@ -167,6 +168,12 @@
   }
   // earlier games are the list of parks the user has made
   let parks = $state<Park[]>([]);
+  // and the teams and players they used
+  let teamRosters = $state<Record<string, Roster>>({});
+  $effect(() => {
+    void games;
+    store.allEvents().then((all) => (teamRosters = rosters(all)), () => {});
+  });
   $effect(() => {
     void games; // re-read when a game is added, deleted or restored
     store.manualSetups().then((l) => (parks = savedParks(l.map((e) => (e as unknown as { setup: GameSetup }).setup))));
@@ -397,7 +404,7 @@
 {:else if view === 'merge' && merging}
   <main class={wide ? 'dmain' : ''}><Merge c={merging.c} labels={merging.labels} check={merging.check} onsave={saveMerge} onclose={() => (view = 'games')} /></main>
 {:else if view === 'setup'}
-  <main class={wide ? 'dmain' : ''}><Setup {parks} oncreate={createGame} oncancel={() => (view = game ? (manual ? 'score' : 'chart') : 'chart')} /></main>
+  <main class={wide ? 'dmain' : ''}><Setup {parks} rosters={teamRosters} oncreate={createGame} oncancel={() => (view = game ? (manual ? 'score' : 'chart') : 'chart')} /></main>
 {:else if error}
   <div class="err">{error}</div>
 {:else if game && fin}

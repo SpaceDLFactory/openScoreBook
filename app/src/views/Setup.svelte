@@ -4,7 +4,10 @@
   import { POS_NAME } from '../lib/manual';
   import { STADIUMS, customFence, fenceOk, type Park } from '../lib/stadiums';
   import { FH, FW, HX, HY, fieldOf } from '../lib/field';
-  let { parks, oncreate, oncancel }: { parks: Park[]; oncreate: (s: Setup) => void; oncancel: () => void } = $props();
+  import type { Roster } from '../lib/rosters';
+  /** rosters: teams seen in earlier games, for names to pick and last lineups to reuse */
+  let { parks, rosters = {}, oncreate, oncancel }: { parks: Park[]; rosters?: Record<string, Roster>; oncreate: (s: Setup) => void; oncancel: () => void } = $props();
+  const teams = $derived(Object.values(rosters).sort((a, b) => b.date.localeCompare(a.date)).map((r) => r.team));
   const POSITIONS = [...POS_NAME.slice(1), '지명타자', '추가타자'];
   const COUNTS = [9, 10, 11, 12, 13, 14, 15];
   const today = new Date().toISOString().slice(0, 10);
@@ -17,6 +20,20 @@
   }
   let away = $state(blank()), home = $state(blank());
   let awayPitcher = $state(''), homePitcher = $state('');
+  const rosterOf = (side: 'away' | 'home') => rosters[(side === 'away' ? awayName : homeName).trim()];
+  /** the team's last batting order (names and positions), to adjust for today */
+  function loadLineup(side: 'away' | 'home') {
+    const r = rosterOf(side), list = side === 'away' ? away : home;
+    if (!r) return;
+    setCount(list, r.lineup.length);
+    r.lineup.forEach((p, i) => { list[i].name = p.name; list[i].pos = p.pos; });
+  }
+  /** a known batter picked by name brings his latest position, when none is set */
+  function knownPos(side: 'away' | 'home', b: { name: string; pos: string }) {
+    const hit = rosterOf(side)?.batters.find((x) => x.name === b.name.trim());
+    if (hit?.pos && !b.pos) b.pos = hit.pos;
+  }
+  const md = (d: string) => d.slice(5).replace('-', '/');
   const NEW_PARK = '__new', FENCE_LABELS = ['좌', '좌중', '중', '우중', '우'];
   let parkName = $state(''), dist = $state<(number | null)[]>([null, null, null, null, null]);
   const isNew = $derived(stadium === NEW_PARK);
@@ -56,15 +73,20 @@
 <div class="cols2">
   {#each ['away', 'home'] as const as side (side)}
     {@const list = side === 'away' ? away : home}
+    {@const roster = rosterOf(side)}
     <div class="card setup">
-      <label>{side === 'away' ? '원정' : '홈'} 팀 {#if side === 'away'}<input id="awayName" bind:value={awayName} placeholder="원정" />{:else}<input id="homeName" bind:value={homeName} placeholder="홈" />{/if}</label>
+      <label>{side === 'away' ? '원정' : '홈'} 팀 {#if side === 'away'}<input id="awayName" list="teams" autocomplete="off" bind:value={awayName} placeholder="원정" />{:else}<input id="homeName" list="teams" autocomplete="off" bind:value={homeName} placeholder="홈" />{/if}</label>
+      {#if roster}<button class="loadline" id="load-{side}" onclick={() => loadLineup(side)}>지난 라인업 불러오기 · {md(roster.date)}</button>{/if}
+      <datalist id="bat-{side}">{#each roster?.batters ?? [] as b}<option value={b.name}>{b.pos}</option>{/each}</datalist>
+      <datalist id="pit-{side}">{#each roster?.pitchers ?? [] as p}<option value={p}></option>{/each}</datalist>
       <label>타자 수 <select class="nbat" data-side={side} value={list.length} onchange={(e) => setCount(list, +e.currentTarget.value)}>{#each COUNTS as n}<option value={n}>{n}명</option>{/each}</select></label>
       {#each list as b, i}
-        <div class="lrow"><b>{i + 1}</b><input class="bname" data-side={side} bind:value={b.name} placeholder="{i + 1}번 타자" />
+        <div class="lrow"><b>{i + 1}</b><input class="bname" data-side={side} list="bat-{side}" autocomplete="off" bind:value={b.name} onchange={() => knownPos(side, b)} placeholder="{i + 1}번 타자" />
           <select bind:value={b.pos}><option value="">포지션</option>{#each POSITIONS as p}<option value={p}>{p}</option>{/each}</select></div>
       {/each}
-      <label>선발 투수 {#if side === 'away'}<input bind:value={awayPitcher} />{:else}<input bind:value={homePitcher} />{/if}</label>
+      <label>선발 투수 {#if side === 'away'}<input id="awayPitcher" list="pit-away" autocomplete="off" bind:value={awayPitcher} />{:else}<input id="homePitcher" list="pit-home" autocomplete="off" bind:value={homePitcher} />{/if}</label>
     </div>
   {/each}
 </div>
+<datalist id="teams">{#each teams as t}<option value={t}></option>{/each}</datalist>
 <div class="nav"><button onclick={oncancel}>취소</button><button class="next" id="create" disabled={blocked} onclick={create}>기록 시작</button></div>

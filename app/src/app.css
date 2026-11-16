@@ -252,4 +252,5 @@
   .err.ro{display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .err.ro button{height:30px;padding:0 12px;border-radius:8px;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.12);color:#7ee2a4;font:inherit;font-weight:700;font-size:12px;white-space:nowrap;}
   .chips .chip:disabled{cursor:default;}
+  .setup .loadline{height:34px;border-radius:9px;border:1px solid rgba(34,197,94,.45);background:rgba(34,197,94,.08);color:#7ee2a4;font:inherit;font-size:12px;font-weight:700;}
   .newgame{height:36px;padding:0 12px;border-radius:9px;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.10);color:#7ee2a4;font-weight:700;font-size:12px;white-space:nowrap;}
