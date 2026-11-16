@@ -301,6 +301,13 @@
 
   // ---- backup: a file with every game of this browser; restoring adds what this browser doesn't have
   let info = $state<string | null>(null);
+  // a newer version of the app took over in the background (main.ts); its screens show after a reload
+  let updated = $state(false);
+  $effect(() => {
+    const on = () => (updated = true);
+    addEventListener('app-updated', on);
+    return () => removeEventListener('app-updated', on);
+  });
   async function saveBackup() {
     info = null; notice = null;
     // edits still waiting for IndexedDB go in too; a backup that would miss some is not made
@@ -348,6 +355,7 @@
 {#if saveError}<div class="err">{saveError}</div>{/if}
 {#if notice}<div class="err" id="notice">{notice}</div>{/if}
 {#if info}<div class="err info" id="info">{info}</div>{/if}
+{#if updated}<div class="err info update" id="updated">새 버전이 준비됐어요. <button onclick={() => location.reload()}>새로고침</button></div>{/if}
 {#if view === 'games'}
   <main class={wide ? 'dmain' : ''}><Games {games} current={game?.gameId ?? null} onopen={openFromList} ondelete={removeGame} oncompare={compare} onmerge={merge} oncancel={() => { comparing++; mergeTok++; }} onnew={() => (view = 'setup')} onclose={game ? () => (view = back) : null} /></main>
 {:else if view === 'compare' && comparison}
