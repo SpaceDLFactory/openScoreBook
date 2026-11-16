@@ -7,7 +7,7 @@
   import type { GameEvent } from '../lib/events';
   import ShareCard from '../components/ShareCard.svelte';
   /** card: a manually scored game's summary, for its share card */
-  let { game, card, events }: { game: Game; card?: CardSummary; events?: () => GameEvent[] } = $props();
+  let { game, card, events, linkable = true }: { game: Game; card?: CardSummary; events?: () => GameEvent[]; linkable?: boolean } = $props();
   // Replay the relay through the scoring engine (wasm) and check it lands on Naver's score and box.
   const check = $derived.by(async () => {
     const { config, events, unmapped, issues } = toEngine(game);
@@ -27,7 +27,7 @@
 
 <div class="h1">박스스코어</div>
 <div class="sub">{game.awayName} {fin.awayScore} : {fin.homeScore} {game.homeName}{isOver(game.meta?.statusCode) ? ' · 최종' : ''}</div>
-{#if card && events}<ShareCard summary={card} gameId={game.gameId} {events} />{/if}
+{#if card && events}<ShareCard summary={card} gameId={game.gameId} {events} {linkable} />{/if}
 <div class="card tbl"><table class="ls"><tbody>
   <tr><th>팀</th>{#each cols as c}<th>{c}</th>{/each}<th>R</th><th>H</th><th>E</th></tr>
   <tr><td>{game.awayName}</td>{#each cols as c}<td>{game.inningScore.away[c]}</td>{/each}<td class="rhe">{fin.awayScore}</td><td class="rhe">{fin.awayHit}</td><td class="rhe">{fin.awayError}</td></tr>

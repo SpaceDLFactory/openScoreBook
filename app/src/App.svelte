@@ -6,7 +6,7 @@
   import { eventsFromLegacy, foldLandings, newId, type GameEvent, type LandingEvent } from './lib/events';
   import * as store from './lib/store';
   import { backupName, backupText, readBackup } from './lib/backup';
-  import { isManualId, isView, type View } from './lib/views';
+  import { isManualId, isSharedId, isView, type View } from './lib/views';
   import { engineEvents, manualGame, resolve, type ManualEvent, type Now, type Setup as GameSetup } from './lib/manual';
   import { deriveSteps } from './lib/engine';
   import { savedParks, type Park } from './lib/stadiums';
@@ -41,6 +41,8 @@
   let now = $state<Now | null>(null); // manual games: the situation for the input screen
   let loaded = $state(false);
   const manual = $derived(!!game && isManualId(game.gameId));
+  /** a game shared with this browser: seen as it was shared; a copy can be edited */
+  const readonly = $derived(!!game && isSharedId(game.gameId));
   let idx = $state(0);
   let view = $state<View>('chart');
   let error = $state<string | null>(null);
@@ -57,7 +59,7 @@
     const m = location.hash.match(/^#pa-(\d+)$/);
     if (m) { view = 'chart'; idx = Math.min(+m[1], g.pas.length - 1); return; }
     const v = location.hash.slice(1);
-    if (isView(v) && v !== 'chart') view = v;
+    if (isView(v) && v !== 'chart' && !(v === 'score' && isSharedId(g.gameId))) view = v;
   }
   $effect(() => {
     if (!game) return;
@@ -81,7 +83,7 @@
       const m = await manualFrom(id, evs);
       if (t !== opening) return;
       try { localStorage.setItem(LAST_GAME, id); } catch { /* private mode */ }
-      events = evs; idx = Math.max(0, m.game.pas.length - 1); now = m.now; game = m.game; view = 'score';
+      events = evs; idx = Math.max(0, m.game.pas.length - 1); now = m.now; game = m.game; view = isSharedId(id) ? 'box' : 'score';
       if (first) readHash(m.game);
       return;
     }
@@ -177,7 +179,7 @@
     await openGame(id);
   }
   async function recordManual(list: ManualEvent[]) {
-    if (!game) return;
+    if (!game || readonly) return;
     const id = game.gameId;
     for (const e of list) {
       // plain copy: values bound in the input screen are Svelte proxies, which IndexedDB can't clone
@@ -204,7 +206,7 @@
   // ---- landing edits (current PA): append to the log; the view folds it
   const pa = $derived(game?.pas[idx]);
   function record(e: LandingEvent) {
-    if (!game) return;
+    if (!game || readonly) return;
     const ev: GameEvent = { ...e, id: newId(), gameId: game.gameId, at: Date.now() };
     events.push(ev);
     // a failed write stays queued and is retried with the next edit; the banner clears once one lands
@@ -318,6 +320,19 @@
     return gameId;
   }
 
+  /** a shared game as a game of this browser's own, to edit */
+  async function copyShared() {
+    if (!game || !readonly) return;
+    const id = `m-${Date.now().toString(36)}`, at = Date.now();
+    const evs = ($state.snapshot(events) as GameEvent[]).map(({ seq: _, ...e }) => ({ ...e, id: newId(), gameId: id, at }) as GameEvent);
+    try {
+      await store.importEvents(evs);
+      games = await listed();
+      await openGame(id);
+      info = '복사했어요. 이 기록은 고칠 수 있어요.';
+    } catch (err) { notice = `복사 실패: ${(err as Error).message}`; }
+  }
+
   // ---- backup: a file with every game of this browser; restoring adds what this browser doesn't have
   let info = $state<string | null>(null);
   // a newer version of the app took over in the background (main.ts); its screens show after a reload
@@ -392,29 +407,30 @@
       <GameSelect {games} current={game.gameId} onchange={switchGame} />
       <button class="glistbtn" id="games" onclick={showGames}>목록</button>
       <button class="newgame" id="newgame" onclick={() => (view = 'setup')}>＋ 새 기록</button>
-      <Tabs {view} {manual} onselect={select} />
+      <Tabs {view} {manual} {readonly} onselect={select} />
     </header>
   {:else}
     <div class="gbar">{#if live}<span class="live">LIVE</span>{/if}<GameSelect {games} current={game.gameId} onchange={switchGame} /><button class="glistbtn" id="games" onclick={showGames}>목록</button><button class="newgame" id="newgame" onclick={() => (view = 'setup')}>＋ 새 기록</button></div>
   {/if}
 
-  {#if view === 'score' && manual && now}
+  {#if readonly}<div class="err info ro" id="readonly">공유받은 기록 · 읽기 전용 <button id="copyShared" onclick={copyShared}>복사해서 고치기</button></div>{/if}
+  {#if view === 'score' && manual && !readonly && now}
     <main class={wide ? 'dmain' : ''}>{#key game.gameId}<Score {game} {now} onrecord={recordManual} onundo={undoManual} />{/key}</main>
   {:else if !game.pas.length}
     <div class="empty">아직 기록한 타석이 없어요.{#if manual} <b>기록</b> 탭에서 시작해요.{/if}</div>
   {:else if view === 'chart'}
-    <Chart {game} {idx} {landings} {wide} ongo={go} ontap={tap} onundo={undo} onclear={clear} onres={setRes} ontraj={setTraj} onexport={exportJSON} />
+    <Chart {game} {idx} {landings} {wide} {readonly} ongo={go} ontap={tap} onundo={undo} onclear={clear} onres={setRes} ontraj={setTraj} onexport={exportJSON} />
   {:else}
     <main class={wide ? `dmain v-${view}` : ''}>
       {#if view === 'sheet'}<Sheet {game} onpick={pick} />
       {:else if view === 'log'}<Log {game} onpick={pick} />
-      {:else if view === 'box'}<Box {game} card={manual && now ? summaryOf(game, now) : undefined} events={() => $state.snapshot(events) as GameEvent[]} />
+      {:else if view === 'box'}<Box {game} card={manual && now ? summaryOf(game, now) : undefined} events={() => $state.snapshot(events) as GameEvent[]} linkable={!readonly} />
       {:else if view === 'pitcher'}<Pitcher {game} {landings} onpick={pick} />
       {:else if view === 'wp' && !manual}<WinProb {game} onpick={pick} />{/if}
     </main>
   {/if}
 
-  {#if !wide}<Tabs {view} {manual} onselect={select} />{/if}
+  {#if !wide}<Tabs {view} {manual} {readonly} onselect={select} />{/if}
 {:else if loaded}
   <div class="empty">경기가 없어요. <button class="newgame" id="newgame" onclick={() => (view = 'setup')}>＋ 새 기록</button></div>
 {/if}

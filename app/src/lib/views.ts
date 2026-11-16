@@ -4,3 +4,5 @@ export const TABS: [View, string][] = [['chart', '차팅'], ['sheet', '기록지
 export const MANUAL_TABS: [View, string][] = [['score', '기록'], ...TABS.filter(([k]) => k !== 'wp')];
 export const isView = (v: string): v is View => v === 'setup' || v === 'games' || MANUAL_TABS.some(([k]) => k === v) || TABS.some(([k]) => k === v);
 export const isManualId = (id: string) => id.startsWith('m-');
+/** a game opened from someone's share link: read-only */
+export const isSharedId = (id: string) => id.startsWith('m-share-');

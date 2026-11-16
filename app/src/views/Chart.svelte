@@ -11,11 +11,13 @@
 
   interface Props {
     game: Game; idx: number; landings: Landings; wide: boolean;
+    /** a shared game: landings are shown, not edited */
+    readonly?: boolean;
     ongo: (i: number) => void;
     ontap: (pt: [number, number]) => void; onundo: () => void; onclear: () => void;
     onres: (r: ResClass) => void; ontraj: (t: string) => void; onexport: () => Promise<boolean>;
   }
-  let { game, idx, landings, wide, ongo, ontap, onundo, onclear, onres, ontraj, onexport }: Props = $props();
+  let { game, idx, landings, wide, readonly = false, ongo, ontap, onundo, onclear, onres, ontraj, onexport }: Props = $props();
 
   const pa = $derived(game.pas[idx]);
   const fence = $derived(game.fence ?? fenceFor(game.stadium));
@@ -68,20 +70,20 @@
 
 {#snippet fieldPart()}
   {#if pa.inPlay}
-    <div class="sect"><span>{saved ? '② 이후 타구 흐름 · 탭 (선택)' : '① 최초 낙구지점 · 탭'}</span><span class="saved">{saved ? `저장됨 · ${landingInfo(saved, (a) => fenceDist(fence, a))}` : ''}</span></div>
-    <div class="card fieldcard"><Field {pa} {fence} {landings} {ontap} /></div>
-    {#if saved}
+    <div class="sect"><span>{readonly ? '낙구지점' : saved ? '② 이후 타구 흐름 · 탭 (선택)' : '① 최초 낙구지점 · 탭'}</span><span class="saved">{saved ? `저장됨 · ${landingInfo(saved, (a) => fenceDist(fence, a))}` : ''}</span></div>
+    <div class="card fieldcard"><Field {pa} {fence} {landings} ontap={readonly ? () => {} : ontap} /></div>
+    {#if saved && !readonly}
       <div class="pathbar"><button id="undo" onclick={onundo}>↶ 되돌리기</button><button id="clear" onclick={onclear}>지우기</button><span>흐름 {saved.path?.length ?? 0}점</span></div>
     {/if}
     <div class="fnote">{note}</div>
-    <div class="sect"><span>결과</span><span>{saved?.resManual ? '직접 수정' : '자동 판정'}</span></div>
+    <div class="sect"><span>결과</span><span>{readonly ? '' : saved?.resManual ? '직접 수정' : '자동 판정'}</span></div>
     <div class="chips res">
       {#each RES as [k, l, c]}
-        <button class="chip" class:sel={curRes === k} data-r={k} style={curRes === k ? `border-color:${c};color:${c};background:${c}1a` : ''} onclick={() => onres(k)}>{l}</button>
+        <button class="chip" class:sel={curRes === k} data-r={k} style={curRes === k ? `border-color:${c};color:${c};background:${c}1a` : ''} disabled={readonly} onclick={() => onres(k)}>{l}</button>
       {/each}
     </div>
     <div class="sect"><span>궤적</span></div>
-    <div class="chips">{#each TRAJ as t}<button class="chip" class:sel={saved?.traj === t} data-t={t} onclick={() => ontraj(t)}>{t}</button>{/each}</div>
+    <div class="chips">{#each TRAJ as t}<button class="chip" class:sel={saved?.traj === t} data-t={t} disabled={readonly} onclick={() => ontraj(t)}>{t}</button>{/each}</div>
   {:else if wide}
     <div class="empty">인플레이 타석이 아니에요.<br />타구 기록은 인플레이 타석에서 해요. <kbd>N</kbd> 다음 인플레이</div>
   {/if}

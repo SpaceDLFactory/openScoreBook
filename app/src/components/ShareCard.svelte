@@ -4,7 +4,8 @@
   import { cardSvg, type CardSummary } from '../lib/card';
   import type { GameEvent } from '../lib/events';
   import { createShare, deleteShare, mySharesOf, shareEnabled, type MyShare } from '../lib/shareApi';
-  let { summary, gameId, events }: { summary: CardSummary; gameId: string; events: () => GameEvent[] } = $props();
+  /** linkable: false for a game someone else shared (it is theirs to link) */
+  let { summary, gameId, events, linkable = true }: { summary: CardSummary; gameId: string; events: () => GameEvent[]; linkable?: boolean } = $props();
   let links = $state<MyShare[]>([]);
   $effect(() => { links = mySharesOf(gameId); });
   const link = $derived(links.at(-1));
@@ -73,7 +74,7 @@
 <div class="card sharecard">
   <img {src} alt="{summary.away} {summary.score[0]} : {summary.score[1]} {summary.home} 스코어 카드" />
   <button id="shareCard" disabled={busy} onclick={share}>{busy ? '만드는 중…' : '이미지 공유'}</button>
-  {#if shareEnabled}
+  {#if shareEnabled && linkable}
     {#if link}
       <div class="sharelink"><a id="shareUrl" href={link.url} target="_blank" rel="noopener">{link.url}</a>{#if copied}<span>복사됨</span>{/if}</div>
       <div class="sharerow">
