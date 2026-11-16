@@ -25,6 +25,7 @@
   import Merge from './views/Merge.svelte';
   import { checkMerged, consensus, type Consensus } from './lib/consensus';
   import { summaryOf } from './lib/card';
+  import { fetchShare } from './lib/shareApi';
   import { compareGames, type Comparison } from './lib/compare';
 
   let source: GameSource;
@@ -109,6 +110,12 @@
     if (!games.length && !seen) { await addSample().catch(() => {}); games = await listed(); } // a fresh install starts with a made-up game
     // ?game= opens that game even when the list doesn't have it (e.g. an older game through the relay server)
     let pick = new URLSearchParams(location.search).get('game');
+    // a share link (#share=id) brings that game in and opens it
+    const shared = location.hash.match(/^#share=([A-Za-z0-9]{12})$/)?.[1];
+    if (shared) {
+      history.replaceState(null, '', '#');
+      try { pick = await importShared(shared); } catch (e) { notice = `공유 기록 열기 실패: ${(e as Error).message}`; }
+    }
     if (!pick) {
       try { pick = localStorage.getItem(LAST_GAME); } catch { /* private mode */ }
       if (!games.some((g) => g.gameId === pick)) pick = games[0]?.gameId ?? null;
@@ -299,6 +306,18 @@
     } catch (err) { notice = `합의 기록은 저장했지만 열지 못했어요: ${(err as Error).message}`; }
   }
 
+  // ---- a game shared by link: kept as its own game (m-share-<id>), opened again if already here
+  async function importShared(id: string): Promise<string> {
+    const gameId = `m-share-${id}`;
+    if (!games.some((g) => g.gameId === gameId)) {
+      const { events: evs } = await fetchShare(id);
+      await store.importEvents(evs.map((e, i) => ({ ...e, id: `share-${id}-${i}`, gameId })));
+      games = await listed();
+      info = '공유받은 기록을 가져왔어요. 목록에서 지울 수 있어요.';
+    }
+    return gameId;
+  }
+
   // ---- backup: a file with every game of this browser; restoring adds what this browser doesn't have
   let info = $state<string | null>(null);
   // a newer version of the app took over in the background (main.ts); its screens show after a reload
@@ -389,7 +408,7 @@
     <main class={wide ? `dmain v-${view}` : ''}>
       {#if view === 'sheet'}<Sheet {game} onpick={pick} />
       {:else if view === 'log'}<Log {game} onpick={pick} />
-      {:else if view === 'box'}<Box {game} card={manual && now ? summaryOf(game, now) : undefined} />
+      {:else if view === 'box'}<Box {game} card={manual && now ? summaryOf(game, now) : undefined} events={() => $state.snapshot(events) as GameEvent[]} />
       {:else if view === 'pitcher'}<Pitcher {game} {landings} onpick={pick} />
       {:else if view === 'wp' && !manual}<WinProb {game} onpick={pick} />{/if}
     </main>

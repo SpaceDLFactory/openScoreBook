@@ -33,7 +33,7 @@
       <div class="grow" class:cur={!picking && g.gameId === current} class:picked={!!mark(g.gameId)} data-game={g.gameId}>
         <button class="gopen" onclick={() => (picking ? pick(g.gameId) : onopen(g.gameId))}>
           <b>{#if mark(g.gameId)}<i class="gmark">{mark(g.gameId)}</i>{/if}{title(g)}</b>
-          <span>{[g.gameDate, g.stadium, g.gameId === 'm-sample' ? '예시 경기' : '', g.gameId.startsWith('m-merge-') ? '합의 기록' : ''].filter(Boolean).join(' · ')}</span>
+          <span>{[g.gameDate, g.stadium, g.gameId === 'm-sample' ? '예시 경기' : '', g.gameId.startsWith('m-merge-') ? '합의 기록' : '', g.gameId.startsWith('m-share-') ? '공유받은 기록' : ''].filter(Boolean).join(' · ')}</span>
         </button>
         {#if !picking && isManualId(g.gameId)}<button class="gdel" aria-label="{title(g)} 삭제" onclick={() => del(g)}>삭제</button>{/if}
       </div>

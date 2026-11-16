@@ -243,4 +243,10 @@
   .sharecard button{height:42px;border-radius:10px;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.12);color:#7ee2a4;font:inherit;font-weight:700;font-size:14px;}
   .sharecard button:disabled{opacity:.5;}
   .err.update button{margin-left:8px;height:28px;padding:0 12px;border-radius:8px;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.12);color:#7ee2a4;font:inherit;font-weight:700;font-size:12px;}
+  .sharecard .sharelink{display:flex;gap:8px;align-items:center;font-size:12px;min-width:0;}
+  .sharecard .sharelink a{color:#7ee2a4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+  .sharecard .sharelink span{color:var(--muted);white-space:nowrap;}
+  .sharecard .sharerow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+  .sharecard .sharerow button{height:38px;font-size:12px;border-color:var(--line);background:var(--panel2);color:var(--txt);}
+  .sharecard .sharerow button.del{border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.08);color:var(--out);}
   .newgame{height:36px;padding:0 12px;border-radius:9px;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.10);color:#7ee2a4;font-weight:700;font-size:12px;white-space:nowrap;}

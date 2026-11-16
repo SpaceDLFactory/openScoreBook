@@ -1,0 +1,24 @@
+{
+  "name": "scorebook-share-server",
+  "private": true,
+  "version": "0.0.0",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/node.ts",
+    "fonts": "sh scripts/fonts.sh",
+    "test": "vitest run",
+    "check": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.8",
+    "@resvg/resvg-wasm": "2.6.2",
+    "hono": "4.13.18"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "tsx": "4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.0"
+  }
+}

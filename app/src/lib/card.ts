@@ -33,12 +33,15 @@ export function summaryOf(game: Game, now: Now): CardSummary {
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 /** a name fitted to a width: smaller type for longer names, cut with … past what fits even then */
 function fit(name: string, width: number, max: number, min: number): { text: string; size: number } {
-  const units = [...name].reduce((t, c) => t + (/[ᄀ-￿]/.test(c) ? 1 : 0.6), 0);
+  const chars = [...name], w = (c: string) => (/[\u1100-\uffff]/.test(c) ? 1 : 0.6);
+  const units = chars.reduce((t, c) => t + w(c), 0);
   const size = Math.max(min, Math.min(max, Math.floor(width / Math.max(units, 1))));
   const room = Math.floor(width / size);
-  let text = name, u = units;
-  while (u > room && text.length > 1) { text = [...text].slice(0, -1).join(''); u = [...text].reduce((t, c) => t + (/[ᄀ-￿]/.test(c) ? 1 : 0.6), 0) + 1; }
-  return { text: text === name ? name : text + '…', size };
+  if (units <= room) return { text: name, size };
+  // one pass: as many characters as fit with room left for the ellipsis
+  let u = 1, n = 0;
+  while (n < chars.length && u + w(chars[n]) <= room) u += w(chars[n++]);
+  return { text: chars.slice(0, Math.max(1, n)).join('') + '…', size };
 }
 
 export const CARD_FONT = "'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
