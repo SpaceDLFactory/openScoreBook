@@ -25,7 +25,7 @@ export type GameEvent = (LandingEvent | ManualEvent) & {
 export const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 
 export function foldLandings(events: readonly GameEvent[]): Landings {
-  const out: Landings = {};
+  const out: Landings = Object.create(null); // keyed by PA numbers only; no inherited keys to hit
   for (const e of events) {
     if (!e.kind.startsWith('landing.')) continue;
     const cur = out[(e as LandingEvent).pa];
