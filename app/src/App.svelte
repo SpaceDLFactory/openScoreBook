@@ -24,6 +24,7 @@
   import Compare from './views/Compare.svelte';
   import Merge from './views/Merge.svelte';
   import { checkMerged, consensus, type Consensus } from './lib/consensus';
+  import { summaryOf } from './lib/card';
   import { compareGames, type Comparison } from './lib/compare';
 
   let source: GameSource;
@@ -380,7 +381,7 @@
     <main class={wide ? `dmain v-${view}` : ''}>
       {#if view === 'sheet'}<Sheet {game} onpick={pick} />
       {:else if view === 'log'}<Log {game} onpick={pick} />
-      {:else if view === 'box'}<Box {game} />
+      {:else if view === 'box'}<Box {game} card={manual && now ? summaryOf(game, now) : undefined} />
       {:else if view === 'pitcher'}<Pitcher {game} {landings} onpick={pick} />
       {:else if view === 'wp' && !manual}<WinProb {game} onpick={pick} />{/if}
     </main>

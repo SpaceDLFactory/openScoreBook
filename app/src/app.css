@@ -238,4 +238,8 @@
   .cmp-pa{font-size:13px;font-weight:700;margin-bottom:3px;}
   .cmp-d{font-size:12px;color:#fbbf24;line-height:1.6;}
   .cmp-d.ok{color:var(--muted);}
+  .sharecard{margin:8px 12px 0;display:flex;flex-direction:column;gap:10px;padding:10px;}
+  .sharecard img{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);display:block;}
+  .sharecard button{height:42px;border-radius:10px;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.12);color:#7ee2a4;font:inherit;font-weight:700;font-size:14px;}
+  .sharecard button:disabled{opacity:.5;}
   .newgame{height:36px;padding:0 12px;border-radius:9px;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.10);color:#7ee2a4;font-weight:700;font-size:12px;white-space:nowrap;}
