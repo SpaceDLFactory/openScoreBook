@@ -30,7 +30,8 @@ const pwa = (): Plugin => ({
     const pub = join(__dirname, 'public')
     const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true })
       .flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name).slice(pub.length + 1)]))
-    const files = ['index.html', ...Object.keys(bundle).filter((f) => f !== 'index.html'), ...walk(pub)].sort()
+    // og.png is only for link previews: not worth a place in every phone's offline cache
+    const files = ['index.html', ...Object.keys(bundle).filter((f) => f !== 'index.html'), ...walk(pub).filter((f) => f !== 'og.png')].sort()
     const version = createHash('sha256').update(files.join('\n')).digest('hex').slice(0, 12)
     const shell = ['./', ...files.map((f) => `./${f}`)]
     const source = readFileSync(join(__dirname, 'sw.template.js'), 'utf8')
