@@ -8,6 +8,7 @@
   import Zone from '../components/Zone.svelte';
   import Field from '../components/Field.svelte';
   import LogRows from '../components/LogRows.svelte';
+  import { directionIssue } from '../lib/direction';
 
   interface Props {
     game: Game; idx: number; landings: Landings; wide: boolean;
@@ -31,6 +32,10 @@
     `${game.stadium ?? '구장 미상'} 펜스 기준${fence.p ? ' · 위성사진 기반 윤곽' : ''}${fence.src.includes('sat') ? ' · ≈ 위성사진 기반 값' : ''}` +
       `${fence.src.some((x) => x !== 'ok' && x !== 'sat') ? ' · * 추정/비공식 수치' : ''}`,
   );
+  // landings that disagree with the fielder their result names: this PA's, and how many in the game
+  const issue = $derived(saved ? directionIssue(pa.result, saved.x, saved.y) : null);
+  const flagged = $derived(game.pas.flatMap((p, i) => { const l = landings[p.no]; return l && directionIssue(p.result, l.x, l.y) ? [i] : []; }));
+  const nextFlagged = $derived(flagged.find((i) => i > idx) ?? flagged[0]);
   let exportLabel = $state('JSON 복사');
   $effect(() => { void game.gameId; exportLabel = 'JSON 복사'; });
 
@@ -72,6 +77,8 @@
   {#if pa.inPlay}
     <div class="sect"><span>{readonly ? '낙구지점' : saved ? '② 이후 타구 흐름 · 탭 (선택)' : '① 최초 낙구지점 · 탭'}</span><span class="saved">{saved ? `저장됨 · ${landingInfo(saved, (a) => fenceDist(fence, a))}` : ''}</span></div>
     <div class="card fieldcard"><Field {pa} {fence} {landings} ontap={readonly ? () => {} : ontap} /></div>
+    {#if issue}<div class="dirwarn" id="dirwarn">방향 확인 · {issue}</div>{/if}
+    <div class="legend" id="legend">{#each RES as [, l, c]}<span><i style="background:{c}"></i>{l}</span>{/each}<span class="cur">큰 점 · 이 타석</span></div>
     {#if saved && !readonly}
       <div class="pathbar"><button id="undo" onclick={onundo}>↶ 되돌리기</button><button id="clear" onclick={onclear}>지우기</button><span>흐름 {saved.path?.length ?? 0}점</span></div>
     {/if}
@@ -92,6 +99,7 @@
 {#snippet navPart()}
   <div class="nav"><button id="prev2" onclick={() => ongo(idx - 1)}>← 이전 타석</button><button class="next" id="next2" onclick={() => ongo(nextInPlay)}>{hasNextInPlay ? '다음 인플레이 →' : '마지막 →'}</button></div>
   <div class="foot"><span>{idx + 1} / {game.pas.length} 타석 · 낙구 {Object.keys(landings).length}개</span>
+    {#if flagged.length}<button id="nextFlag" class="flag" onclick={() => ongo(nextFlagged)}>방향 확인 {flagged.length}건</button>{/if}
     <button id="export" onclick={async () => (exportLabel = (await onexport()) ? '복사됨' : '복사 실패')}>{exportLabel}</button></div>
 {/snippet}
 
