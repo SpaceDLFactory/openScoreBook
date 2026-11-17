@@ -35,9 +35,9 @@
   const hasNextInPlay = $derived(game.pas.some((p, i) => i > idx && p.inPlay));
   const note = $derived(
     `${game.stadium ?? '구장 미상'} 펜스 기준${older ? ' · 기록 당시 윤곽' : ''}` +
-      // KBO outlines come from aerial imagery; MLB ones from a traced outline fitted to Statcast's measured wall
+      // KBO outlines come from satellite imagery, other measured ones from aerial photos; the rest is five distances
       (kbo ? `${fence.p ? ' · 위성사진 기반 윤곽' : ''}${fence.src.includes('sat') ? ' · ≈ 위성사진 기반 값' : ''}`
-        : `${fence.p ? ' · Statcast 실측에 맞춘 윤곽' : ''}${fence.src.includes('sat') ? ' · ≈ 윤곽에서 읽은 값' : ''}`) +
+        : fence.p ? ' · 항공사진에서 잰 윤곽 · ≈ 윤곽에서 읽은 값' : ' · 다섯 거리 사이는 보간') +
       `${fence.src.some((x) => x !== 'ok' && x !== 'sat') ? ' · * 추정/비공식 수치' : ''}`,
   );
   // landings that disagree with the fielder their result names: this PA's, and how many in the game

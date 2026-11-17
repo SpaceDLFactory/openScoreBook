@@ -96,11 +96,11 @@ describe('parks of other leagues', () => {
     }
   });
 
-  it('draws the MLB parks with a fitted outline on it, meeting their labels', async () => {
+  it('draws only the MLB parks whose wall was measured on imagery as an outline, meeting their labels', async () => {
     const { PARKS } = await import('./stadiums');
     const traced = PARKS.filter((p) => p.fence.p && p.league !== 'KBO'); // KBO outlines come from aerial imagery
     expect(traced.filter((p) => p.league !== 'MLB')).toEqual([]);
-    expect(traced.length).toBe(17); // 16 traced outlines that still fit, and Angel Stadium measured on NAIP imagery
+    expect(traced.map((p) => p.name)).toEqual(['Angel Stadium']); // measured on NAIP imagery; no other wall is validated yet
     for (const p of traced) {
       expect(p.fence.p, p.name).toHaveLength(91);
       for (const [i, a] of [[0, -45], [2, 0], [4, 45]] as const) expect(fenceDist(p.fence, a), p.name).toBeCloseTo(p.fence.f[i]!, 0);

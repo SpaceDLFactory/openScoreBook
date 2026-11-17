@@ -6,14 +6,16 @@ plays there. NPB: the twelve home parks, from each park's Japanese Wikipedia art
 checked 2026-11-17). Distances that look wrong (outside 250-470 ft, or a gap not between line and center) are dropped
 and left for the app to estimate.
 
-MLB parks whose outline traced in GeomMLBStadiums still matches Baseball Savant's measured wall get a 1-degree
-profile too (mlb_outlines.py), and so do those measured on NAIP aerial imagery that pass the same kind of check
-(naip_fence.py -> naip_profiles.json); their five labels are then read off that profile.
+MLB parks take Baseball Savant's Statcast-measured lines and straightaway center (savant.py) over the posted
+distances. A park whose wall has been measured on aerial imagery and checked (naip_fence.py -> naip_profiles.json)
+gets that 1-degree profile, its labels read off it; no other MLB outline is drawn, since none has been validated.
+(An outline traced around 2018 in GeomMLBStadiums was tried and dropped: scaled and nudged onto five points, it was
+a sketch, not a measured wall.)
 
     python3 build_parks.py 2026
 """
 import json, sys, urllib.request
-from mlb_outlines import outlines
+from savant import measured
 from datetime import date
 from pathlib import Path
 
@@ -63,13 +65,19 @@ def main(season):
         if p['name'] in seen: p['name'] = f"{p['name']} ({p['teams'][0]})"
         seen[p['name']] = p
     for p in parks: p['src'] = ['est' if v is None else 'ok' for v in p['f']]
-    # measured walls (the latest season Savant has) with outlines that still fit them
+    # Savant's measurements for the latest season it has
+    meas = {}
     for year in (int(season), int(season) - 1):
-        try: prof, report, meas = outlines(year); break
+        try: meas = measured(year); break
         except Exception as e: print('no Savant dimensions for', year, e)
-    print('outline check (worst miss, m):', report)
-    naip = HERE_NAIP.exists() and json.loads(HERE_NAIP.read_text())['profiles'] or {}
-    prof = {**naip, **prof}  # a traced outline that fits wins over an aerial measurement
+    prof = HERE_NAIP.exists() and json.loads(HERE_NAIP.read_text())['profiles'] or {}
+    for p in parks:
+        q = prof.get(p['name']) if p['league'] == 'MLB' else None
+        if not q: continue
+        p['p'] = q
+        p['posted'] = p['f']  # the published distances, kept for checking measurements against
+        p['f'] = [q[0], round((q[22] + q[23]) / 2, 1), q[45], round((q[67] + q[68]) / 2, 1), q[90]]
+        p['src'] = ['ok', 'sat', 'ok', 'sat', 'ok']  # read off the measured outline
     # MLB parks without an outline: Savant's measured lines and straightaway center replace the posted ones (a
     # posted "center" can be the deepest corner: Fenway's 420 ft triangle, not 0 degrees); posted gaps are signs at
     # unknown bearings, kept as estimates
@@ -79,19 +87,12 @@ def main(season):
             p['posted'] = p['f']
             p['f'] = [round(m[0], 1), p['f'][1], round(m[2], 1), p['f'][3], round(m[4], 1)]
             p['src'] = ['ok', 'est', 'ok', 'est', 'ok']
-    for p in parks:
-        q = prof.get(p['name']) if p['league'] == 'MLB' else None
-        if not q: continue
-        p['p'] = q
-        p['posted'] = p['f']  # the published distances, kept for checking measurements against
-        p['f'] = [q[0], round((q[22] + q[23]) / 2, 1), q[45], round((q[67] + q[68]) / 2, 1), q[90]]
-        p['src'] = ['ok', 'sat', 'ok', 'sat', 'ok']  # lines and center measured; gaps read off the outline
     OUT.write_text(json.dumps({'source': f'MLB Stats API venue fieldInfo, season {season}; NPB: Japanese Wikipedia park articles; '
-                                         f'MLB outlines: GeomMLBStadiums (MIT, (c) 2018 Ben Dilday) or USDA NAIP imagery (public domain), fitted to Baseball Savant park dimensions',
+                                         f'MLB: Baseball Savant measured distances; outlines measured on USDA NAIP imagery (public domain)',
                                'fetched': str(date.today()),
                                'parks': parks}, ensure_ascii=False, separators=(',', ':')) + '\n')
     from collections import Counter
-    print('wrote', OUT, len(parks), dict(Counter(p['league'] for p in parks)), 'with outlines:', sum('p' in p for p in parks))
+    print('wrote', OUT, len(parks), dict(Counter(p['league'] for p in parks)), 'with outlines:', [p['name'] for p in parks if 'p' in p])
 
 if __name__ == '__main__':
     main(sys.argv[1] if len(sys.argv) > 1 else str(date.today().year))

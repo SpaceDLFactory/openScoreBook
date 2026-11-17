@@ -1,6 +1,6 @@
 """Measure MLB walls the traced outlines no longer fit, on USDA NAIP aerial imagery (public domain, via USGS).
 
-For the open-air parks that changed since GeomMLBStadiums was traced, this runs the KBO tool's measurement
+For open-air MLB parks, this runs the KBO tool's measurement
 (tools/park_fence: home plate from the chalk foul lines, the wall as the outer edge of the warning track) on a NAIP
 image instead of VWorld tiles, and models the wall as straight segments between corners (the trace's RDP corners at
 1 m; MLB walls are mostly straight runs, and this fit the trace to 0.3 m where one polynomial left 1.2 m).
@@ -22,7 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'park_fence'))
 import park_fence as pf  # noqa: E402
-from mlb_outlines import DIMS, FT, get, measured  # noqa: E402
+from savant import FT, measured, rows  # noqa: E402
 from PIL import Image, ImageDraw  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -85,12 +85,10 @@ def measure(name):
 ANCHORS = (-45, -17.5, 0, 17.5, 45)
 
 def profiles(year):
-    import re
-    meas, rows = {}, {}
+    meas, recs = {}, {}
     for y in (year, year - 1):
         try:
-            meas = measured(y)
-            rows = {r['venue_name_short']: r for r in json.loads(re.search(r'var data\s*=\s*(\[.*?\]);\s*\n', get(DIMS.format(year=y)), re.S).group(1))}
+            meas = measured(y); recs = rows(y)
             break
         except Exception as e: print('no Savant dimensions for', y, e)
     # the published distances (not labels read off a profile this script made earlier)
@@ -106,7 +104,7 @@ def profiles(year):
         poly = pf.polygon(verts, radii)
         m = meas[name]
         resid = [pf.at(poly, a) - mm for a, mm in zip(ANCHORS, m)]
-        deep = rows[name]['distance_deepest'] * FT
+        deep = recs[name]['distance_deepest'] * FT
         signs = [abs(pf.at(poly, a) - posted[name][i]) for a, i in ((-22.5, 1), (22.5, 3)) if posted[name][i] is not None]
         checks = {'shape': max(abs(x) for x in resid[1:4]) <= 2 and max(abs(resid[0]), abs(resid[4])) <= 4,
                   'deepest': abs(max(poly) - deep) <= 1.5, 'posted gaps': all(s <= 1.5 for s in signs)}

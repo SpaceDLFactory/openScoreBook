@@ -78,8 +78,8 @@ export function savedParks(setups: { stadium: string; fence?: (number | null)[] 
 }
 
 // Parks of other leagues (tools/parks/build_parks.py: MLB and the minors from the MLB Stats API, NPB's twelve home
-// parks from their published figures). Five distances, the wall between them interpolated; MLB parks whose traced
-// outline (GeomMLBStadiums) still matches Statcast's measured wall also have a 1-degree profile.
+// parks from their published figures). Five distances, the wall between them interpolated (MLB: Statcast-measured
+// lines and center); an MLB park whose wall was measured on aerial imagery and checked also has a 1-degree profile.
 export type League = 'KBO' | 'NPB' | 'MLB' | 'AAA' | 'AA' | 'A+' | 'A';
 export const LEAGUES: [League, string][] = [['KBO', 'KBO'], ['NPB', 'NPB'], ['MLB', 'MLB'], ['AAA', '트리플A'], ['AA', '더블A'], ['A+', '하이싱글A'], ['A', '싱글A']];
 export interface ListedPark { name: string; league: League; teams: string[]; fence: Fence }
