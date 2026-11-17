@@ -9,6 +9,11 @@ distance on every degree from -45 to +45; one scale per park fitted at the lines
 large); then the outline is kept only if it is within 2 m of every measured point (Savant's gap points sit near
 17.5 degrees off center, not 22.5), and nudged to meet them exactly. Parks rebuilt or re-fenced since the tracing
 (Camden Yards, Rogers Centre, Kauffman, ...) fail the test and keep their five published distances.
+
+Tried for those (2026-11-17): measuring the open-air ones on USDA NAIP aerial imagery with tools/park_fence. None came
+within 2 m of Savant's measured points, and the raw traces were 3-28 m off: stands' shadows over the wall (Comerica,
+Busch), imagery older than the 2026 fences (Kauffman), tall stands leaning in the orthophoto and a home plate found
+1.9 degrees off square (Dodger Stadium), Fenway's right-field corner. Not kept; it would need per-park hand work.
 """
 import csv, io, json, math, re, statistics, urllib.request
 from collections import defaultdict
