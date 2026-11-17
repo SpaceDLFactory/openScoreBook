@@ -13,7 +13,7 @@ profile too (mlb_outlines.py), and so do those measured on NAIP aerial imagery t
     python3 build_parks.py 2026
 """
 import json, sys, urllib.request
-from mlb_outlines import outlines, smooth_onto
+from mlb_outlines import outlines
 from datetime import date
 from pathlib import Path
 
@@ -43,7 +43,8 @@ def sane(ft):
     ok = lambda v: isinstance(v, (int, float)) and 250 <= v <= 470
     lf, lcf, cf, rcf, rf = ft
     if not (ok(lf) and ok(cf) and ok(rf)): return None
-    gap = lambda g, line: g if ok(g) and min(line, cf) - 5 <= g <= cf + 10 else None
+    # a gap may well be deeper than center (Oracle's 415 ft alley against 391 ft center, PNC's 410 ft corner)
+    gap = lambda g, line: g if ok(g) and min(line, cf) - 5 <= g <= cf + 30 else None
     return [round(v * FT, 1) if v is not None else None for v in (lf, gap(lcf, lf), cf, gap(rcf, rf), rf)]
 
 def main(season):
@@ -69,7 +70,15 @@ def main(season):
     print('outline check (worst miss, m):', report)
     naip = HERE_NAIP.exists() and json.loads(HERE_NAIP.read_text())['profiles'] or {}
     prof = {**naip, **prof}  # a traced outline that fits wins over an aerial measurement
-    prof = {name: smooth_onto(q, meas[name]) for name, q in prof.items()}
+    # MLB parks without an outline: Savant's measured lines and straightaway center replace the posted ones (a
+    # posted "center" can be the deepest corner: Fenway's 420 ft triangle, not 0 degrees); posted gaps are signs at
+    # unknown bearings, kept as estimates
+    for p in parks:
+        if p['league'] == 'MLB' and p['name'] not in prof and p['name'] in meas:
+            m = meas[p['name']]
+            p['posted'] = p['f']
+            p['f'] = [round(m[0], 1), p['f'][1], round(m[2], 1), p['f'][3], round(m[4], 1)]
+            p['src'] = ['ok', 'est', 'ok', 'est', 'ok']
     for p in parks:
         q = prof.get(p['name']) if p['league'] == 'MLB' else None
         if not q: continue
