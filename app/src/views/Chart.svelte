@@ -9,6 +9,7 @@
   import Field from '../components/Field.svelte';
   import LogRows from '../components/LogRows.svelte';
   import { directionIssue } from '../lib/direction';
+  import { estimate, hangDelay, setHangDelay } from '../lib/flight';
 
   interface Props {
     game: Game; idx: number; landings: Landings; wide: boolean;
@@ -48,6 +49,16 @@
     const sec = Math.round((performance.now() - started) / 100) / 10;
     started = null;
     if (sec > 0 && sec <= 15) onhang(sec);
+  }
+  // launch angle and exit velocity from distance and hang time, for balls in the air that carry
+  let delay = $state(hangDelay());
+  const est = $derived(saved?.hang != null && saved.traj !== '땅볼' && saved.traj !== '번트' && Math.hypot(saved.x, saved.y) >= 40
+    ? estimate(Math.hypot(saved.x, saved.y), saved.hang, caught, delay) : null);
+  function changeDelay() {
+    const v = prompt('스톱워치를 늦게 누르는 만큼 더할 시간(초). 기본 0.22초', String(delay));
+    if (v == null) return;
+    const n = Number(v);
+    if (Number.isFinite(n) && n >= 0 && n <= 1) { delay = n; setHangDelay(n); }
   }
   function typed(e: Event) {
     const v = (e.currentTarget as HTMLInputElement).valueAsNumber;
@@ -117,6 +128,12 @@
         {#if !readonly}<button id="hangTimer" class:on={started != null} onclick={stopwatch}>{started == null ? '시간 재기 · 타격 순간' : '낙구 순간에 누르기'}</button>{/if}
         {#if saved.hang != null && !readonly}<button id="hangClear" onclick={() => onhang(null)}>지우기</button>{/if}
       </div>
+      {#if est}
+        <div class="est" id="estimate"><span>추정 · 발사각 <b>{Math.round(est.la)}°</b> (±{Math.max(1, Math.round(est.laSd))}) · 타구속도 <b>{Math.round(est.evKmh)}km/h</b> (±{Math.max(3, Math.round(est.evSd))})</span>
+          <button id="delay" onclick={changeDelay}>반응 보정 +{delay}초</button></div>
+      {:else if saved.hang != null && saved.traj !== '땅볼' && saved.traj !== '번트' && Math.hypot(saved.x, saved.y) >= 40}
+        <div class="est muted" id="estimate">이 거리와 체공시간에 맞는 타구가 없어요. 낙구지점이나 시간을 확인해 주세요.</div>
+      {/if}
     {/if}
   {:else if wide}
     <div class="empty">인플레이 타석이 아니에요.<br />타구 기록은 인플레이 타석에서 해요. <kbd>N</kbd> 다음 인플레이</div>

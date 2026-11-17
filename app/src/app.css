@@ -264,4 +264,8 @@
   .hang button{flex:1;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font:inherit;font-size:12px;font-weight:700;}
   .hang button.on{border-color:rgba(251,191,36,.6);background:rgba(251,191,36,.1);color:#fbbf24;}
   .hang #hangClear{flex:0 0 auto;padding:0 12px;}
+  .est{margin:8px 12px 0;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);}
+  .est b{color:var(--txt);}
+  .est.muted{color:#fbbf24;}
+  .est button{flex:0 0 auto;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);font:inherit;font-size:11px;}
   .newgame{height:36px;padding:0 12px;border-radius:9px;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.10);color:#7ee2a4;font-weight:700;font-size:12px;white-space:nowrap;}
