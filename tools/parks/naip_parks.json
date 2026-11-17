@@ -1,0 +1,86 @@
+{
+ "Fenway Park": {
+  "key": "fenway",
+  "center": [
+   42.346456,
+   -71.097441
+  ],
+  "azimuth": 45.0,
+  "home": [
+   507,
+   683
+  ]
+ },
+ "Oriole Park at Camden Yards": {
+  "key": "oriole",
+  "center": [
+   39.283787,
+   -76.621689
+  ],
+  "azimuth": 31.0,
+  "home": [
+   531,
+   707
+  ]
+ },
+ "Comerica Park": {
+  "key": "comerica",
+  "center": [
+   42.3391151,
+   -83.048695
+  ],
+  "azimuth": 150.0,
+  "home": [
+   517,
+   460
+  ]
+ },
+ "Kauffman Stadium": {
+  "key": "kauffman",
+  "center": [
+   39.051567,
+   -94.480483
+  ],
+  "azimuth": 46.0,
+  "home": [
+   496,
+   725
+  ]
+ },
+ "UNIQLO Field at Dodger Stadium": {
+  "key": "uniqlo",
+  "center": [
+   34.07368,
+   -118.24053
+  ],
+  "azimuth": 26.0,
+  "home": [
+   697,
+   701
+  ]
+ },
+ "Busch Stadium": {
+  "key": "busch",
+  "center": [
+   38.62256667,
+   -90.19286667
+  ],
+  "azimuth": 62.0,
+  "home": [
+   439,
+   659
+  ]
+ },
+ "Angel Stadium": {
+  "key": "angel",
+  "center": [
+   33.80019044,
+   -117.8823996
+  ],
+  "azimuth": 43.61,
+  "home": [
+   349,
+   704
+  ]
+ }
+}

@@ -100,7 +100,7 @@ describe('parks of other leagues', () => {
     const { PARKS } = await import('./stadiums');
     const traced = PARKS.filter((p) => p.fence.p && p.league !== 'KBO'); // KBO outlines come from aerial imagery
     expect(traced.filter((p) => p.league !== 'MLB')).toEqual([]);
-    expect(traced.length).toBe(16);
+    expect(traced.length).toBe(17); // 16 traced outlines that still fit, and Angel Stadium measured on NAIP imagery
     for (const p of traced) {
       expect(p.fence.p, p.name).toHaveLength(91);
       for (const [i, a] of [[0, -45], [2, 0], [4, 45]] as const) expect(fenceDist(p.fence, a), p.name).toBeCloseTo(p.fence.f[i]!, 0);

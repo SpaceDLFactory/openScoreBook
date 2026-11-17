@@ -7,7 +7,8 @@ checked 2026-11-17). Distances that look wrong (outside 250-470 ft, or a gap not
 and left for the app to estimate.
 
 MLB parks whose outline traced in GeomMLBStadiums still matches Baseball Savant's measured wall get a 1-degree
-profile too (mlb_outlines.py); their five labels are then read off that profile.
+profile too (mlb_outlines.py), and so do those measured on NAIP aerial imagery that pass the same kind of check
+(naip_fence.py -> naip_profiles.json); their five labels are then read off that profile.
 
     python3 build_parks.py 2026
 """
@@ -17,6 +18,7 @@ from datetime import date
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[2] / 'app/src/lib/parks.json'
+HERE_NAIP = Path(__file__).resolve().parent / 'naip_profiles.json'
 LEVEL = {1: 'MLB', 11: 'AAA', 12: 'AA', 13: 'A+', 14: 'A'}
 FT = 0.3048
 
@@ -65,14 +67,17 @@ def main(season):
         try: prof, report = outlines(year); break
         except Exception as e: print('no Savant dimensions for', year, e)
     print('outline check (worst miss, m):', report)
+    naip = HERE_NAIP.exists() and json.loads(HERE_NAIP.read_text())['profiles'] or {}
+    prof = {**naip, **prof}  # a traced outline that fits wins over an aerial measurement
     for p in parks:
         q = prof.get(p['name']) if p['league'] == 'MLB' else None
         if not q: continue
         p['p'] = q
+        p['posted'] = p['f']  # the published distances, kept for checking measurements against
         p['f'] = [q[0], round((q[22] + q[23]) / 2, 1), q[45], round((q[67] + q[68]) / 2, 1), q[90]]
         p['src'] = ['ok', 'sat', 'ok', 'sat', 'ok']  # lines and center measured; gaps read off the outline
     OUT.write_text(json.dumps({'source': f'MLB Stats API venue fieldInfo, season {season}; NPB: Japanese Wikipedia park articles; '
-                                         f'MLB outlines: GeomMLBStadiums (MIT, (c) 2018 Ben Dilday) fitted to Baseball Savant park dimensions',
+                                         f'MLB outlines: GeomMLBStadiums (MIT, (c) 2018 Ben Dilday) or USDA NAIP imagery (public domain), fitted to Baseball Savant park dimensions',
                                'fetched': str(date.today()),
                                'parks': parks}, ensure_ascii=False, separators=(',', ':')) + '\n')
     from collections import Counter
