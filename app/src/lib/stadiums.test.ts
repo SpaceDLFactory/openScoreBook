@@ -111,7 +111,8 @@ describe('parks of other leagues', () => {
 
   it('finds a listed park by name', async () => {
     const { fenceFor } = await import('./stadiums');
-    expect(fenceFor('Fenway Park').f[0]).toBeCloseTo(94.5, 0); // the Green Monster line, 310 ft
+    expect(fenceFor('Fenway Park').f[0]).toBeCloseTo(94.0, 1); // the Green Monster line as Statcast measures it (310 ft posted)
+    expect(fenceFor('Fenway Park').f[2]).toBeCloseTo(118.4, 1); // straightaway center, not the 420 ft triangle
     expect(fenceFor('도쿄돔').f).toEqual([100, 110, 122, 110, 100]);
     expect(fenceFor('없는 구장')).toBe(fenceFor(null));
   });
