@@ -17,3 +17,7 @@ web/dist/
 # aerial imagery for tools/park_fence (VWorld; not ours to redistribute)
 fixtures/parks/
 __pycache__/
+
+# Statcast CSVs for tools/hang_time (public data, not ours to redistribute)
+tools/hang_time/data/
+tools/hang_time/.venv/
