@@ -2,7 +2,7 @@
   import { isOver, pickSource, type GameSource } from './lib/source';
   import type { Game, ResClass } from './lib/naver/parse';
   import type { NaverGameMeta } from './lib/naver/types';
-  import { legacyLandings } from './lib/landings';
+  import { caughtByResult, legacyLandings } from './lib/landings';
   import { eventsFromLegacy, foldLandings, newId, type GameEvent, type LandingEvent } from './lib/events';
   import * as store from './lib/store';
   import { backupName, backupText, readBackup } from './lib/backup';
@@ -228,6 +228,9 @@
   function clear() { if (pa && landings[pa.no]) record({ kind: 'landing.clear', pa: pa.no }); }
   function setRes(r: ResClass) { if (pa && landings[pa.no]) record({ kind: 'landing.res', pa: pa.no, res: r, manual: r !== pa.res }); }
   function setTraj(t: string) { if (pa && landings[pa.no]) record({ kind: 'landing.traj', pa: pa.no, traj: t }); }
+  function setHang(sec: number | null) { if (pa && landings[pa.no]) record({ kind: 'landing.hang', pa: pa.no, sec }); }
+  /** the same as the result implies is stored as "automatic", so only real corrections read as corrections */
+  function setCaught(v: boolean) { if (pa && landings[pa.no]) record({ kind: 'landing.caught', pa: pa.no, caught: v === caughtByResult(pa.result) ? null : v }); }
   function exportJSON() {
     const data = { gameId: game?.gameId, landings, events: $state.snapshot(events) };
     return navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => true, () => false);
@@ -426,7 +429,7 @@
   {:else if !game.pas.length}
     <div class="empty">아직 기록한 타석이 없어요.{#if manual} <b>기록</b> 탭에서 시작해요.{/if}</div>
   {:else if view === 'chart'}
-    <Chart {game} {idx} {landings} {wide} {readonly} ongo={go} ontap={tap} onundo={undo} onclear={clear} onres={setRes} ontraj={setTraj} onexport={exportJSON} />
+    <Chart {game} {idx} {landings} {wide} {readonly} ongo={go} ontap={tap} onundo={undo} onclear={clear} onres={setRes} ontraj={setTraj} onhang={setHang} oncaught={setCaught} onexport={exportJSON} />
   {:else}
     <main class={wide ? `dmain v-${view}` : ''}>
       {#if view === 'sheet'}<Sheet {game} onpick={pick} />

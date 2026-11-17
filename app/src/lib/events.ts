@@ -10,7 +10,11 @@ export type LandingEvent =
   | { kind: 'landing.undo'; pa: number } // drop the last path point, or the landing when it has no path
   | { kind: 'landing.clear'; pa: number }
   | { kind: 'landing.res'; pa: number; res: ResClass; manual: boolean }
-  | { kind: 'landing.traj'; pa: number; traj: string };
+  | { kind: 'landing.traj'; pa: number; traj: string }
+  /** seconds from contact to landing, timed or typed; null clears it */
+  | { kind: 'landing.hang'; pa: number; sec: number | null }
+  /** fielded before it first touched the ground; null: back to what the result implies */
+  | { kind: 'landing.caught'; pa: number; caught: boolean | null };
 
 export type GameEvent = (LandingEvent | ManualEvent) & {
   /** unique per event; lets a replayed write-ahead entry be recognised */
@@ -41,6 +45,8 @@ export function foldLandings(events: readonly GameEvent[]): Landings {
       case 'landing.clear': delete out[e.pa]; break;
       case 'landing.res': if (cur) { cur.res = e.res; cur.resManual = e.manual; } break;
       case 'landing.traj': if (cur) cur.traj = e.traj; break;
+      case 'landing.hang': if (cur) { if (e.sec == null) delete cur.hang; else cur.hang = e.sec; } break;
+      case 'landing.caught': if (cur) { if (e.caught == null) delete cur.caught; else cur.caught = e.caught; } break;
     }
   }
   return out;

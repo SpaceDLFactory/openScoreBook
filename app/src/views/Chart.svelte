@@ -2,7 +2,7 @@
   // One plate appearance: matchup, pitch zone + log, result; for balls in play the field to record where it
   // landed and rolled. PC adds the PA list as a sidebar.
   import type { Game, ResClass } from '../lib/naver/parse';
-  import { landingInfo, type Landings } from '../lib/landings';
+  import { caughtByResult, landingInfo, type Landings } from '../lib/landings';
   import { fenceDist, fenceFor } from '../lib/stadiums';
   import { RES, TRAJ, callColor, callLabel, halfName, slotOf } from '../lib/ui';
   import Zone from '../components/Zone.svelte';
@@ -17,8 +17,9 @@
     ongo: (i: number) => void;
     ontap: (pt: [number, number]) => void; onundo: () => void; onclear: () => void;
     onres: (r: ResClass) => void; ontraj: (t: string) => void; onexport: () => Promise<boolean>;
+    onhang: (sec: number | null) => void; oncaught: (v: boolean) => void;
   }
-  let { game, idx, landings, wide, readonly = false, ongo, ontap, onundo, onclear, onres, ontraj, onexport }: Props = $props();
+  let { game, idx, landings, wide, readonly = false, ongo, ontap, onundo, onclear, onres, ontraj, onhang, oncaught, onexport }: Props = $props();
 
   const pa = $derived(game.pas[idx]);
   const fence = $derived(game.fence ?? fenceFor(game.stadium));
@@ -36,6 +37,20 @@
   const issue = $derived(saved ? directionIssue(pa.result, saved.x, saved.y) : null);
   const flagged = $derived(game.pas.flatMap((p, i) => { const l = landings[p.no]; return l && directionIssue(p.result, l.x, l.y) ? [i] : []; }));
   const nextFlagged = $derived(flagged.find((i) => i > idx) ?? flagged[0]);
+  const caught = $derived(saved?.caught ?? caughtByResult(pa.result));
+  // hang time by stopwatch, for scoring from video: press at contact, press again when it lands
+  let started = $state<number | null>(null);
+  $effect(() => { void pa.no; started = null; });
+  function stopwatch() {
+    if (started == null) { started = performance.now(); return; }
+    const sec = Math.round((performance.now() - started) / 100) / 10;
+    started = null;
+    if (sec > 0 && sec <= 15) onhang(sec);
+  }
+  function typed(e: Event) {
+    const v = (e.currentTarget as HTMLInputElement).valueAsNumber;
+    onhang(Number.isFinite(v) && v > 0 && v <= 15 ? Math.round(v * 10) / 10 : null);
+  }
   let exportLabel = $state('JSON 복사');
   $effect(() => { void game.gameId; exportLabel = 'JSON 복사'; });
 
@@ -91,6 +106,16 @@
     </div>
     <div class="sect"><span>궤적</span></div>
     <div class="chips">{#each TRAJ as t}<button class="chip" class:sel={saved?.traj === t} data-t={t} disabled={readonly} onclick={() => ontraj(t)}>{t}</button>{/each}</div>
+    {#if saved}
+      <div class="sect"><span>수비 처리</span><span>{saved.caught != null ? '직접 수정' : '결과에서 판정'}</span></div>
+      <div class="chips"><button class="chip" id="caughtYes" class:sel={caught} disabled={readonly} onclick={() => oncaught(true)}>낙구 전 잡힘</button><button class="chip" id="caughtNo" class:sel={!caught} disabled={readonly} onclick={() => oncaught(false)}>땅에 떨어짐</button></div>
+      <div class="sect"><span>체공시간 · 선택</span><span>{saved.hang != null ? `${saved.hang}초` : ''}</span></div>
+      <div class="hang">
+        <input id="hang" type="number" inputmode="decimal" step="0.1" min="0.1" max="15" placeholder="초" value={saved.hang ?? ''} disabled={readonly} onchange={typed} />
+        {#if !readonly}<button id="hangTimer" class:on={started != null} onclick={stopwatch}>{started == null ? '시간 재기 · 타격 순간' : '낙구 순간에 누르기'}</button>{/if}
+        {#if saved.hang != null && !readonly}<button id="hangClear" onclick={() => onhang(null)}>지우기</button>{/if}
+      </div>
+    {/if}
   {:else if wide}
     <div class="empty">인플레이 타석이 아니에요.<br />타구 기록은 인플레이 타석에서 해요. <kbd>N</kbd> 다음 인플레이</div>
   {/if}

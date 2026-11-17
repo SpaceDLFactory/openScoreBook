@@ -12,6 +12,10 @@ export interface Landing {
   res: ResClass | null;
   resManual?: boolean;
   traj?: string;
+  /** seconds from contact to landing (optional) */
+  hang?: number;
+  /** set by hand: whether a fielder caught it before it landed (otherwise read from the result) */
+  caught?: boolean;
   inn: number;
   batter: string;
   result: string | null;
@@ -28,11 +32,15 @@ export function legacyLandings(gameId: string): Landings {
   return v as Landings;
 }
 
-/** "54m · 펜스 107m · 이후 32m" */
+/** Caught in the air, as the result reads: fly outs and line outs (a dropped one is an error, not caught). */
+export const caughtByResult = (result: string | null | undefined) =>
+  /플라이|라인드라이브/.test(result ?? '') && !/안타|루타|홈런|실책/.test(result ?? '');
+
+/** "54m · 펜스 107m · 이후 32m · 체공 4.2초" */
 export function landingInfo(v: Landing, fenceAt: (a: number) => number): string {
   const d = Math.hypot(v.x, v.y), a = (Math.atan2(v.x, v.y) * 180) / Math.PI;
   const fence = Math.abs(a) <= 45 ? ` · 펜스 ${Math.round(fenceAt(a))}m` : ' · 파울지역';
   let roll = 0, prev: [number, number] = [v.x, v.y];
   for (const q of v.path ?? []) { roll += Math.hypot(q[0] - prev[0], q[1] - prev[1]); prev = q; }
-  return `${Math.round(d)}m${fence}${roll ? ` · 이후 ${Math.round(roll)}m` : ''}`;
+  return `${Math.round(d)}m${fence}${roll ? ` · 이후 ${Math.round(roll)}m` : ''}${v.hang != null ? ` · 체공 ${v.hang}초` : ''}`;
 }

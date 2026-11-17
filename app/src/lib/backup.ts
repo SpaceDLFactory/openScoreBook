@@ -32,6 +32,8 @@ function isLanding(x: Record<string, unknown>): boolean {
     case 'landing.undo': case 'landing.clear': return true;
     case 'landing.res': return RES.includes(x.res as string) && typeof x.manual === 'boolean';
     case 'landing.traj': return str(x.traj);
+    case 'landing.hang': return x.sec === null || (typeof x.sec === 'number' && x.sec > 0 && x.sec <= 15);
+    case 'landing.caught': return x.caught === null || typeof x.caught === 'boolean';
     default: return false;
   }
 }
