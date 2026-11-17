@@ -92,7 +92,7 @@
 
 ### 구장
 
-KBO 9개 구장(잠실, 문학, 수원, 사직, 창원, 대전, 광주, 대구, 고척)과 NPB 12개 구단 본거지, MLB 30개 구장, 마이너리그(트리플A·더블A·하이싱글A·싱글A) 117개 구장의 펜스 거리가 들어 있고, 경기 설정에서 리그별로 묶여 나온다. MLB·마이너리그는 MLB Stats API의 구장 정보, NPB는 각 구장이 공개한 수치(일본어 위키백과 기준)로 [tools/parks/build_parks.py](tools/parks/build_parks.py)가 만든다. 이 구장들은 좌·좌중·중·우중·우 다섯 거리 사이를 보간한다. MLB 구장의 양 폴과 정중앙은 Baseball Savant가 Statcast로 잰 거리를 쓴다(좌중·우중은 위치를 모르는 공식 표기라 `*` 추정). 실제 펜스 모양(1도 단위 윤곽)은 항공사진에서 재고 검증한 구장만 그린다. 지금은 에인절 스타디움 하나다(미국 농무부 NAIP 항공사진, [tools/parks/naip_fence.py](tools/parks/naip_fence.py)). KBO 구장은 VWorld 위성사진에서 따낸 윤곽으로 1도 단위 펜스 거리를 계산한다. 저장소에는 수치만 있고 사진은 없다. 구장을 `기타`로 고르면 기본 펜스로 그린다.
+KBO 9개 구장(잠실, 문학, 수원, 사직, 창원, 대전, 광주, 대구, 고척)과 NPB 12개 구단 본거지, MLB 30개 구장, 마이너리그(트리플A·더블A·하이싱글A·싱글A) 117개 구장의 펜스 거리가 들어 있고, 경기 설정에서 리그별로 묶여 나온다. MLB·마이너리그는 MLB Stats API의 구장 정보, NPB는 각 구장이 공개한 수치(일본어 위키백과 기준)로 [tools/parks/build_parks.py](tools/parks/build_parks.py)가 만든다. 이 구장들은 좌·좌중·중·우중·우 다섯 거리 사이를 보간한다. MLB 구장의 양 폴과 정중앙은 Baseball Savant가 Statcast로 잰 거리를 쓴다(좌중·우중은 위치를 모르는 공식 표기라 `*` 추정). 실제 펜스 모양(1도 단위 윤곽)은 항공사진에서 재고 검증한 구장만 그린다. 지금은 에인절 스타디움(미국 농무부 NAIP 항공사진, [tools/parks/naip_fence.py](tools/parks/naip_fence.py))과 내셔널스 파크(워싱턴 DC 0.1 m 정사영상, CC BY 4.0 District of Columbia Office of the Chief Technology Officer, [tools/parks/ortho_fence.py](tools/parks/ortho_fence.py)) 둘이다. 홈플레이트는 파울라인 초크나 규정으로 위치가 정해진 마운드·내야 잔디 호로 잡고, Savant 측정값과 다른 해에 찍은 사진으로 따로 확인한다. KBO 구장은 VWorld 위성사진에서 따낸 윤곽으로 1도 단위 펜스 거리를 계산한다. 저장소에는 수치만 있고 사진은 없다. 구장을 `기타`로 고르면 기본 펜스로 그린다.
 
 목록에 없는 구장(사회인 야구장 등)은 `직접 입력`으로 만든다. 이름과 좌·중·우 펜스 거리를 넣으면 되고, 좌중·우중은 비워 두면 추정해서 `*`로 표시한다. 필드는 구장 크기에 맞춰 그리고, 만든 구장은 다음 경기의 구장 목록에 나온다. 펜스 수치는 경기마다 함께 저장되므로 나중에 같은 이름으로 고쳐도 지난 경기는 바뀌지 않는다. 측정 방법은 [tools/park_fence/README.md](tools/park_fence/README.md)에 있다.
 
@@ -138,7 +138,7 @@ npm run build       # app/dist에 배포용 정적 파일 생성
 | `app/src/lib/notation.ts` · `scout.ts` · `stadiums.ts` | 기록 표기, 코스 번호, 구장 펜스 |
 | `engine/` | Rust 스코어링 엔진. 이벤트를 재생해 점수·주자·박스를 계산하는 순수 함수, WASM으로 컴파일 |
 | `server/` | 경기 링크 공유 서버 (로컬 실행, [server/README.md](server/README.md)) |
-| `tools/park_fence/` | 위성사진에서 펜스 윤곽을 재는 도구 |
+| `tools/park_fence/` · `tools/parks/` | 위성·항공사진에서 펜스 윤곽을 재는 도구, 구장 목록 생성 |
 | `*.dc.html` · `canvas.json` · `web/` | 초기 디자인 시안과 프로토타입 |
 
 ## 라이선스

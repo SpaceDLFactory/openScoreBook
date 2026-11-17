@@ -1,0 +1,15 @@
+{
+ "Nationals Park": {
+  "key": "nationals",
+  "center": [38.872861, -77.007501],
+  "savant": 2026,
+  "home": [1498, 2026],
+  "lines": [-105, -16],
+  "sources": [
+   {"year": 2023, "flown": "May 2023", "service": "https://imagery.dcgis.dc.gov/dcgis/rest/services/Ortho/Ortho_2023/ImageServer",
+    "licence": "CC BY 4.0, District of Columbia Office of the Chief Technology Officer"},
+   {"year": 2025, "flown": "March 2025", "service": "https://imagery.dcgis.dc.gov/dcgis/rest/services/Ortho/Ortho_2025/ImageServer",
+    "licence": "CC BY 4.0, District of Columbia Office of the Chief Technology Officer"}
+  ]
+ }
+}

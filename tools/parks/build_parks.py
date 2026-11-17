@@ -7,8 +7,9 @@ checked 2026-11-17). Distances that look wrong (outside 250-470 ft, or a gap not
 and left for the app to estimate.
 
 MLB parks take Baseball Savant's Statcast-measured lines and straightaway center (savant.py) over the posted
-distances. A park whose wall has been measured on aerial imagery and checked (naip_fence.py -> naip_profiles.json)
-gets that 1-degree profile, its labels read off it; no other MLB outline is drawn, since none has been validated.
+distances. A park whose wall has been measured on aerial imagery and checked (ortho_fence.py -> ortho_profiles.json
+on 0.1 m city orthophotos, else naip_fence.py -> naip_profiles.json) gets that 1-degree profile, its labels read off
+it; no other MLB outline is drawn, since none has been validated.
 (An outline traced around 2018 in GeomMLBStadiums was tried and dropped: scaled and nudged onto five points, it was
 a sketch, not a measured wall.)
 
@@ -21,6 +22,7 @@ from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[2] / 'app/src/lib/parks.json'
 HERE_NAIP = Path(__file__).resolve().parent / 'naip_profiles.json'
+HERE_ORTHO = Path(__file__).resolve().parent / 'ortho_profiles.json'
 LEVEL = {1: 'MLB', 11: 'AAA', 12: 'AA', 13: 'A+', 14: 'A'}
 FT = 0.3048
 
@@ -71,6 +73,8 @@ def main(season):
         try: meas = measured(year); break
         except Exception as e: print('no Savant dimensions for', year, e)
     prof = HERE_NAIP.exists() and json.loads(HERE_NAIP.read_text())['profiles'] or {}
+    ortho = json.loads(HERE_ORTHO.read_text()) if HERE_ORTHO.exists() else {'profiles': {}, 'sources': {}}
+    prof.update(ortho['profiles'])  # the finer photos win
     for p in parks:
         q = prof.get(p['name']) if p['league'] == 'MLB' else None
         if not q: continue
@@ -88,7 +92,8 @@ def main(season):
             p['f'] = [round(m[0], 1), p['f'][1], round(m[2], 1), p['f'][3], round(m[4], 1)]
             p['src'] = ['ok', 'est', 'ok', 'est', 'ok']
     OUT.write_text(json.dumps({'source': f'MLB Stats API venue fieldInfo, season {season}; NPB: Japanese Wikipedia park articles; '
-                                         f'MLB: Baseball Savant measured distances; outlines measured on USDA NAIP imagery (public domain)',
+                                         f'MLB: Baseball Savant measured distances; outlines measured on USDA NAIP imagery (public domain)'
+                                         + ''.join(f'; {n} outline measured on orthophotos ({ortho["sources"][n]["licence"]})' for n in sorted(ortho['sources'])),
                                'fetched': str(date.today()),
                                'parks': parks}, ensure_ascii=False, separators=(',', ':')) + '\n')
     from collections import Counter
