@@ -47,8 +47,9 @@
       list.map((b, i) => ({ id: `${side[0]}${i + 1}-${Date.now().toString(36)}`, name: b.name.trim() || `${label}${i + 1}번`, pos: b.pos }));
     const a = awayName.trim() || '원정', h = homeName.trim() || '홈';
     const fence = isNew ? newDist : parks.find((p) => p.name === stadium)?.fence;
+    const park = !isNew && !fence && STADIUMS[stadium] ? $state.snapshot(STADIUMS[stadium]) : undefined;
     oncreate({
-      date, stadium: isNew ? newName : stadium, ...(fence && { fence }), awayName: a, homeName: h, away: t('away', away, a), home: t('home', home, h),
+      date, stadium: isNew ? newName : stadium, ...(fence && { fence }), ...(park && { park }), awayName: a, homeName: h, away: t('away', away, a), home: t('home', home, h),
       awayPitcher: { id: `ap-${Date.now().toString(36)}`, name: awayPitcher.trim() || `${a} 선발`, pos: '투수' },
       homePitcher: { id: `hp-${Date.now().toString(36)}`, name: homePitcher.trim() || `${h} 선발`, pos: '투수' },
     });

@@ -3,7 +3,7 @@
   // landed and rolled. PC adds the PA list as a sidebar.
   import type { Game, ResClass } from '../lib/naver/parse';
   import { caughtByResult, landingInfo, type Landings } from '../lib/landings';
-  import { fenceDist, fenceFor } from '../lib/stadiums';
+  import { STADIUMS, fenceDist, fenceFor } from '../lib/stadiums';
   import { RES, TRAJ, callColor, callLabel, halfName, slotOf } from '../lib/ui';
   import Zone from '../components/Zone.svelte';
   import Field from '../components/Field.svelte';
@@ -23,6 +23,8 @@
 
   const pa = $derived(game.pas[idx]);
   const fence = $derived(game.fence ?? fenceFor(game.stadium));
+  /** the outline stored with the game is not the one listed now (it has been measured again since) */
+  const older = $derived(!!game.fence && !!game.stadium && game.stadium in STADIUMS && JSON.stringify(game.fence) !== JSON.stringify(STADIUMS[game.stadium]));
   const st = $derived(pa.pitches[pa.pitches.length - 1]?.state ?? pa.after);
   const saved = $derived(landings[pa.no]);
   const isOut = $derived(/아웃|병살/.test(pa.result ?? ''));
@@ -30,7 +32,7 @@
   const nextInPlay = $derived.by(() => { const j = game.pas.findIndex((p, i) => i > idx && p.inPlay); return j < 0 ? game.pas.length - 1 : j; });
   const hasNextInPlay = $derived(game.pas.some((p, i) => i > idx && p.inPlay));
   const note = $derived(
-    `${game.stadium ?? '구장 미상'} 펜스 기준${fence.p ? ' · 위성사진 기반 윤곽' : ''}${fence.src.includes('sat') ? ' · ≈ 위성사진 기반 값' : ''}` +
+    `${game.stadium ?? '구장 미상'} 펜스 기준${older ? ' · 기록 당시 윤곽' : ''}${fence.p ? ' · 위성사진 기반 윤곽' : ''}${fence.src.includes('sat') ? ' · ≈ 위성사진 기반 값' : ''}` +
       `${fence.src.some((x) => x !== 'ok' && x !== 'sat') ? ' · * 추정/비공식 수치' : ''}`,
   );
   // landings that disagree with the fielder their result names: this PA's, and how many in the game
@@ -98,7 +100,7 @@
       <div class="pathbar"><button id="undo" onclick={onundo}>↶ 되돌리기</button><button id="clear" onclick={onclear}>지우기</button><span>흐름 {saved.path?.length ?? 0}점</span></div>
     {/if}
     <div class="fnote">{note}</div>
-    <div class="sect"><span>결과</span><span>{readonly ? '' : saved?.resManual ? '직접 수정' : '자동 판정'}</span></div>
+    <div class="sect"><span>결과</span><span>{readonly ? '' : saved?.resManual ? '직접 수정' : '결과 문구로 자동 판정'}</span></div>
     <div class="chips res">
       {#each RES as [k, l, c]}
         <button class="chip" class:sel={curRes === k} data-r={k} style={curRes === k ? `border-color:${c};color:${c};background:${c}1a` : ''} disabled={readonly} onclick={() => onres(k)}>{l}</button>

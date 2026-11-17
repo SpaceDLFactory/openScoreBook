@@ -20,6 +20,14 @@ function bounded(v: unknown, depth = 0): boolean {
   if (depth > 6 || typeof v !== 'object') return false;
   return Object.entries(v as object).every(([k, x]) => k.length <= MAX_TEXT && bounded(x, depth + 1));
 }
+const SRCS = ['ok', 'sat', 'comm', 'est'];
+/** a park's fence as stored with a game: five labels, their sources, and maybe the 1° outline */
+function isPark(v: unknown): boolean {
+  const f = v as { f?: unknown; src?: unknown; p?: unknown };
+  return !!f && Array.isArray(f.f) && f.f.length === 5 && f.f.every((x) => x === null || num(x))
+    && Array.isArray(f.src) && f.src.length === 5 && f.src.every((x) => SRCS.includes(x))
+    && (f.p === undefined || (Array.isArray(f.p) && f.p.length === 91 && f.p.every(num)));
+}
 const RES = ['1B', '2B', '3B', 'HR', 'OUT', 'E', 'ETC'];
 const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 1000;
 /** a landing edit: the PA it belongs to (a plain positive number, never a property name) and sane values */
@@ -48,7 +56,8 @@ export function isEvent(e: unknown): boolean {
   const s = x.setup;
   return !!s && ['date', 'stadium', 'awayName', 'homeName'].every((k) => str(s[k]))
     && [s.away, s.home].every((l) => Array.isArray(l) && l.length >= 9 && l.length <= 15 && l.every(player)) && player(s.awayPitcher) && player(s.homePitcher)
-    && (s.fence === undefined || (Array.isArray(s.fence) && s.fence.length === 5 && s.fence.every((v) => v === null || num(v))));
+    && (s.fence === undefined || (Array.isArray(s.fence) && s.fence.length === 5 && s.fence.every((v) => v === null || num(v))))
+    && (s.park === undefined || isPark(s.park));
 }
 
 // Every scoring edit, field by field: replay indexes lineups and tables with these values, so a side, role, slot
