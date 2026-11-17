@@ -1,15 +1,44 @@
 {
  "Nationals Park": {
   "key": "nationals",
-  "center": [38.872861, -77.007501],
+  "center": [
+   38.872861,
+   -77.007501
+  ],
   "savant": 2026,
-  "home": [1498, 2026],
-  "lines": [-105, -16],
+  "home": [
+   1498,
+   2026
+  ],
+  "lines": [
+   -105,
+   -16
+  ],
   "sources": [
-   {"year": 2023, "flown": "May 2023", "service": "https://imagery.dcgis.dc.gov/dcgis/rest/services/Ortho/Ortho_2023/ImageServer",
-    "licence": "CC BY 4.0, District of Columbia Office of the Chief Technology Officer"},
-   {"year": 2025, "flown": "March 2025", "service": "https://imagery.dcgis.dc.gov/dcgis/rest/services/Ortho/Ortho_2025/ImageServer",
-    "licence": "CC BY 4.0, District of Columbia Office of the Chief Technology Officer"}
+   {
+    "year": 2023,
+    "flown": "May 2023",
+    "service": "https://imagery.dcgis.dc.gov/dcgis/rest/services/Ortho/Ortho_2023/ImageServer",
+    "credit": "District of Columbia Office of the Chief Technology Officer",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/"
+   },
+   {
+    "year": 2025,
+    "flown": "27 March 2025",
+    "service": "https://imagery.dcgis.dc.gov/dcgis/rest/services/Ortho/Ortho_2025/ImageServer",
+    "credit": "District of Columbia Office of the Chief Technology Officer",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/"
+   },
+   {
+    "year": 2019,
+    "flown": "23 April 2019",
+    "service": "https://imagery.dcgis.dc.gov/dcgis/rest/services/Ortho/Ortho_2019/ImageServer",
+    "credit": "District of Columbia Office of the Chief Technology Officer",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/"
+   }
   ]
  }
 }

@@ -80,6 +80,8 @@ def main(season):
         if not q: continue
         p['p'] = q
         p['posted'] = p['f']  # the published distances, kept for checking measurements against
+        # gap labels read off the profile at 22.5 degrees, where the app puts them - not Savant's gaps, whose bearing
+        # is unknown and which the measuring tools only print
         p['f'] = [q[0], round((q[22] + q[23]) / 2, 1), q[45], round((q[67] + q[68]) / 2, 1), q[90]]
         p['src'] = ['ok', 'sat', 'ok', 'sat', 'ok']  # read off the measured outline
     # MLB parks without an outline: Savant's measured lines and straightaway center replace the posted ones (a
@@ -93,7 +95,9 @@ def main(season):
             p['src'] = ['ok', 'est', 'ok', 'est', 'ok']
     OUT.write_text(json.dumps({'source': f'MLB Stats API venue fieldInfo, season {season}; NPB: Japanese Wikipedia park articles; '
                                          f'MLB: Baseball Savant measured distances; outlines measured on USDA NAIP imagery (public domain)'
-                                         + ''.join(f'; {n} outline measured on orthophotos ({ortho["sources"][n]["licence"]})' for n in sorted(ortho['sources'])),
+                                         + ''.join(f'; {n}: wall distances measured on orthophotos by {s["credit"]}, {s["photo"]} ({s["flown"]}), '
+                                                   f'{s["licence"]} {s["licence_url"]}; imagery not redistributed'
+                                                   for n, s in sorted(ortho['sources'].items())),
                                'fetched': str(date.today()),
                                'parks': parks}, ensure_ascii=False, separators=(',', ':')) + '\n')
     from collections import Counter
