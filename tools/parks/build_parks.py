@@ -13,7 +13,7 @@ profile too (mlb_outlines.py), and so do those measured on NAIP aerial imagery t
     python3 build_parks.py 2026
 """
 import json, sys, urllib.request
-from mlb_outlines import outlines
+from mlb_outlines import outlines, smooth_onto
 from datetime import date
 from pathlib import Path
 
@@ -64,11 +64,12 @@ def main(season):
     for p in parks: p['src'] = ['est' if v is None else 'ok' for v in p['f']]
     # measured walls (the latest season Savant has) with outlines that still fit them
     for year in (int(season), int(season) - 1):
-        try: prof, report = outlines(year); break
+        try: prof, report, meas = outlines(year); break
         except Exception as e: print('no Savant dimensions for', year, e)
     print('outline check (worst miss, m):', report)
     naip = HERE_NAIP.exists() and json.loads(HERE_NAIP.read_text())['profiles'] or {}
     prof = {**naip, **prof}  # a traced outline that fits wins over an aerial measurement
+    prof = {name: smooth_onto(q, meas[name]) for name, q in prof.items()}
     for p in parks:
         q = prof.get(p['name']) if p['league'] == 'MLB' else None
         if not q: continue

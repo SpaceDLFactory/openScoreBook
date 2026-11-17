@@ -63,6 +63,27 @@ def profile(seg):
 def at(q, deg):
     u = deg + 45; i = min(89, int(u)); return q[i] + (q[i + 1] - q[i]) * (u - i)
 
+def smooth_onto(q, m, sigma=2.0):
+    """Gaussian smoothing along the wall (sigma in degrees, mirrored at the poles), then nudged back onto the measured
+    points. Takes out the 1-3 degree kinks of tracing and the corners of straight-wall models; 2 degrees keeps a park's
+    features (Angel's right-field shelf, PNC's left-center jog), 4 already rounds them off by a couple of meters."""
+    h = int(3 * sigma) + 1
+    k = [math.exp(-0.5 * (d / sigma) ** 2) for d in range(-h, h + 1)]
+    sm = []
+    for i in range(91):
+        s = w = 0.0
+        for j, kk in enumerate(k):
+            t = i + j - h
+            t = -t if t < 0 else (180 - t if t > 90 else t)
+            s += kk * q[t]; w += kk
+        sm.append(s / w)
+    c = [mm / at(sm, a) for a, mm in zip(ANCHORS, m)]
+    def corr(deg):
+        for (a0, c0), (a1, c1) in zip(zip(ANCHORS, c), zip(ANCHORS[1:], c[1:])):
+            if a0 <= deg <= a1: return c0 + (c1 - c0) * (deg - a0) / (a1 - a0)
+        return c[-1]
+    return [round(v * corr(i - 45), 1) for i, v in enumerate(sm)]
+
 def outlines(year):
     """{venue name: 91 distances in meters} for the parks whose outline passes"""
     seg = defaultdict(lambda: defaultdict(list))
@@ -88,4 +109,4 @@ def outlines(year):
                 if a0 <= deg <= a1: return c0 + (c1 - c0) * (deg - a0) / (a1 - a0)
             return c[-1]
         out[venue] = [round(v * corr(d - 45), 1) for d, v in enumerate(q)]
-    return out, sorted(report, key=lambda x: x[1])
+    return out, sorted(report, key=lambda x: x[1]), meas
