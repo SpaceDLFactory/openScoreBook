@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>체공시간 측정</title>
+<style>
+  :root{--bg:#0d1014;--panel:#161b22;--line:#2b3440;--txt:#e6edf3;--muted:#8b95a3;--ok:#7ee2a4;--warn:#fbbf24}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+  main{max-width:860px;margin:0 auto;padding:16px}
+  h1{font-size:20px;margin:4px 0}
+  p,li{color:var(--muted);font-size:14px;line-height:1.6}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+  video{width:100%;border-radius:10px;background:#000}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  button{height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:#1d232c;color:var(--txt);font:inherit;font-weight:700}
+  button.go{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.12);color:var(--ok)}
+  button:disabled{opacity:.4}
+  .t{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums}
+  .muted{color:var(--muted);font-size:13px}
+  table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+  td,th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right}
+  td:first-child,th:first-child{text-align:left}
+  .sum b{color:var(--ok)} kbd{border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:12px}
+</style></head><body><main>
+<h1>체공시간 측정</h1>
+<p>영상을 재생하고, <b>타격 순간</b>과 공이 <b>땅에 닿거나 잡히는 순간</b>에 아래 큰 버튼을 한 번씩 누르세요(경기를 보며 앱에서 재는 것과 같은 실시간 스톱워치). 영상 밖을 누른 상태면 <kbd>Space</kbd>로도 됩니다. 다시 재면 덮어씁니다. 타구속도·발사각은 다 잰 뒤에 보입니다.</p>
+<div class="card">
+  <div class="muted" id="pos"></div>
+  <div id="des" style="margin:6px 0 10px"></div>
+  <!-- only the clip of Savant's page: its sidebar shows exit velocity and distance, which would bias the timing -->
+  <div id="clipbox" style="position:relative;width:100%;overflow:hidden;border-radius:10px;background:#000">
+    <div id="clip" style="position:absolute;left:0;top:0;width:879px;height:494px;overflow:hidden;transform-origin:0 0">
+      <iframe id="v" scrolling="no" allow="autoplay; fullscreen" style="position:absolute;left:-14px;top:-299px;width:1200px;height:1200px;border:0"></iframe>
+    </div>
+  </div>
+  <div class="row">
+    <button id="watch" style="flex:1;height:64px;font-size:18px">타격 순간에 누르기</button>
+    <span class="t" id="tt">–</span>
+    <span style="flex:1"></span>
+    <button id="prev">이전</button><button class="go" id="next">다음 (N)</button>
+  </div>
+</div>
+<div class="card">
+  <div class="row"><span class="muted" id="count"></span><span style="flex:1"></span><button id="show" class="go">결과 보기</button><button id="copy">결과 JSON 복사</button><button id="reset">기록 지우기</button></div>
+  <div id="result"></div>
+</div>
+</main>
+<script>
+const DATA = /*DATA*/null;
+const P = DATA.plays, G = DATA.grid, KEY = 'hangtime:' + P.map((p) => p.video.slice(-12)).join('').slice(0, 40);
+let rec = JSON.parse(localStorage.getItem(KEY) || '{}'), i = 0, start = null;
+const $ = (id) => document.getElementById(id), v = $('v');
+const save = () => localStorage.setItem(KEY, JSON.stringify(rec));
+function show() {
+  const p = P[i], r = rec[i];
+  $('pos').textContent = `${i + 1} / ${P.length} · ${p.caught ? '잡힌 타구 · 두 번째는 잡히는 순간' : '떨어진 타구 · 두 번째는 땅에 닿는 순간'}`;
+  $('des').textContent = p.des;
+  if (v.dataset.src !== p.video) { v.src = p.video; v.dataset.src = p.video; }
+  $('tt').textContent = start != null ? '…' : r ? `${r.t.toFixed(2)}초` : '–';
+  $('watch').textContent = start != null ? '낙구·포구 순간에 누르기' : '타격 순간에 누르기';
+  $('watch').classList.toggle('go', start != null);
+  $('count').textContent = `잰 타구 ${Object.keys(rec).length} / ${P.length}`;
+  $('show').disabled = Object.keys(rec).length < 10;
+}
+/** first press: contact; second: landing or catch */
+function press() {
+  if (start == null) { start = performance.now(); show(); return; }
+  const t = (performance.now() - start) / 1000;
+  if (t > 0.3 && t < 9) { rec[i] = { t: Math.round(t * 1000) / 1000 }; save(); }
+  start = null; show();
+}
+function go(k) { i = (i + k + P.length) % P.length; start = null; show(); }
+// the clip is laid out at 879 x 494 inside Savant's page at 1200 px wide; scale it to the card
+function fit() { const k = $('clipbox').clientWidth / 879; $('clip').style.transform = `scale(${k})`; $('clipbox').style.height = `${494 * k}px`; }
+addEventListener('resize', fit); fit();
+$('watch').onpointerdown = (e) => { e.preventDefault(); press(); }; // on press, not release: less delay
+$('next').onclick = () => go(1); $('prev').onclick = () => go(-1);
+addEventListener('keydown', (e) => {
+  if (e.key === ' ') { e.preventDefault(); press(); } else if (e.key.toLowerCase() === 'n') go(1);
+});
+$('reset').onclick = () => { if (confirm('잰 기록을 모두 지울까요?')) { rec = {}; save(); $('result').innerHTML = ''; show(); } };
+
+// (distance, hang time) -> EV, LA: weighted average over the model grid, as in model.py
+function invert(d, t, caught, sd = 5, st = 0.25) {
+  const tg = caught ? G.tc : G.t0;
+  let best = Infinity; const c = new Float64Array(G.ev.length);
+  for (let k = 0; k < c.length; k++) { c[k] = ((G.d[k] - d) / sd) ** 2 + ((tg[k] - t) / st) ** 2; if (c[k] < best) best = c[k]; }
+  let w = 0, ev = 0, la = 0;
+  for (let k = 0; k < c.length; k++) { const x = Math.exp(-0.5 * (c[k] - best)); w += x; ev += x * G.ev[k]; la += x * G.la[k]; }
+  return [ev / w, la / w];
+}
+const band = (la) => (la < 20 ? 0 : la <= 32 ? 1 : 2);
+const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
+function results() {
+  const rows = Object.entries(rec).map(([k, r]) => {
+    const p = P[+k], [ev, la] = invert(p.d, r.t, p.caught);
+    return { n: +k + 1, ...p, you: r.t, ev_hat: ev, la_hat: la };
+  });
+  const sum = (rs, name) => {
+    if (!rs.length) return '';
+    const dt = rs.map((r) => r.you - r.t_model);
+    return `<p class="sum">${name} ${rs.length}개 · 체공시간 (나 − 모델) 평균 <b>${mean(dt).toFixed(2)}초</b>, 절대 오차 <b>${mean(dt.map(Math.abs)).toFixed(2)}초</b><br>
+      타구속도 오차 <b>${mean(rs.map((r) => Math.abs(r.ev_hat - r.ev))).toFixed(1)}mph</b> (비거리만 ${mean(rs.map((r) => Math.abs(r.ev_dist - r.ev))).toFixed(1)}) ·
+      발사각 오차 <b>${mean(rs.map((r) => Math.abs(r.la_hat - r.la))).toFixed(1)}°</b> (비거리만 ${mean(rs.map((r) => Math.abs(r.la_dist - r.la))).toFixed(1)}) ·
+      발사각 구간 일치 <b>${Math.round(100 * mean(rs.map((r) => +(band(r.la_hat) === band(r.la)))))}%</b> (비거리만 ${Math.round(100 * mean(rs.map((r) => +(band(r.la_dist) === band(r.la)))))}%) ·
+      강한 타구 구분 <b>${Math.round(100 * mean(rs.map((r) => +((r.ev_hat >= 95) === (r.ev >= 95)))))}%</b> (비거리만 ${Math.round(100 * mean(rs.map((r) => +((r.ev_dist >= 95) === (r.ev >= 95)))))}%)</p>`;
+  };
+  $('result').innerHTML = sum(rows, '전체') +
+    `<table><tr><th>#</th><th>나</th><th>모델</th><th>비거리</th><th>EV 실제</th><th>EV 추정</th><th>LA 실제</th><th>LA 추정</th></tr>${rows.map((r) =>
+      `<tr><td>${r.n}${r.caught ? ' ·포구' : ''}</td><td>${r.you.toFixed(2)}</td><td>${r.t_model.toFixed(2)}</td><td>${r.d.toFixed(0)}m</td><td>${r.ev}</td><td>${r.ev_hat.toFixed(1)}</td><td>${r.la}</td><td>${r.la_hat.toFixed(1)}</td></tr>`).join('')}</table>`;
+  return rows;
+}
+$('show').onclick = results;
+$('copy').onclick = () => navigator.clipboard.writeText(JSON.stringify(results().map(({ n, you, t_model, caught, d, ev, la, ev_hat, la_hat }) => ({ n, you, t_model, caught, d, ev, la, ev_hat, la_hat }))));
+show();
+</script></body></html>

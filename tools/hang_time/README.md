@@ -37,3 +37,20 @@ python3 -m venv .venv && .venv/bin/pip install numpy scipy
 mkdir data   # Baseball Savant의 statcast_search CSV(type=details)를 날짜별로 받아 넣는다. 저장소에는 넣지 않는다
 .venv/bin/python model.py data
 ```
+
+## 실측 체공시간으로 확인하기
+
+위 표의 체공시간은 모델 값이라, 사람이 영상을 보며 잰 체공시간으로 같은 계산을 해 봐야 한다. `make_timing.py`가 그 측정 페이지를 만든다.
+
+```sh
+.venv/bin/python make_timing.py data 30   # out/timing.html: 뜬공·라이너 30개 (발사각 구간별로 고름)
+open out/timing.html
+```
+
+- 각 플레이의 중계 영상을 Baseball Savant의 영상 페이지에서 그대로 띄운다(영상 부분만 보이게 잘라서). 그 페이지 옆 칸의 타구속도·비거리는 가려진다.
+- 타격 순간과 공이 땅에 닿거나 잡히는 순간에 큰 버튼(또는 `Space`)을 누른다. 경기를 보며 앱에서 재는 것과 같은 실시간 스톱워치다.
+- 10개 이상 재면 `결과 보기`로 내 체공시간과 모델 체공시간의 차이, 그리고 (Statcast 비거리, 내 체공시간)으로 추정한 타구속도·발사각의 오차가 나온다. 비거리만 쓴 추정과 나란히 보여 준다.
+- 잡힌 타구는 포구 높이(1.8m)까지의 시간으로 비교한다.
+- 영상과 Statcast 수치가 담긴 `out/`은 저장소에 넣지 않는다.
+
+페이지 자체 점검: 모델 체공시간을 그대로 넣으면 발사각 오차 1.0°·구간 일치 93%, 0.18초 잡음을 넣으면 1.9°·87%가 나와 위 시뮬레이션과 맞는다.

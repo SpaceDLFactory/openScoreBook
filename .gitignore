@@ -19,5 +19,7 @@ fixtures/parks/
 __pycache__/
 
 # Statcast CSVs for tools/hang_time (public data, not ours to redistribute)
-tools/hang_time/data/
+tools/hang_time/data
 tools/hang_time/.venv/
+# the timing page carries clip links and Statcast values: local only
+tools/hang_time/out/
