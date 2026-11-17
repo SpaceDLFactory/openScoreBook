@@ -3,7 +3,7 @@
   // landed and rolled. PC adds the PA list as a sidebar.
   import type { Game, ResClass } from '../lib/naver/parse';
   import { caughtByResult, landingInfo, type Landings } from '../lib/landings';
-  import { LISTED, fenceDist, fenceFor } from '../lib/stadiums';
+  import { LISTED, STADIUMS, fenceDist, fenceFor } from '../lib/stadiums';
   import { RES, TRAJ, callColor, callLabel, halfName, slotOf } from '../lib/ui';
   import Zone from '../components/Zone.svelte';
   import Field from '../components/Field.svelte';
@@ -24,6 +24,7 @@
 
   const pa = $derived(game.pas[idx]);
   const fence = $derived(game.fence ?? fenceFor(game.stadium));
+  const kbo = $derived(!!game.stadium && game.stadium in STADIUMS);
   /** the outline stored with the game is not the one listed now (it has been measured again since) */
   const older = $derived(!!game.fence && !!game.stadium && game.stadium in LISTED && JSON.stringify(game.fence) !== JSON.stringify(LISTED[game.stadium]));
   const st = $derived(pa.pitches[pa.pitches.length - 1]?.state ?? pa.after);
@@ -33,7 +34,10 @@
   const nextInPlay = $derived.by(() => { const j = game.pas.findIndex((p, i) => i > idx && p.inPlay); return j < 0 ? game.pas.length - 1 : j; });
   const hasNextInPlay = $derived(game.pas.some((p, i) => i > idx && p.inPlay));
   const note = $derived(
-    `${game.stadium ?? '구장 미상'} 펜스 기준${older ? ' · 기록 당시 윤곽' : ''}${fence.p ? ' · 위성사진 기반 윤곽' : ''}${fence.src.includes('sat') ? ' · ≈ 위성사진 기반 값' : ''}` +
+    `${game.stadium ?? '구장 미상'} 펜스 기준${older ? ' · 기록 당시 윤곽' : ''}` +
+      // KBO outlines come from aerial imagery; MLB ones from a traced outline fitted to Statcast's measured wall
+      (kbo ? `${fence.p ? ' · 위성사진 기반 윤곽' : ''}${fence.src.includes('sat') ? ' · ≈ 위성사진 기반 값' : ''}`
+        : `${fence.p ? ' · Statcast 실측에 맞춘 윤곽' : ''}${fence.src.includes('sat') ? ' · ≈ 윤곽에서 읽은 값' : ''}`) +
       `${fence.src.some((x) => x !== 'ok' && x !== 'sat') ? ' · * 추정/비공식 수치' : ''}`,
   );
   // landings that disagree with the fielder their result names: this PA's, and how many in the game

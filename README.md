@@ -92,7 +92,7 @@
 
 ### 구장
 
-KBO 9개 구장(잠실, 문학, 수원, 사직, 창원, 대전, 광주, 대구, 고척)과 NPB 12개 구단 본거지, MLB 30개 구장, 마이너리그(트리플A·더블A·하이싱글A·싱글A) 117개 구장의 펜스 거리가 들어 있고, 경기 설정에서 리그별로 묶여 나온다. MLB·마이너리그는 MLB Stats API의 구장 정보, NPB는 각 구장이 공개한 수치(일본어 위키백과 기준)로 [tools/parks/build_parks.py](tools/parks/build_parks.py)가 만든다. 이 구장들은 좌·좌중·중·우중·우 다섯 거리만 있어서 그 사이는 보간한다. KBO 구장은 VWorld 위성사진에서 따낸 윤곽으로 1도 단위 펜스 거리를 계산한다. 저장소에는 수치만 있고 사진은 없다. 구장을 `기타`로 고르면 기본 펜스로 그린다.
+KBO 9개 구장(잠실, 문학, 수원, 사직, 창원, 대전, 광주, 대구, 고척)과 NPB 12개 구단 본거지, MLB 30개 구장, 마이너리그(트리플A·더블A·하이싱글A·싱글A) 117개 구장의 펜스 거리가 들어 있고, 경기 설정에서 리그별로 묶여 나온다. MLB·마이너리그는 MLB Stats API의 구장 정보, NPB는 각 구장이 공개한 수치(일본어 위키백과 기준)로 [tools/parks/build_parks.py](tools/parks/build_parks.py)가 만든다. 이 구장들은 좌·좌중·중·우중·우 다섯 거리 사이를 보간한다. 다만 MLB 16개 구장(지금도 그 모양 그대로인 곳)은 [GeomMLBStadiums](https://github.com/bdilday/GeomMLBStadiums)(MIT)의 외곽 펜스 경로를 Baseball Savant가 Statcast로 잰 펜스 거리에 맞춘 1도 단위 윤곽을 쓴다([tools/parks/mlb_outlines.py](tools/parks/mlb_outlines.py)). KBO 구장은 VWorld 위성사진에서 따낸 윤곽으로 1도 단위 펜스 거리를 계산한다. 저장소에는 수치만 있고 사진은 없다. 구장을 `기타`로 고르면 기본 펜스로 그린다.
 
 목록에 없는 구장(사회인 야구장 등)은 `직접 입력`으로 만든다. 이름과 좌·중·우 펜스 거리를 넣으면 되고, 좌중·우중은 비워 두면 추정해서 `*`로 표시한다. 필드는 구장 크기에 맞춰 그리고, 만든 구장은 다음 경기의 구장 목록에 나온다. 펜스 수치는 경기마다 함께 저장되므로 나중에 같은 이름으로 고쳐도 지난 경기는 바뀌지 않는다. 측정 방법은 [tools/park_fence/README.md](tools/park_fence/README.md)에 있다.
 

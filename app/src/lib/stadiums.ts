@@ -78,7 +78,8 @@ export function savedParks(setups: { stadium: string; fence?: (number | null)[] 
 }
 
 // Parks of other leagues (tools/parks/build_parks.py: MLB and the minors from the MLB Stats API, NPB's twelve home
-// parks from their published figures). Five distances only, no outline: the wall in between is interpolated.
+// parks from their published figures). Five distances, the wall between them interpolated; MLB parks whose traced
+// outline (GeomMLBStadiums) still matches Statcast's measured wall also have a 1-degree profile.
 export type League = 'KBO' | 'NPB' | 'MLB' | 'AAA' | 'AA' | 'A+' | 'A';
 export const LEAGUES: [League, string][] = [['KBO', 'KBO'], ['NPB', 'NPB'], ['MLB', 'MLB'], ['AAA', '트리플A'], ['AA', '더블A'], ['A+', '하이싱글A'], ['A', '싱글A']];
 export interface ListedPark { name: string; league: League; teams: string[]; fence: Fence }
@@ -86,8 +87,8 @@ export interface ListedPark { name: string; league: League; teams: string[]; fen
 const KBO_TEAMS: Record<string, string[]> = { 잠실: ['LG', '두산'], 문학: ['SSG'], 수원: ['KT'], 사직: ['롯데'], 창원: ['NC'], 대전: ['한화'], 광주: ['KIA'], 대구: ['삼성'], 고척: ['키움'] };
 export const PARKS: ListedPark[] = [
   ...Object.entries(STADIUMS).map(([name, fence]) => ({ name, league: 'KBO' as League, teams: KBO_TEAMS[name] ?? [], fence })),
-  ...(listed.parks as { name: string; league: League; teams: string[]; f: (number | null)[]; src: FenceSrc[] }[])
-    .map((p) => ({ name: p.name, league: p.league, teams: p.teams, fence: { f: p.f, src: p.src } })),
+  ...(listed.parks as { name: string; league: League; teams: string[]; f: (number | null)[]; src: FenceSrc[]; p?: number[] }[])
+    .map((p) => ({ name: p.name, league: p.league, teams: p.teams, fence: { f: p.f, src: p.src, ...(p.p && { p: p.p }) } })),
 ];
 /** every listed park by name */
 export const LISTED: Record<string, Fence> = Object.fromEntries(PARKS.map((p) => [p.name, p.fence]));

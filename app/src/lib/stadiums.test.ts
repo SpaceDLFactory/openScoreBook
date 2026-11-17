@@ -96,6 +96,19 @@ describe('parks of other leagues', () => {
     }
   });
 
+  it('draws the MLB parks with a fitted outline on it, meeting their labels', async () => {
+    const { PARKS } = await import('./stadiums');
+    const traced = PARKS.filter((p) => p.fence.p && p.league !== 'KBO'); // KBO outlines come from aerial imagery
+    expect(traced.filter((p) => p.league !== 'MLB')).toEqual([]);
+    expect(traced.length).toBe(16);
+    for (const p of traced) {
+      expect(p.fence.p, p.name).toHaveLength(91);
+      for (const [i, a] of [[0, -45], [2, 0], [4, 45]] as const) expect(fenceDist(p.fence, a), p.name).toBeCloseTo(p.fence.f[i]!, 0);
+      // a wall, not noise: no jump of more than 4 m between neighbouring degrees
+      expect(Math.max(...p.fence.p!.slice(1).map((v, i) => Math.abs(v - p.fence.p![i]))), p.name).toBeLessThan(4);
+    }
+  });
+
   it('finds a listed park by name', async () => {
     const { fenceFor } = await import('./stadiums');
     expect(fenceFor('Fenway Park').f[0]).toBeCloseTo(94.5, 0); // the Green Monster line, 310 ft
