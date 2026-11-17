@@ -76,3 +76,30 @@ describe('field scale', () => {
     }
   });
 });
+
+describe('parks of other leagues', () => {
+  it('lists each league\'s parks under one name each', async () => {
+    const { PARKS, LISTED, LEAGUES } = await import('./stadiums');
+    const count = Object.fromEntries(LEAGUES.map(([lg]) => [lg, PARKS.filter((p) => p.league === lg).length]));
+    expect(count).toEqual({ KBO: 9, NPB: 12, MLB: 30, AAA: 29, AA: 30, 'A+': 29, A: 29 });
+    expect(new Set(PARKS.map((p) => p.name)).size).toBe(PARKS.length);
+    expect(Object.keys(LISTED)).toHaveLength(PARKS.length);
+  });
+
+  it('has plausible walls everywhere: lines and center known, center deepest or near it', async () => {
+    const { PARKS } = await import('./stadiums');
+    for (const p of PARKS) {
+      const [lf, , cf, , rf] = p.fence.f as number[];
+      for (const v of [lf, cf, rf]) expect(v, p.name).toBeGreaterThan(75);
+      expect(cf, p.name).toBeGreaterThanOrEqual(Math.max(lf, rf));
+      expect(fenceDist(p.fence, 0), p.name).toBeCloseTo(cf, 0);
+    }
+  });
+
+  it('finds a listed park by name', async () => {
+    const { fenceFor } = await import('./stadiums');
+    expect(fenceFor('Fenway Park').f[0]).toBeCloseTo(94.5, 0); // the Green Monster line, 310 ft
+    expect(fenceFor('도쿄돔').f).toEqual([100, 110, 122, 110, 100]);
+    expect(fenceFor('없는 구장')).toBe(fenceFor(null));
+  });
+});

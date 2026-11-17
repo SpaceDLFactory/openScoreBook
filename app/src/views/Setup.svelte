@@ -2,7 +2,7 @@
   // New manually scored game: teams, park, batting orders and starting pitchers.
   import type { Player, Setup } from '../lib/manual';
   import { POS_NAME } from '../lib/manual';
-  import { STADIUMS, customFence, fenceOk, type Park } from '../lib/stadiums';
+  import { LEAGUES, LISTED, PARKS, customFence, fenceOk, type Park } from '../lib/stadiums';
   import { FH, FW, HX, HY, fieldOf } from '../lib/field';
   import type { Roster } from '../lib/rosters';
   /** rosters: teams seen in earlier games, for names to pick and last lineups to reuse */
@@ -39,7 +39,7 @@
   const isNew = $derived(stadium === NEW_PARK);
   const newName = $derived(parkName.trim());
   const newDist = $derived(dist.map((v) => (typeof v === 'number' ? v : null)));
-  const taken = $derived(newName === '기타' || newName === NEW_PARK || newName in STADIUMS);
+  const taken = $derived(newName === '기타' || newName === NEW_PARK || newName in LISTED);
   const shape = $derived(fenceOk(newDist) ? fieldOf(customFence(newDist)) : null);
   const blocked = $derived(isNew && (!newName || taken || !shape));
   function create() {
@@ -47,7 +47,7 @@
       list.map((b, i) => ({ id: `${side[0]}${i + 1}-${Date.now().toString(36)}`, name: b.name.trim() || `${label}${i + 1}번`, pos: b.pos }));
     const a = awayName.trim() || '원정', h = homeName.trim() || '홈';
     const fence = isNew ? newDist : parks.find((p) => p.name === stadium)?.fence;
-    const park = !isNew && !fence && STADIUMS[stadium] ? $state.snapshot(STADIUMS[stadium]) : undefined;
+    const park = !isNew && !fence && LISTED[stadium] ? $state.snapshot(LISTED[stadium]) : undefined;
     oncreate({
       date, stadium: isNew ? newName : stadium, ...(fence && { fence }), ...(park && { park }), awayName: a, homeName: h, away: t('away', away, a), home: t('home', home, h),
       awayPitcher: { id: `ap-${Date.now().toString(36)}`, name: awayPitcher.trim() || `${a} 선발`, pos: '투수' },
@@ -60,7 +60,13 @@
 <div class="sub">이름을 비워 두면 "팀 N번"으로 채워요. 나중에 교체로 바꿀 수 있어요.</div>
 <div class="card setup">
   <label>날짜 <input type="date" bind:value={date} /></label>
-  <label>구장 <select id="stadium" bind:value={stadium}>{#each parks as p (p.name)}<option value={p.name}>{p.name}</option>{/each}{#each Object.keys(STADIUMS) as k}<option value={k}>{k}</option>{/each}<option value="">기타</option><option value={NEW_PARK}>직접 입력</option></select></label>
+  <label>구장 <select id="stadium" bind:value={stadium}>
+    {#if parks.length}<optgroup label="직접 만든 구장">{#each parks as p (p.name)}<option value={p.name}>{p.name}</option>{/each}</optgroup>{/if}
+    {#each LEAGUES as [lg, label] (lg)}
+      <optgroup label={label}>{#each PARKS.filter((p) => p.league === lg) as p (p.name)}<option value={p.name}>{p.name}{p.teams.length ? ` · ${p.teams.join(', ')}` : ''}</option>{/each}</optgroup>
+    {/each}
+    <optgroup label="그 밖"><option value="">기타</option><option value={NEW_PARK}>직접 입력</option></optgroup>
+  </select></label>
   {#if isNew}
     <label>이름 <input id="parkName" bind:value={parkName} placeholder="구장 이름" /></label>
     <div class="fences">{#each FENCE_LABELS as l, i}<label>{l}<input class="fdist" data-i={i} type="number" inputmode="decimal" min="30" max="200" bind:value={dist[i]} placeholder={i % 2 ? '선택' : 'm'} /></label>{/each}</div>

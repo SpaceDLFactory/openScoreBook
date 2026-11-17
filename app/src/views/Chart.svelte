@@ -3,7 +3,7 @@
   // landed and rolled. PC adds the PA list as a sidebar.
   import type { Game, ResClass } from '../lib/naver/parse';
   import { caughtByResult, landingInfo, type Landings } from '../lib/landings';
-  import { STADIUMS, fenceDist, fenceFor } from '../lib/stadiums';
+  import { LISTED, fenceDist, fenceFor } from '../lib/stadiums';
   import { RES, TRAJ, callColor, callLabel, halfName, slotOf } from '../lib/ui';
   import Zone from '../components/Zone.svelte';
   import Field from '../components/Field.svelte';
@@ -25,7 +25,7 @@
   const pa = $derived(game.pas[idx]);
   const fence = $derived(game.fence ?? fenceFor(game.stadium));
   /** the outline stored with the game is not the one listed now (it has been measured again since) */
-  const older = $derived(!!game.fence && !!game.stadium && game.stadium in STADIUMS && JSON.stringify(game.fence) !== JSON.stringify(STADIUMS[game.stadium]));
+  const older = $derived(!!game.fence && !!game.stadium && game.stadium in LISTED && JSON.stringify(game.fence) !== JSON.stringify(LISTED[game.stadium]));
   const st = $derived(pa.pitches[pa.pitches.length - 1]?.state ?? pa.after);
   const saved = $derived(landings[pa.no]);
   const isOut = $derived(/아웃|병살/.test(pa.result ?? ''));

@@ -1,4 +1,5 @@
 // Outfield fence data per KBO park, keyed by Naver's stadium name, and the geometry used to draw it.
+import listed from './parks.json';
 
 export type FenceSrc = 'ok' | 'sat' | 'comm' | 'est';
 export interface Fence {
@@ -60,7 +61,7 @@ export function fenceDist(fence: Fence, a: number): number {
   return 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
 }
 
-export const fenceFor = (stadium: string | null | undefined): Fence => (stadium && STADIUMS[stadium]) || DEFAULT_FENCE;
+export const fenceFor = (stadium: string | null | undefined): Fence => (stadium && LISTED[stadium]) || DEFAULT_FENCE;
 
 /** A park the user measured: distances (m) at LF line, LCF, CF, RCF, RF; the two gaps may be empty. */
 export const customFence = (f: (number | null)[]): Fence => ({ f, src: f.map((v) => (v == null ? 'est' : 'ok')) });
@@ -75,3 +76,18 @@ export function savedParks(setups: { stadium: string; fence?: (number | null)[] 
   for (const { stadium: name, fence } of setups) if (fence && !out.has(name)) out.set(name, { name, fence });
   return [...out.values()];
 }
+
+// Parks of other leagues (tools/parks/build_parks.py: MLB and the minors from the MLB Stats API, NPB's twelve home
+// parks from their published figures). Five distances only, no outline: the wall in between is interpolated.
+export type League = 'KBO' | 'NPB' | 'MLB' | 'AAA' | 'AA' | 'A+' | 'A';
+export const LEAGUES: [League, string][] = [['KBO', 'KBO'], ['NPB', 'NPB'], ['MLB', 'MLB'], ['AAA', '트리플A'], ['AA', '더블A'], ['A+', '하이싱글A'], ['A', '싱글A']];
+export interface ListedPark { name: string; league: League; teams: string[]; fence: Fence }
+/** KBO teams of the parks above, for the picker */
+const KBO_TEAMS: Record<string, string[]> = { 잠실: ['LG', '두산'], 문학: ['SSG'], 수원: ['KT'], 사직: ['롯데'], 창원: ['NC'], 대전: ['한화'], 광주: ['KIA'], 대구: ['삼성'], 고척: ['키움'] };
+export const PARKS: ListedPark[] = [
+  ...Object.entries(STADIUMS).map(([name, fence]) => ({ name, league: 'KBO' as League, teams: KBO_TEAMS[name] ?? [], fence })),
+  ...(listed.parks as { name: string; league: League; teams: string[]; f: (number | null)[]; src: FenceSrc[] }[])
+    .map((p) => ({ name: p.name, league: p.league, teams: p.teams, fence: { f: p.f, src: p.src } })),
+];
+/** every listed park by name */
+export const LISTED: Record<string, Fence> = Object.fromEntries(PARKS.map((p) => [p.name, p.fence]));
