@@ -12,24 +12,29 @@ and agree with it (0.5 m); without, both. These are landscaping, laid out to a t
 they place home to a few decimetres, not centimetres.
 
 Wall. Along a ray every 0.5 degrees: past 8 m of grass, the far end of the warning track - where the track colour
-stops for 0.4 m, or steps sharply away from it (a light cap in front of a red bullpen). Seen from off to one side, a
-wall's field face shows as a band beyond its foot, so the track still ends at the foot; a wall leaning over the track
-hides it and reads short, and shade, padding or objects can fool the colours - which is why the profile must be
-corroborated by other flights, sector by sector (below). A ray more than 2 m off the median of its neighbours within
-2 degrees is dropped; the rays left must leave no gap over 3 degrees and reach within 1 degree of both poles. Each
-whole degree takes the median of its rays; holes are interpolated (and marked). A pole is the observed ray along the
-foul line when there is one, else where the straight wall through the rays within 3 degrees meets the foul line -
-only if those rays lie within 0.3 m of one line that crosses the foul line at 20 degrees or more.
+stops for 0.4 m, or steps sharply away from it (a light cap in front of a red bullpen). Where a photo has the stands'
+shadow on the wall it is not read (ortho_parks.json lists those degrees per photo, as seen on it): shade turns a track
+blue and a shadow's edge across it reads as a wall. A ray more than 2 m off the median of its neighbours within
+2 degrees is dropped.
+
+Flights. One photo can be wrong where another is right: at Nationals Park's left-field corner 2023 shows the track
+ending 1 m short of where 2019, 2021 and 2025 all show it. So every flight is measured on its own and, sector by sector
+(both corners, left, left-center, center, right-center, right), a ray where two or more flights agree within 0.5 m
+takes their median; a flight that disagrees there with a flight that has agreed with another in the sector is left out
+of the whole sector; a ray only one flight still sees takes its value, marked as seen once. The rays left must leave
+no gap over 3 degrees and reach within 1 degree of both poles. Each whole degree takes the median of its rays; holes
+are interpolated. A pole is the ray along the foul line when there is one, else where the straight wall through the
+rays within 3 degrees meets the foul line - only if those rays lie within 0.3 m of one line that crosses the foul line
+at 20 degrees or more and the crossing is within 2.5 m of a ray.
 
 Acceptance, nothing fitted to any of it: Baseball Savant's measured lines and straightaway center within 1.5 m, its
-deepest point within 1.5 m, its fair area within 2% (Savant's gaps are printed, not used: their bearing is unknown);
-and every one of seven sectors (both corners, left, left-center, center, right-center, right) corroborated by other
-flights measured on their own - at least 4 of their rays in the sector, median within 0.5 m of the published profile.
+deepest point within 1.5 m, its fair area within 2% (Savant's gaps are printed, not used: their bearing is unknown).
+How each degree was got - agreed, seen once, interpolated, pole - is written with the profile.
 
     python3 ortho_fence.py fetch PARK      # photos -> fixtures/parks/ortho/ (gitignored: only measurements leave)
     python3 ortho_fence.py measure PARK    # registration, trace, checks; overlay and QA sheet next to the photos
 """
-import io, json, math, sys, urllib.parse, urllib.request
+import io, json, math, sys, time, urllib.parse, urllib.request
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter
 from savant import FT, measured, rows
@@ -61,7 +66,12 @@ def fetch(name):
                 bb = (x - h + i * step, y + h - (j + 1) * step, x - h + (i + 1) * step, y + h - j * step)
                 p = urllib.parse.urlencode({'bbox': ','.join(map(str, bb)), 'bboxSR': 3857, 'imageSR': 3857, 'size': f'{sz},{sz}',
                                             'format': 'jpg', 'compressionQuality': 92, 'bandIds': '0,1,2', 'f': 'image'})
-                b = urllib.request.urlopen(urllib.request.Request(src['service'] + '/exportImage?' + p, headers=UA), timeout=180).read()
+                for attempt in range(5):  # NAIP's server answers 502/504 now and then
+                    try:
+                        b = urllib.request.urlopen(urllib.request.Request(src['service'] + '/exportImage?' + p, headers=UA), timeout=180).read(); break
+                    except OSError as e:
+                        print(name, src['year'], 'retry', attempt, e, file=sys.stderr); time.sleep(10)
+                else: raise SystemExit(f"{name} {src['year']}: no image")
                 img.paste(Image.open(io.BytesIO(b)).convert('RGB'), (i * sz, j * sz))
         CACHE.mkdir(parents=True, exist_ok=True)
         img.save(photo(park, src), quality=93)
@@ -222,13 +232,13 @@ def home_plate(m, park, log):
 # ---- wall ----
 
 def kind(c):
-    """G grass, T warning track, O anything else. The track stays redder than green and bluer than green from full sun
-    (123,79,86) into the shade of a tall wall (63,58,72); padded faces (navy 43,43,59, teal 66,87,99) and caps
-    (98,113,119) are not redder than green; brick behind a wall (144,108,103) is red but not bluer than green."""
-    r, g, b = c
-    if r - g < -3 and g >= b - 4: return 'G'
-    if r - g > 3 and b >= g - 2: return 'T'
-    return 'O'
+    """G grass, T warning track, O anything else, by log(red) - log(green), which a photo's overall colour balance and
+    shade (both close to scalings) move little: grass -0.14 to -0.30 on every flight, the track +0.2 to +0.6 in sun
+    (2019's olive-looking track included) and +0.08 in the shade of a tall wall; padded faces (navy 43,43,59: 0, teal
+    66,87,99: -0.27) and grey caps fall below. Deep shade turns the track blue (2025: -0.47) - unread, not misread.
+    Red brick behind a wall reads as track; the colour-step rule in wall() stops at the cap in front of it."""
+    q = math.log(c[0] + 1) - math.log(c[1] + 1)
+    return 'G' if q < -0.08 else 'T' if q > 0.04 else 'O'
 
 def wall(m, hx, hy, axis, a, rmin=60, rmax=145):
     ux, uy = math.cos(math.radians(axis + a)), math.sin(math.radians(axis + a))
@@ -255,9 +265,10 @@ def wall(m, hx, hy, axis, a, rmin=60, rmax=145):
         i += 1
     return None
 
-def trace(m, hx, hy, axis):
-    """rays every 0.5 degrees; those more than 2 m off the median of their neighbours within 2 degrees dropped"""
-    rays = {k / 2: wall(m, hx, hy, axis, k / 2) for k in range(-90, 91)}
+def trace(m, hx, hy, axis, shade=()):
+    """rays every 0.5 degrees outside the shaded stretches; those more than 2 m off the median of their neighbours
+    within 2 degrees dropped"""
+    rays = {k / 2: wall(m, hx, hy, axis, k / 2) for k in range(-90, 91) if not any(lo <= k / 2 <= hi for lo, hi in shade)}
     rays = {a: v for a, v in rays.items() if v}
     keep, dropped = {}, []
     for a, v in rays.items():
@@ -292,15 +303,17 @@ def pole(rays, side):
         return obs, True
     return t, False
 
-def profile(rays):
-    """91 whole degrees and how each was got: m measured, i interpolated, p pole from the wall near it"""
+def profile(rays, once=frozenset()):
+    """91 whole degrees and how each was got: m agreed, s seen by one flight only (each as the ray whose value the
+    degree took), i interpolated, p pole from the wall near it"""
     coverage(rays)
     p, how = [], []
     for i in range(91):
-        near = sorted(v for a, v in rays.items() if abs(a - (i - 45)) <= 0.5)
-        p.append(near[len(near) // 2] if near else None); how.append('m' if near else 'i')
+        near = sorted((v, a) for a, v in rays.items() if abs(a - (i - 45)) <= 0.5)
+        pick = near[len(near) // 2] if near else None
+        p.append(pick[0] if pick else None); how.append('i' if not pick else 's' if pick[1] in once else 'm')
     for i, side in ((0, -1), (90, 1)):
-        p[i], seen = pole(rays, side); how[i] = 'm' if seen else 'p'
+        p[i], seen = pole(rays, side); how[i] = ('s' if 45.0 * side in once else 'm') if seen else 'p'
     i = 0
     while i < 91:
         if p[i] is None:
@@ -321,21 +334,46 @@ def at(p, deg):
     u = deg + 45; i = min(89, int(u))
     return p[i] + (p[i + 1] - p[i]) * (u - i)
 
-def corroborate(p, others, log):
-    """other flights' rays against the published profile, sector by sector"""
-    ok = True
+def combine(flights, log, tol=0.5):
+    """flights: [(year, rays)] -> rays, and the ones seen by one flight only (see the module's notes on Flights)"""
+    def agree(fl, angles):
+        """rays where the largest group of flights within tol holds 2 or more and no other group of that size stands
+        apart from it; the rest of the rays, those with two equally supported readings among them"""
+        agreed, members, split = {}, {}, []
+        for a in angles:
+            vals = sorted((rays[a], y) for y, rays in fl if a in rays)
+            size = max((j - i for i in range(len(vals)) for j in range(i + 1, len(vals) + 1) if vals[j - 1][0] - vals[i][0] <= tol), default=0)
+            if size < 2: continue
+            starts = [i for i in range(len(vals) - size + 1) if vals[i + size - 1][0] - vals[i][0] <= tol]
+            if starts[-1] - starts[0] >= size: split.append(a); continue  # two separate groups, equally supported
+            g = min((vals[i:i + size] for i in starts), key=lambda g: g[-1][0] - g[0][0])
+            vs = [v for v, _ in g]; n = len(vs)
+            agreed[a] = vs[n // 2] if n % 2 else (vs[n // 2 - 1] + vs[n // 2]) / 2; members[a] = {y for _, y in g}
+        return agreed, members, split
+    out, once = {}, set()
     for name, lo, hi in SECTORS:
-        d = sorted(r - at(p, a) for _, rays in others for a, r in rays.items() if lo <= a <= hi)
-        ad = sorted(abs(x) for x in d)
-        if len(d) < 4:
-            log(f'    {name:12s} {len(d)} rays - not corroborated'); ok = False; continue
-        med, p90 = ad[len(ad) // 2], ad[int(len(ad) * 0.9)]
-        log(f'    {name:12s} {len(d):3d} rays, median {med:.2f} m, 90% {p90:.2f} m, bias {d[len(d) // 2]:+.2f} m' + ('' if med <= 0.5 else ' - disagrees'))
-        ok = ok and med <= 0.5
-    seen = sorted({a for _, rays in others for a in rays})
-    hole = max([b - a for a, b in zip([-45.5] + seen, seen + [45.5])])
-    log(f'    longest stretch no other flight saw: {hole - 0.5:.1f} deg')
-    return ok
+        angles = [k / 2 for k in range(2 * lo, 2 * hi + 1) if lo <= k / 2 < hi or k / 2 == hi == 45]
+        agreed, members, split = agree(flights, angles)
+        # in this sector, how often each flight is in an agreeing group, and how often it reads against one - or,
+        # where no group formed, against another flight's ray: one who disagrees as often as it agrees is left out
+        score = {y: [0, 0] for y, _ in flights}
+        for a in angles:
+            seen = [(y, rays[a]) for y, rays in flights if a in rays]
+            if a in agreed:
+                for y, v in seen: score[y][0 if y in members[a] else 1] += 1
+            elif len(seen) >= 2 and max(v for _, v in seen) - min(v for _, v in seen) > tol:
+                for y, _ in seen: score[y][1] += 1
+        left_out = {y for y, (yes, no) in score.items() if no and no >= yes}
+        kept = [(y, rays) for y, rays in flights if y not in left_out]
+        agreed, members, split = agree(kept, angles)
+        single = {}
+        for a in angles:
+            if a in agreed: out[a] = agreed[a]; continue
+            seen = [(y, rays[a]) for y, rays in kept if a in rays]
+            if len(seen) == 1: out[a] = seen[0][1]; once.add(a); single[seen[0][0]] = single.get(seen[0][0], 0) + 1
+        log(f'    {name:12s} {len(agreed):2d}/{len(angles)} rays agreed' + (f", seen once: {single}" if single else '')
+            + (f', left out: {sorted(left_out)}' if left_out else '') + (f', split evenly (dropped): {split}' if split else ''))
+    return out, once
 
 def draw(m, hx, hy, axis, p, rays_by, path_overlay, path_qa):
     colours = [(255, 230, 0), (0, 255, 255), (255, 0, 255), (255, 140, 0), (120, 255, 120)]
@@ -360,38 +398,41 @@ def measure(name):
     year = park['savant']
     meas, rec = measured(year)[name], rows(year)[name]
     runs = []
-    for k, src in enumerate(park['sources']):
+    for src in park['sources']:
         m = Photo(photo(park, src)); log(f"{name}, {src['year']} photo:")
         try:
             hx, hy, axis, how = home_plate(m, park, log)
         except SystemExit as e:
-            if k == 0: raise
             log(f'  not used: {e}'); continue
-        rays, dropped = trace(m, hx, hy, axis)
-        log(f'  wall traced on {len(rays)}/181 rays' + (f'; dropped as off their neighbours: {dropped}' if dropped else ''))
+        rays, dropped = trace(m, hx, hy, axis, src.get('shade', ()))
+        log(f'  wall traced on {len(rays)}/181 rays' + (f"; not read in shade: {src['shade']}" if src.get('shade') else '')
+            + (f'; dropped as off their neighbours: {dropped}' if dropped else ''))
         runs.append((src, m, hx, hy, axis, how, rays))
-    if len(runs) < 2: raise SystemExit(f'{name}: no second flight to corroborate with')
-    src, m, hx, hy, axis, how, rays = runs[0]
-    p, made = profile(rays)
-    log(f"  profile: {made.count('m')} degrees measured, interpolated at {[i - 45 for i, c in enumerate(made) if c == 'i']}, "
-        f"poles {'measured' if made[0] == 'm' else 'from the wall near it'} / {'measured' if made[90] == 'm' else 'from the wall near it'}")
-    draw(m, hx, hy, axis, p, [(r[0]['year'], r[6]) for r in runs],
-         CACHE / f"{park['key']}.overlay.png", CACHE / f"{park['key']}.qa.png")
+    if len(runs) < 2: raise SystemExit(f'{name}: fewer than two flights placed home plate')
+    log('  flights combined, sector by sector:')
+    rays, once = combine([(r[0]['year'], r[6]) for r in runs], log)
+    p, made = profile(rays, once)
+    log(f"  profile: {made.count('m')} degrees agreed, {made.count('s')} seen once at {[i - 45 for i, c in enumerate(made) if c == 's']}, "
+        f"interpolated at {[i - 45 for i, c in enumerate(made) if c == 'i']}, poles {made[0]}/{made[90]}")
+    src, m, hx, hy, axis = runs[0][:5]  # drawn on the first photo that placed home
+    draw(m, hx, hy, axis, p, [(r[0]['year'], r[6]) for r in runs], CACHE / f"{park['key']}.overlay.png", CACHE / f"{park['key']}.qa.png")
     gates = {'LF': (p[0], meas[0]), 'CF': (p[45], meas[2]), 'RF': (p[90], meas[4]), 'deepest': (max(p), rec['distance_deepest'] * FT)}
     fair, savant_fair = area(p), rec['fence_area'] * FT * FT
     log(f'  vs Savant {year} (m): ' + '  '.join(f'{k} {a:.1f}/{b:.1f} ({a - b:+.1f})' for k, (a, b) in gates.items())
         + f'  area {fair:.0f}/{savant_fair:.0f} m2 ({fair / savant_fair - 1:+.1%})'
         + f'  [gaps, bearing unknown so not checked: 17.5 deg {at(p, -17.5):.1f}/{meas[1]:.1f}, {at(p, 17.5):.1f}/{meas[3]:.1f}]')
-    ok = all(abs(a - b) <= 1.5 for a, b in gates.values()) and abs(fair / savant_fair - 1) <= 0.02
-    log(f"  other flights ({', '.join(str(r[0]['year']) for r in runs[1:])}) against the profile:")
-    ok = corroborate(p, [(r[0]['year'], r[6]) for r in runs[1:]], log) and ok
-    if not ok: raise SystemExit(f'{name}: checks failed, not written')
+    if not (all(abs(a - b) <= 1.5 for a, b in gates.values()) and abs(fair / savant_fair - 1) <= 0.02):
+        raise SystemExit(f'{name}: Savant checks failed, not written')
+    used = [r[0] for r in runs]
     data = json.loads(OUT.read_text()) if OUT.exists() else {'profiles': {}, 'sources': {}}
     data['profiles'][name] = p
     data['sources'][name] = {
-        'photo': src['service'], 'flown': src['flown'], 'credit': src['credit'], 'licence': src['licence'], 'licence_url': src['licence_url'],
-        'home plate': how, 'degrees': made + ' (m measured, i interpolated, p pole from the wall near it; LF line first)',
-        'corroborated by': [f"{r[0]['service']} ({r[0]['flown']})" for r in runs[1:]], 'checked against': f'Baseball Savant {year}'}
+        'photos': [f"{s['service']} ({s['flown']})" for s in used],
+        'credit': ' / '.join(sorted({s['credit'] for s in used})), 'licence': ' / '.join(sorted({s['licence'] for s in used})),
+        'licence_url': ' '.join(sorted({s['licence_url'] for s in used})),
+        'home plate': {s['year']: r[5] for s, r in zip(used, runs)},
+        'degrees': made + ' (m agreed by two or more photos, s seen by one only, i interpolated, p pole from the wall near it; LF line first)',
+        'checked against': f'Baseball Savant {year}'}
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1) + '\n')
     log(f'{name}: written to {OUT.name}')
 

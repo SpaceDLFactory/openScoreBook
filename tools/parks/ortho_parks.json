@@ -29,7 +29,13 @@
     "service": "https://imagery.dcgis.dc.gov/dcgis/rest/services/Ortho/Ortho_2025/ImageServer",
     "credit": "District of Columbia Office of the Chief Technology Officer",
     "licence": "CC BY 4.0",
-    "licence_url": "https://creativecommons.org/licenses/by/4.0/"
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "shade": [
+     [
+      25,
+      45
+     ]
+    ]
    },
    {
     "year": 2019,
@@ -37,7 +43,13 @@
     "service": "https://imagery.dcgis.dc.gov/dcgis/rest/services/Ortho/Ortho_2019/ImageServer",
     "credit": "District of Columbia Office of the Chief Technology Officer",
     "licence": "CC BY 4.0",
-    "licence_url": "https://creativecommons.org/licenses/by/4.0/"
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "shade": [
+     [
+      27,
+      45
+     ]
+    ]
    }
   ]
  }

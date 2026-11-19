@@ -95,7 +95,7 @@ def main(season):
             p['src'] = ['ok', 'est', 'ok', 'est', 'ok']
     OUT.write_text(json.dumps({'source': f'MLB Stats API venue fieldInfo, season {season}; NPB: Japanese Wikipedia park articles; '
                                          f'MLB: Baseball Savant measured distances; outlines measured on USDA NAIP imagery (public domain)'
-                                         + ''.join(f'; {n}: wall distances measured on orthophotos by {s["credit"]}, {s["photo"]} ({s["flown"]}), '
+                                         + ''.join(f'; {n}: wall distances measured on orthophotos by {s["credit"]} ({", ".join(s["photos"])}), '
                                                    f'{s["licence"]} {s["licence_url"]}; imagery not redistributed'
                                                    for n, s in sorted(ortho['sources'].items())),
                                'fetched': str(date.today()),

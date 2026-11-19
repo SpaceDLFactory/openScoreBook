@@ -100,7 +100,8 @@ describe('parks of other leagues', () => {
     const { PARKS } = await import('./stadiums');
     const traced = PARKS.filter((p) => p.fence.p && p.league !== 'KBO'); // KBO outlines come from aerial imagery
     expect(traced.filter((p) => p.league !== 'MLB')).toEqual([]);
-    expect(traced.map((p) => p.name)).toEqual(['Angel Stadium']); // measured on NAIP imagery; no other wall is validated yet
+    // Angel Stadium on NAIP imagery, Nationals Park on DC's 0.1 m orthophotos (three flights); no other wall is validated yet
+    expect(traced.map((p) => p.name).sort()).toEqual(['Angel Stadium', 'Nationals Park']);
     for (const p of traced) {
       expect(p.fence.p, p.name).toHaveLength(91);
       for (const [i, a] of [[0, -45], [2, 0], [4, 45]] as const) expect(fenceDist(p.fence, a), p.name).toBeCloseTo(p.fence.f[i]!, 0);
@@ -113,6 +114,9 @@ describe('parks of other leagues', () => {
     const { fenceFor } = await import('./stadiums');
     expect(fenceFor('Fenway Park').f[0]).toBeCloseTo(94.0, 1); // the Green Monster line as Statcast measures it (310 ft posted)
     expect(fenceFor('Fenway Park').f[2]).toBeCloseTo(118.4, 1); // straightaway center, not the 420 ft triangle
+    // measured on the photo: lines and center within 1.5 m of the posted 336/402/335 ft
+    const nats = fenceFor('Nationals Park');
+    for (const [a, ft] of [[-45, 336], [0, 402], [45, 335]] as const) expect(Math.abs(fenceDist(nats, a) - ft * 0.3048)).toBeLessThan(1.5);
     expect(fenceFor('도쿄돔').f).toEqual([100, 110, 122, 110, 100]);
     expect(fenceFor('없는 구장')).toBe(fenceFor(null));
   });
